@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import { getOrders } from "../services/api"
-import Navbar from "../components/Navbar"
-import CartSidebar from "../components/CartSidebar"
+import AdminLayout from "../layouts/AdminLayout"
 
 function AdminDashboard() {
   const [orders, setOrders] = useState([])
@@ -25,18 +24,22 @@ function AdminDashboard() {
   }, [])
 
   const totalOrders = orders.length
-  const pendingOrders = orders.filter((order) => order.status === "PENDING").length
-  const completedOrders = orders.filter((order) => order.status === "COMPLETED").length
+
+  const pendingOrders = orders.filter(
+    (order) => order.status === "PENDING"
+  ).length
+
+  const completedOrders = orders.filter(
+    (order) => order.status === "COMPLETED"
+  ).length
+
   const totalRevenue = orders
     .filter((order) => order.status !== "CANCELLED")
     .reduce((total, order) => total + order.total, 0)
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <Navbar />
-      <CartSidebar />
-
-      <main className="pt-32 px-6 pb-20">
+    <AdminLayout>
+      <main className="px-6 py-10">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10">
             <div>
@@ -63,39 +66,66 @@ function AdminDashboard() {
               >
                 Manage Products
               </Link>
+
+              <Link
+                to="/kitchen"
+                className="border border-white/10 hover:border-green-500 hover:text-green-400 px-6 py-3 rounded-full font-bold transition"
+              >
+                Kitchen Panel
+              </Link>
             </div>
           </div>
 
-          {loading && <p className="text-gray-400">Loading dashboard...</p>}
+          {loading && (
+            <p className="text-gray-400">
+              Loading dashboard...
+            </p>
+          )}
 
-          {error && <p className="text-red-400">{error}</p>}
+          {error && (
+            <p className="text-red-400">
+              {error}
+            </p>
+          )}
 
           {!loading && !error && (
             <>
               <div className="grid md:grid-cols-4 gap-6 mb-10">
                 <div className="bg-zinc-950 border border-white/10 rounded-[2rem] p-6">
-                  <p className="text-gray-400 mb-3">Total Orders</p>
+                  <p className="text-gray-400 mb-3">
+                    Total Orders
+                  </p>
+
                   <h2 className="text-4xl font-extrabold text-orange-500">
                     {totalOrders}
                   </h2>
                 </div>
 
                 <div className="bg-zinc-950 border border-white/10 rounded-[2rem] p-6">
-                  <p className="text-gray-400 mb-3">Pending Orders</p>
+                  <p className="text-gray-400 mb-3">
+                    Pending Orders
+                  </p>
+
                   <h2 className="text-4xl font-extrabold text-yellow-400">
                     {pendingOrders}
                   </h2>
                 </div>
 
                 <div className="bg-zinc-950 border border-white/10 rounded-[2rem] p-6">
-                  <p className="text-gray-400 mb-3">Completed Orders</p>
+                  <p className="text-gray-400 mb-3">
+                    Completed Orders
+                  </p>
+
                   <h2 className="text-4xl font-extrabold text-green-400">
                     {completedOrders}
                   </h2>
                 </div>
 
                 <div className="bg-zinc-950 border border-white/10 rounded-[2rem] p-6">
-                  <p className="text-gray-400 mb-3">Revenue</p>
+                  <p className="text-gray-400 mb-3">
+                    Revenue
+                  </p>
+
                   <h2 className="text-4xl font-extrabold text-orange-500">
                     Rs. {totalRevenue}
                   </h2>
@@ -108,7 +138,9 @@ function AdminDashboard() {
                 </h2>
 
                 {orders.length === 0 ? (
-                  <p className="text-gray-400">No orders yet.</p>
+                  <p className="text-gray-400">
+                    No orders yet.
+                  </p>
                 ) : (
                   <div className="space-y-4">
                     {orders.slice(0, 5).map((order) => (
@@ -145,7 +177,7 @@ function AdminDashboard() {
           )}
         </div>
       </main>
-    </div>
+    </AdminLayout>
   )
 }
 

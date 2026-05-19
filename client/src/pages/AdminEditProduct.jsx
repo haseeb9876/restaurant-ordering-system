@@ -1,12 +1,7 @@
 import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import Navbar from "../components/Navbar"
-import CartSidebar from "../components/CartSidebar"
-import {
-  getCategories,
-  getProduct,
-  updateProduct,
-} from "../services/api"
+import AdminLayout from "../layouts/AdminLayout"
+import { getCategories, getProduct, updateProduct } from "../services/api"
 
 function AdminEditProduct() {
   const { id } = useParams()
@@ -94,11 +89,8 @@ function AdminEditProduct() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <Navbar />
-      <CartSidebar />
-
-      <main className="pt-32 px-6 pb-20">
+    <AdminLayout>
+      <main className="px-6 py-10">
         <div className="max-w-3xl mx-auto">
           <div className="mb-10">
             <p className="text-orange-500 font-semibold mb-3">
@@ -199,7 +191,7 @@ function AdminEditProduct() {
           )}
         </div>
       </main>
-    </div>
+    </AdminLayout>
   )
 }
 

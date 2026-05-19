@@ -1,10 +1,6 @@
 import { useEffect, useState } from "react"
-import {
-  getOrders,
-  updateOrderStatus,
-} from "../services/api"
-import Navbar from "../components/Navbar"
-import CartSidebar from "../components/CartSidebar"
+import { getOrders, updateOrderStatus } from "../services/api"
+import AdminLayout from "../layouts/AdminLayout"
 
 const orderStatuses = [
   "PENDING",
@@ -53,11 +49,8 @@ function AdminOrders() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <Navbar />
-      <CartSidebar />
-
-      <main className="pt-32 px-6 pb-20">
+    <AdminLayout>
+      <main className="px-6 py-10">
         <div className="max-w-7xl mx-auto">
           <div className="mb-10">
             <p className="text-orange-500 font-semibold mb-3">
@@ -137,9 +130,7 @@ function AdminOrders() {
 
                   <div className="grid md:grid-cols-3 gap-6">
                     <div>
-                      <h3 className="font-bold mb-3">
-                        Customer
-                      </h3>
+                      <h3 className="font-bold mb-3">Customer</h3>
 
                       <div className="space-y-2 text-gray-400">
                         <p>{order.customerName}</p>
@@ -150,9 +141,7 @@ function AdminOrders() {
                     </div>
 
                     <div>
-                      <h3 className="font-bold mb-3">
-                        Items
-                      </h3>
+                      <h3 className="font-bold mb-3">Items</h3>
 
                       <div className="space-y-2 text-gray-400">
                         {order.items.map((item) => (
@@ -164,9 +153,7 @@ function AdminOrders() {
                     </div>
 
                     <div>
-                      <h3 className="font-bold mb-3">
-                        Payment Summary
-                      </h3>
+                      <h3 className="font-bold mb-3">Payment Summary</h3>
 
                       <div className="space-y-2 text-gray-400">
                         <p>Subtotal: Rs. {order.subtotal}</p>
@@ -183,7 +170,7 @@ function AdminOrders() {
           )}
         </div>
       </main>
-    </div>
+    </AdminLayout>
   )
 }
 

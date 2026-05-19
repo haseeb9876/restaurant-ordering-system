@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import { deleteProduct, getProducts } from "../services/api"
-import Navbar from "../components/Navbar"
-import CartSidebar from "../components/CartSidebar"
+import AdminLayout from "../layouts/AdminLayout"
 
 function AdminProducts() {
   const [products, setProducts] = useState([])
@@ -49,11 +48,8 @@ function AdminProducts() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <Navbar />
-      <CartSidebar />
-
-      <main className="pt-32 px-6 pb-20">
+    <AdminLayout>
+      <main className="px-6 py-10">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10">
             <div>
@@ -149,7 +145,7 @@ function AdminProducts() {
           )}
         </div>
       </main>
-    </div>
+    </AdminLayout>
   )
 }
 

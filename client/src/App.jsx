@@ -16,11 +16,14 @@ import AdminOrders from "./features/admin/pages/AdminOrders"
 import AdminProducts from "./features/admin/pages/AdminProducts"
 import AdminAddProduct from "./features/admin/pages/AdminAddProduct"
 import AdminEditProduct from "./features/admin/pages/AdminEditProduct"
+import NotFound from "./features/customer/pages/NotFound"
+
 
 function App() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
+      <Route path="*" element={<NotFound />} />
 
       <Route
         path="/checkout"

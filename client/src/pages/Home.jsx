@@ -1,3 +1,4 @@
+import { useState } from "react"
 import Navbar from "../components/Navbar"
 import Hero from "../components/Hero"
 import Categories from "../components/Categories"
@@ -9,15 +10,20 @@ import Footer from "../components/Footer"
 import CartSidebar from "../components/CartSidebar"
 
 function Home() {
+  const [selectedCategory, setSelectedCategory] = useState("All")
+
   return (
     <div className="min-h-screen bg-black text-white">
       <Navbar />
       <CartSidebar />
 
       <Hero />
-      <Categories />
+      <Categories setSelectedCategory={setSelectedCategory} />
       <FeaturedMenu />
-      <MenuSection />
+      <MenuSection
+        selectedCategory={selectedCategory}
+        setSelectedCategory={setSelectedCategory}
+      />
       <About />
       <Contact />
       <Footer />

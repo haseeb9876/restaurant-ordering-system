@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import Navbar from "../../customer/components/Navbar"
 import CartSidebar from "../../cart/components/CartSidebar"
 import { useAuth } from "../context/AuthContext"
@@ -7,6 +7,9 @@ import { useAuth } from "../context/AuthContext"
 function Login() {
   const { login } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+
+  const redirectPath = searchParams.get("redirect")
 
   const [formData, setFormData] = useState({
     email: "",
@@ -33,6 +36,11 @@ function Login() {
     }
 
     const loggedInUser = login(formData)
+
+    if (redirectPath) {
+      navigate(redirectPath)
+      return
+    }
 
     if (loggedInUser.role === "admin") {
       navigate("/admin")

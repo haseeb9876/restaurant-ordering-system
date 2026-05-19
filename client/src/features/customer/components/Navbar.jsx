@@ -52,6 +52,24 @@ function Navbar() {
         </ul>
 
         <div className="hidden md:flex items-center gap-4">
+          {(user?.role === "admin" || user?.role === "staff") && (
+            <Link
+              to="/kitchen"
+              className="border border-green-500 text-green-400 hover:bg-green-500 hover:text-black px-5 py-2 rounded-full font-semibold transition"
+            >
+              Kitchen
+            </Link>
+          )}
+
+          {user?.role === "admin" && (
+            <Link
+              to="/admin"
+              className="border border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white px-5 py-2 rounded-full font-semibold transition"
+            >
+              Admin Panel
+            </Link>
+          )}
+
           <button
             onClick={openCart}
             className="relative border border-white/10 hover:border-orange-500 px-4 py-2 rounded-full font-semibold transition"
@@ -151,6 +169,30 @@ function Navbar() {
                 Contact
               </a>
             </li>
+
+            {(user?.role === "admin" || user?.role === "staff") && (
+              <li>
+                <Link
+                  to="/kitchen"
+                  onClick={closeMobileMenu}
+                  className="block text-green-400 hover:text-green-300"
+                >
+                  Kitchen Panel
+                </Link>
+              </li>
+            )}
+
+            {user?.role === "admin" && (
+              <li>
+                <Link
+                  to="/admin"
+                  onClick={closeMobileMenu}
+                  className="block text-orange-500 hover:text-orange-400"
+                >
+                  Admin Panel
+                </Link>
+              </li>
+            )}
 
             <li>
               <button

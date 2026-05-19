@@ -5,11 +5,20 @@ const AuthContext = createContext()
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem("user")
-    return savedUser ? JSON.parse(savedUser) : null
+
+    try {
+      return savedUser ? JSON.parse(savedUser) : null
+    } catch {
+      return null
+    }
   })
 
   useEffect(() => {
-    localStorage.setItem("user", JSON.stringify(user))
+    if (user) {
+      localStorage.setItem("user", JSON.stringify(user))
+    } else {
+      localStorage.removeItem("user")
+    }
   }, [user])
 
   const register = (userData) => {
@@ -24,14 +33,29 @@ export function AuthProvider({ children }) {
   }
 
   const login = (userData) => {
+    let role = "customer"
+    let fullName = "Customer User"
+
+    if (userData.email === "admin@foodiehub.com") {
+      role = "admin"
+      fullName = "Admin User"
+    }
+
+    if (userData.email === "staff@foodiehub.com") {
+      role = "staff"
+      fullName = "Kitchen Staff"
+    }
+
     const loggedInUser = {
       id: Date.now(),
-      fullName: "Customer User",
+      fullName,
       email: userData.email,
-      role: "customer",
+      role,
     }
 
     setUser(loggedInUser)
+    return loggedInUser
+
   }
 
   const logout = () => {

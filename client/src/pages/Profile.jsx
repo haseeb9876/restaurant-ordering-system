@@ -1,8 +1,8 @@
 import { Link, useNavigate } from "react-router-dom"
 import Navbar from "../components/Navbar"
-import CartSidebar from "../components/CartSidebar"
-import { useAuth } from "../context/AuthContext"
-import { useCart } from "../context/CartContext"
+import CartSidebar from "../features/cart/components/CartSidebar"
+import { useAuth } from "../features/auth/context/AuthContext"
+import { useCart } from "../features/cart/context/CartContext"
 
 function Profile() {
   const { user, logout } = useAuth()

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
-import { getOrders } from "../services/api"
+import { getOrders } from "../../../services/api"
 import AdminLayout from "../layouts/AdminLayout"
 
 function AdminDashboard() {

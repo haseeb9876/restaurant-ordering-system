@@ -1,35 +1,99 @@
 import { Routes, Route } from "react-router-dom"
+
 import Home from "./pages/Home"
 import Checkout from "./pages/Checkout"
 import OrderSuccess from "./pages/OrderSuccess"
-import Login from "./pages/Login"
-import Register from "./pages/Register"
 import Profile from "./pages/Profile"
-import AdminOrders from "./pages/AdminOrders"
-import AdminDashboard from "./pages/AdminDashboard"
-import AdminProducts from "./pages/AdminProducts"
-import AdminAddProduct from "./pages/AdminAddProduct"
-import AdminEditProduct from "./pages/AdminEditProduct"
 import KitchenPanel from "./pages/KitchenPanel"
+
+import Login from "./features/auth/pages/Login"
+import Register from "./features/auth/pages/Register"
+import ProtectedRoute from "./features/auth/components/ProtectedRoute"
+
+import AdminDashboard from "./features/admin/pages/AdminDashboard"
+import AdminOrders from "./features/admin/pages/AdminOrders"
+import AdminProducts from "./features/admin/pages/AdminProducts"
+import AdminAddProduct from "./features/admin/pages/AdminAddProduct"
+import AdminEditProduct from "./features/admin/pages/AdminEditProduct"
 
 function App() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
+
       <Route path="/checkout" element={<Checkout />} />
-      <Route path="/order-success" element={<OrderSuccess />} />
+
+      <Route
+        path="/order-success"
+        element={<OrderSuccess />}
+      />
+
       <Route path="/login" element={<Login />} />
+
       <Route path="/register" element={<Register />} />
-      <Route path="/profile" element={<Profile />} />
-      <Route path="/admin" element={<AdminDashboard />} />
-      <Route path="/admin/orders" element={<AdminOrders />} />
-      <Route path="/admin/products" element={<AdminProducts />} />
-      <Route path="/admin/products/new" element={<AdminAddProduct />} />
+
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute allowedRoles={["customer", "admin", "staff"]}>
+            <Profile />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminDashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/orders"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminOrders />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/products"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminProducts />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/products/new"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminAddProduct />
+          </ProtectedRoute>
+        }
+      />
+
       <Route
         path="/admin/products/:id/edit"
-        element={<AdminEditProduct />}
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminEditProduct />
+          </ProtectedRoute>
+        }
       />
-      <Route path="/kitchen" element={<KitchenPanel />} />
+
+      <Route
+        path="/kitchen"
+        element={
+          <ProtectedRoute allowedRoles={["admin", "staff"]}>
+            <KitchenPanel />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   )
 }

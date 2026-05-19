@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import Navbar from "../components/Navbar"
-import CartSidebar from "../components/CartSidebar"
-import { useCart } from "../context/CartContext"
-import { useAuth } from "../context/AuthContext"
+import CartSidebar from "../features/cart/components/CartSidebar"
+import { useCart } from "../features/cart/context/CartContext"
+import { useAuth } from "../features/auth/context/AuthContext"
 import { createOrder } from "../services/api"
 
 function Checkout() {

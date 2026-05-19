@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import Navbar from "../components/Navbar"
-import CartSidebar from "../components/CartSidebar"
+import Navbar from "../../../components/Navbar"
+import CartSidebar from "../../cart/components/CartSidebar"
 import { useAuth } from "../context/AuthContext"
 
 function Login() {
@@ -32,7 +32,18 @@ function Login() {
       return
     }
 
-    login(formData)
+    const loggedInUser = login(formData)
+
+    if (loggedInUser.role === "admin") {
+      navigate("/admin")
+      return
+    }
+
+    if (loggedInUser.role === "staff") {
+      navigate("/kitchen")
+      return
+    }
+
     navigate("/")
   }
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import AdminLayout from "../layouts/AdminLayout"
-import { getCategories, getProduct, updateProduct } from "../services/api"
+import { getCategories, getProduct, updateProduct } from "../../../services/api"
 
 function AdminEditProduct() {
   const { id } = useParams()

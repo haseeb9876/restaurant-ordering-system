@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import AdminLayout from "../layouts/AdminLayout"
-import { createProduct, getCategories } from "../services/api"
+import { createProduct, getCategories } from "../../../services/api"
 
 function AdminAddProduct() {
   const navigate = useNavigate()

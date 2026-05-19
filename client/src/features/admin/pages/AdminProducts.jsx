@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
-import { deleteProduct, getProducts } from "../services/api"
+import { deleteProduct, getProducts } from "../../../services/api"
 import AdminLayout from "../layouts/AdminLayout"
 
 function AdminProducts() {

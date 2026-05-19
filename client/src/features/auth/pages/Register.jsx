@@ -1,8 +1,10 @@
 import { useState } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
-import Navbar from "../components/Navbar"
-import CartSidebar from "../components/CartSidebar"
+
+import Navbar from "../../../components/Navbar"
+import CartSidebar from "../../cart/components/CartSidebar"
 import { useAuth } from "../context/AuthContext"
+
 
 function Register() {
   const { register } = useAuth()

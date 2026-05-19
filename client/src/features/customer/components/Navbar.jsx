@@ -52,7 +52,7 @@ function Navbar() {
         </ul>
 
         <div className="hidden md:flex items-center gap-4">
-          {(user?.role === "admin" || user?.role === "staff") && (
+          {(user?.role === "ADMIN" || user?.role === "STAFF") && (
             <Link
               to="/kitchen"
               className="border border-green-500 text-green-400 hover:bg-green-500 hover:text-black px-5 py-2 rounded-full font-semibold transition"
@@ -61,7 +61,7 @@ function Navbar() {
             </Link>
           )}
 
-          {user?.role === "admin" && (
+          {user?.role === "ADMIN" && (
             <Link
               to="/admin"
               className="border border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white px-5 py-2 rounded-full font-semibold transition"
@@ -170,7 +170,8 @@ function Navbar() {
               </a>
             </li>
 
-            {(user?.role === "admin" || user?.role === "staff") && (
+            {(user?.role === "ADMIN" ||
+              user?.role === "STAFF") && (
               <li>
                 <Link
                   to="/kitchen"
@@ -182,7 +183,7 @@ function Navbar() {
               </li>
             )}
 
-            {user?.role === "admin" && (
+            {user?.role === "ADMIN" && (
               <li>
                 <Link
                   to="/admin"

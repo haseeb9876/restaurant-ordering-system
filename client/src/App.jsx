@@ -16,8 +16,8 @@ import AdminOrders from "./features/admin/pages/AdminOrders"
 import AdminProducts from "./features/admin/pages/AdminProducts"
 import AdminAddProduct from "./features/admin/pages/AdminAddProduct"
 import AdminEditProduct from "./features/admin/pages/AdminEditProduct"
-import NotFound from "./features/customer/pages/NotFound"
 
+import NotFound from "./features/customer/pages/NotFound"
 
 function App() {
   return (
@@ -28,7 +28,9 @@ function App() {
       <Route
         path="/checkout"
         element={
-          <ProtectedRoute allowedRoles={["customer", "admin", "staff"]}>
+          <ProtectedRoute
+            allowedRoles={["CUSTOMER", "ADMIN", "STAFF"]}
+          >
             <Checkout />
           </ProtectedRoute>
         }
@@ -37,7 +39,9 @@ function App() {
       <Route
         path="/order-success"
         element={
-          <ProtectedRoute allowedRoles={["customer", "admin", "staff"]}>
+          <ProtectedRoute
+            allowedRoles={["CUSTOMER", "ADMIN", "STAFF"]}
+          >
             <OrderSuccess />
           </ProtectedRoute>
         }
@@ -46,7 +50,9 @@ function App() {
       <Route
         path="/profile"
         element={
-          <ProtectedRoute allowedRoles={["customer", "admin", "staff"]}>
+          <ProtectedRoute
+            allowedRoles={["CUSTOMER", "ADMIN", "STAFF"]}
+          >
             <Profile />
           </ProtectedRoute>
         }
@@ -58,7 +64,7 @@ function App() {
       <Route
         path="/admin"
         element={
-          <ProtectedRoute allowedRoles={["admin"]}>
+          <ProtectedRoute allowedRoles={["ADMIN"]}>
             <AdminDashboard />
           </ProtectedRoute>
         }
@@ -67,7 +73,7 @@ function App() {
       <Route
         path="/admin/orders"
         element={
-          <ProtectedRoute allowedRoles={["admin"]}>
+          <ProtectedRoute allowedRoles={["ADMIN"]}>
             <AdminOrders />
           </ProtectedRoute>
         }
@@ -76,7 +82,7 @@ function App() {
       <Route
         path="/admin/products"
         element={
-          <ProtectedRoute allowedRoles={["admin"]}>
+          <ProtectedRoute allowedRoles={["ADMIN"]}>
             <AdminProducts />
           </ProtectedRoute>
         }
@@ -85,7 +91,7 @@ function App() {
       <Route
         path="/admin/products/new"
         element={
-          <ProtectedRoute allowedRoles={["admin"]}>
+          <ProtectedRoute allowedRoles={["ADMIN"]}>
             <AdminAddProduct />
           </ProtectedRoute>
         }
@@ -94,7 +100,7 @@ function App() {
       <Route
         path="/admin/products/:id/edit"
         element={
-          <ProtectedRoute allowedRoles={["admin"]}>
+          <ProtectedRoute allowedRoles={["ADMIN"]}>
             <AdminEditProduct />
           </ProtectedRoute>
         }
@@ -103,7 +109,7 @@ function App() {
       <Route
         path="/kitchen"
         element={
-          <ProtectedRoute allowedRoles={["staff", "admin"]}>
+          <ProtectedRoute allowedRoles={["STAFF", "ADMIN"]}>
             <KitchenPanel />
           </ProtectedRoute>
         }

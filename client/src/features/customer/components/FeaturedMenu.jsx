@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
-import { getProducts } from "../services/api"
-import { useCart } from "../features/cart/context/CartContext"
+import { getProducts } from "../../../services/api"
+import { useCart } from "../../cart/context/CartContext"
 
 function FeaturedMenu() {
   const [featuredItems, setFeaturedItems] = useState([])

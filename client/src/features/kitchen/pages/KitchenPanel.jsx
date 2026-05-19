@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { getOrders, updateOrderStatus } from "../services/api"
+import { getOrders, updateOrderStatus } from "../../../services/api"
 
 function KitchenPanel() {
   const [orders, setOrders] = useState([])

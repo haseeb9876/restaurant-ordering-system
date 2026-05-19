@@ -7,7 +7,7 @@ import MenuSection from "../components/MenuSection"
 import About from "../components/About"
 import Contact from "../components/Contact"
 import Footer from "../components/Footer"
-import CartSidebar from "../features/cart/components/CartSidebar"
+import CartSidebar from "../../cart/components/CartSidebar"
 
 function Home() {
   const [selectedCategory, setSelectedCategory] = useState("All")

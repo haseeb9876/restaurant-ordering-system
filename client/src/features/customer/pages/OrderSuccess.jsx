@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom"
 import Navbar from "../components/Navbar"
-import CartSidebar from "../features/cart/components/CartSidebar"
-import { useCart } from "../features/cart/context/CartContext"
+import CartSidebar from "../../cart/components/CartSidebar"
+import { useCart } from "../../cart/context/CartContext"
 
 function OrderSuccess() {
   const { latestOrder } = useCart()

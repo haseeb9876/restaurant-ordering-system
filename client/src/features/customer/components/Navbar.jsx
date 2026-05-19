@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
-import { useCart } from "../features/cart/context/CartContext"
-import { useAuth } from "../features/auth/context/AuthContext"
+import { useCart } from "../../cart/context/CartContext"
+import { useAuth } from "../../auth/context/AuthContext"
 
 function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)

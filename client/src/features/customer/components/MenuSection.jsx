@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
-import { getCategories, getProducts } from "../services/api"
-import { useCart } from "../features/cart/context/CartContext"
+import { getCategories, getProducts } from "../../../services/api"
+import { useCart } from "../../cart/context/CartContext"
 
 function MenuSection({ selectedCategory, setSelectedCategory }) {
   const [menuItems, setMenuItems] = useState([])

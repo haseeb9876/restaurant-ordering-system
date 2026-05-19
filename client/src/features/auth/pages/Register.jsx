@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 
-import Navbar from "../../../components/Navbar"
+import Navbar from "../../customer/components/Navbar"
 import CartSidebar from "../../cart/components/CartSidebar"
 import { useAuth } from "../context/AuthContext"
 

@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import Navbar from "../components/Navbar"
-import CartSidebar from "../features/cart/components/CartSidebar"
-import { useCart } from "../features/cart/context/CartContext"
-import { useAuth } from "../features/auth/context/AuthContext"
-import { createOrder } from "../services/api"
+import CartSidebar from "../../cart/components/CartSidebar"
+import { useCart } from "../../cart/context/CartContext"
+import { useAuth } from "../../auth/context/AuthContext"
+import { createOrder } from "../../../services/api"
 
 function Checkout() {
   const { cartItems, clearCart, saveLatestOrder } = useCart()

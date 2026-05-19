@@ -1,5 +1,73 @@
 const API_BASE_URL = "http://localhost:5000/api"
 
+const getAuthToken = () => {
+  return localStorage.getItem("token")
+}
+
+const getAuthHeaders = () => {
+  const token = getAuthToken()
+
+  if (!token) {
+    return {}
+  }
+
+  return {
+    Authorization: `Bearer ${token}`,
+  }
+}
+
+export const registerUser = async (userData) => {
+  const response = await fetch(`${API_BASE_URL}/auth/register`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(userData),
+  })
+
+  const result = await response.json()
+
+  if (!response.ok) {
+    throw new Error(result.message || "Failed to register user")
+  }
+
+  return result.data
+}
+
+export const loginUser = async (userData) => {
+  const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(userData),
+  })
+
+  const result = await response.json()
+
+  if (!response.ok) {
+    throw new Error(result.message || "Failed to login user")
+  }
+
+  return result.data
+}
+
+export const getCurrentUser = async () => {
+  const response = await fetch(`${API_BASE_URL}/auth/me`, {
+    headers: {
+      ...getAuthHeaders(),
+    },
+  })
+
+  const result = await response.json()
+
+  if (!response.ok) {
+    throw new Error(result.message || "Failed to fetch current user")
+  }
+
+  return result.data.user
+}
+
 export const getProducts = async () => {
   const response = await fetch(`${API_BASE_URL}/products`)
   const result = await response.json()
@@ -27,6 +95,7 @@ export const createProduct = async (productData) => {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...getAuthHeaders(),
     },
     body: JSON.stringify(productData),
   })
@@ -45,6 +114,7 @@ export const updateProduct = async (productId, productData) => {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
+      ...getAuthHeaders(),
     },
     body: JSON.stringify(productData),
   })
@@ -61,6 +131,9 @@ export const updateProduct = async (productId, productData) => {
 export const deleteProduct = async (productId) => {
   const response = await fetch(`${API_BASE_URL}/products/${productId}`, {
     method: "DELETE",
+    headers: {
+      ...getAuthHeaders(),
+    },
   })
 
   const result = await response.json()
@@ -102,7 +175,12 @@ export const createOrder = async (orderData) => {
 }
 
 export const getOrders = async () => {
-  const response = await fetch(`${API_BASE_URL}/orders`)
+  const response = await fetch(`${API_BASE_URL}/orders`, {
+    headers: {
+      ...getAuthHeaders(),
+    },
+  })
+
   const result = await response.json()
 
   if (!response.ok) {
@@ -117,6 +195,7 @@ export const updateOrderStatus = async (orderId, status) => {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
+      ...getAuthHeaders(),
     },
     body: JSON.stringify({ status }),
   })

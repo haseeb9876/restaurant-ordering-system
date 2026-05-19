@@ -4,11 +4,18 @@ import {
   getOrders,
   updateOrderStatus,
 } from "../controllers/orderController.js"
+import { allowRoles, protect } from "../middleware/authMiddleware.js"
 
 const router = express.Router()
 
-router.get("/", getOrders)
 router.post("/", createOrder)
-router.patch("/:id/status", updateOrderStatus)
+
+router.get("/", protect, allowRoles("ADMIN", "STAFF"), getOrders)
+router.patch(
+  "/:id/status",
+  protect,
+  allowRoles("ADMIN", "STAFF"),
+  updateOrderStatus
+)
 
 export default router

@@ -5,7 +5,6 @@ import Navbar from "../../customer/components/Navbar"
 import CartSidebar from "../../cart/components/CartSidebar"
 import { useAuth } from "../context/AuthContext"
 
-
 function Register() {
   const { register } = useAuth()
   const navigate = useNavigate()
@@ -20,6 +19,7 @@ function Register() {
   })
 
   const [error, setError] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -30,7 +30,7 @@ function Register() {
     })
   }
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     setError("")
 
     if (!formData.fullName || !formData.email || !formData.password) {
@@ -38,8 +38,16 @@ function Register() {
       return
     }
 
-    register(formData)
-    navigate(redirectPath)
+    try {
+      setIsSubmitting(true)
+
+      await register(formData)
+      navigate(redirectPath)
+    } catch (error) {
+      setError(error.message)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -94,9 +102,10 @@ function Register() {
             <button
               type="button"
               onClick={handleRegister}
-              className="w-full bg-orange-500 hover:bg-orange-600 py-4 rounded-xl font-bold transition"
+              disabled={isSubmitting}
+              className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-orange-500/50 disabled:cursor-not-allowed py-4 rounded-xl font-bold transition"
             >
-              Create Account
+              {isSubmitting ? "Creating account..." : "Create Account"}
             </button>
           </form>
 

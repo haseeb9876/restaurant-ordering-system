@@ -17,6 +17,7 @@ function Login() {
   })
 
   const [error, setError] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -27,7 +28,7 @@ function Login() {
     })
   }
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     setError("")
 
     if (!formData.email || !formData.password) {
@@ -35,24 +36,32 @@ function Login() {
       return
     }
 
-    const loggedInUser = login(formData)
+    try {
+      setIsSubmitting(true)
 
-    if (redirectPath) {
-      navigate(redirectPath)
-      return
+      const loggedInUser = await login(formData)
+
+      if (redirectPath) {
+        navigate(redirectPath)
+        return
+      }
+
+      if (loggedInUser.role === "ADMIN") {
+        navigate("/admin")
+        return
+      }
+
+      if (loggedInUser.role === "STAFF") {
+        navigate("/kitchen")
+        return
+      }
+
+      navigate("/")
+    } catch (error) {
+      setError(error.message)
+    } finally {
+      setIsSubmitting(false)
     }
-
-    if (loggedInUser.role === "admin") {
-      navigate("/admin")
-      return
-    }
-
-    if (loggedInUser.role === "staff") {
-      navigate("/kitchen")
-      return
-    }
-
-    navigate("/")
   }
 
   return (
@@ -98,9 +107,10 @@ function Login() {
             <button
               type="button"
               onClick={handleLogin}
-              className="w-full bg-orange-500 hover:bg-orange-600 py-4 rounded-xl font-bold transition"
+              disabled={isSubmitting}
+              className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-orange-500/50 disabled:cursor-not-allowed py-4 rounded-xl font-bold transition"
             >
-              Login
+              {isSubmitting ? "Logging in..." : "Login"}
             </button>
           </form>
 

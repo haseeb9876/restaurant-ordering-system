@@ -1,4 +1,5 @@
 import dotenv from "dotenv"
+import bcrypt from "bcryptjs"
 import { PrismaClient } from "../src/generated/prisma/client.js"
 import { PrismaPg } from "@prisma/adapter-pg"
 
@@ -17,6 +18,39 @@ async function main() {
   await prisma.order.deleteMany()
   await prisma.product.deleteMany()
   await prisma.category.deleteMany()
+
+  const hashedAdminPassword = await bcrypt.hash("admin123", 10)
+  const hashedStaffPassword = await bcrypt.hash("staff123", 10)
+
+  await prisma.user.upsert({
+    where: { email: "admin@foodiehub.com" },
+    update: {
+      fullName: "Admin User",
+      password: hashedAdminPassword,
+      role: "ADMIN",
+    },
+    create: {
+      fullName: "Admin User",
+      email: "admin@foodiehub.com",
+      password: hashedAdminPassword,
+      role: "ADMIN",
+    },
+  })
+
+  await prisma.user.upsert({
+    where: { email: "staff@foodiehub.com" },
+    update: {
+      fullName: "Kitchen Staff",
+      password: hashedStaffPassword,
+      role: "STAFF",
+    },
+    create: {
+      fullName: "Kitchen Staff",
+      email: "staff@foodiehub.com",
+      password: hashedStaffPassword,
+      role: "STAFF",
+    },
+  })
 
   const pizza = await prisma.category.create({
     data: { name: "Pizza" },
@@ -79,7 +113,7 @@ async function main() {
         name: "Grilled Chicken Burger",
         description: "Juicy grilled chicken burger with fresh salad.",
         price: 799,
-        image: "https://images.unsplash.com/photo-1550547660-d9450f859349",
+        image: "https://images.unsplash.com/photo-1550547660-d9450c58cd",
         categoryId: burger.id,
       },
     ],

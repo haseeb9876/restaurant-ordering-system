@@ -1,8 +1,13 @@
 import { createContext, useContext, useEffect, useState } from "react"
+import {
+  getCurrentUser,
+  loginUser,
+  registerUser,
+} from "../../../services/api"
 
 const AuthContext = createContext()
 
-const VALID_ROLES = ["customer", "admin", "staff"]
+const VALID_ROLES = ["CUSTOMER", "ADMIN", "STAFF"]
 
 function validateUser(user) {
   if (!user) {
@@ -33,56 +38,76 @@ export function AuthProvider({ children }) {
     }
   })
 
+  const [authLoading, setAuthLoading] = useState(true)
+
   useEffect(() => {
-    const validUser = validateUser(user)
+    const restoreUser = async () => {
+      const token = localStorage.getItem("token")
 
-    if (validUser) {
-      localStorage.setItem("user", JSON.stringify(validUser))
-    } else {
-      localStorage.removeItem("user")
+      if (!token) {
+        localStorage.removeItem("user")
+        setUser(null)
+        setAuthLoading(false)
+        return
+      }
+
+      try {
+        const currentUser = await getCurrentUser()
+        const validUser = validateUser(currentUser)
+
+        if (validUser) {
+          localStorage.setItem("user", JSON.stringify(validUser))
+          setUser(validUser)
+        } else {
+          localStorage.removeItem("token")
+          localStorage.removeItem("user")
+          setUser(null)
+        }
+      } catch {
+        localStorage.removeItem("token")
+        localStorage.removeItem("user")
+        setUser(null)
+      } finally {
+        setAuthLoading(false)
+      }
     }
-  }, [user])
 
-  const register = (userData) => {
-    const newUser = {
-      id: Date.now(),
-      fullName: userData.fullName,
-      email: userData.email,
-      role: "customer",
+    restoreUser()
+  }, [])
+
+  const register = async (userData) => {
+    const authData = await registerUser(userData)
+    const validUser = validateUser(authData.user)
+
+    if (!validUser) {
+      throw new Error("Invalid user data received from server.")
     }
 
-    setUser(newUser)
+    localStorage.setItem("token", authData.token)
+    localStorage.setItem("user", JSON.stringify(validUser))
+    setUser(validUser)
+
+    return validUser
   }
 
-  const login = (userData) => {
-    let role = "customer"
-    let fullName = "Customer User"
+  const login = async (userData) => {
+    const authData = await loginUser(userData)
+    const validUser = validateUser(authData.user)
 
-    if (userData.email === "admin@foodiehub.com") {
-      role = "admin"
-      fullName = "Admin User"
+    if (!validUser) {
+      throw new Error("Invalid user data received from server.")
     }
 
-    if (userData.email === "staff@foodiehub.com") {
-      role = "staff"
-      fullName = "Kitchen Staff"
-    }
-
-    const loggedInUser = {
-      id: Date.now(),
-      fullName,
-      email: userData.email,
-      role,
-    }
-
-    const validUser = validateUser(loggedInUser)
-
+    localStorage.setItem("token", authData.token)
+    localStorage.setItem("user", JSON.stringify(validUser))
     setUser(validUser)
 
     return validUser
   }
 
   const logout = () => {
+    localStorage.removeItem("token")
+    localStorage.removeItem("user")
     setUser(null)
   }
 
@@ -90,6 +115,7 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider
       value={{
         user,
+        authLoading,
         register,
         login,
         logout,

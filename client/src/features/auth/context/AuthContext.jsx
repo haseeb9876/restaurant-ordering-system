@@ -2,20 +2,42 @@ import { createContext, useContext, useEffect, useState } from "react"
 
 const AuthContext = createContext()
 
+const VALID_ROLES = ["customer", "admin", "staff"]
+
+function validateUser(user) {
+  if (!user) {
+    return null
+  }
+
+  if (
+    typeof user !== "object" ||
+    !user.email ||
+    !user.fullName ||
+    !VALID_ROLES.includes(user.role)
+  ) {
+    return null
+  }
+
+  return user
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem("user")
 
     try {
-      return savedUser ? JSON.parse(savedUser) : null
+      const parsedUser = savedUser ? JSON.parse(savedUser) : null
+      return validateUser(parsedUser)
     } catch {
       return null
     }
   })
 
   useEffect(() => {
-    if (user) {
-      localStorage.setItem("user", JSON.stringify(user))
+    const validUser = validateUser(user)
+
+    if (validUser) {
+      localStorage.setItem("user", JSON.stringify(validUser))
     } else {
       localStorage.removeItem("user")
     }
@@ -53,9 +75,11 @@ export function AuthProvider({ children }) {
       role,
     }
 
-    setUser(loggedInUser)
-    return loggedInUser
+    const validUser = validateUser(loggedInUser)
 
+    setUser(validUser)
+
+    return validUser
   }
 
   const logout = () => {

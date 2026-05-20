@@ -1,9 +1,11 @@
 import { useState } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
+import toast from "react-hot-toast"
 
 import Navbar from "../../customer/components/Navbar"
 import CartSidebar from "../../cart/components/CartSidebar"
 import { useAuth } from "../context/AuthContext"
+import { validateRegisterForm } from "../../../utils/validation"
 
 function Register() {
   const { register } = useAuth()
@@ -33,18 +35,24 @@ function Register() {
   const handleRegister = async () => {
     setError("")
 
-    if (!formData.fullName || !formData.email || !formData.password) {
-      setError("Please fill all fields.")
+    const validation = validateRegisterForm(formData)
+
+    if (!validation.isValid) {
+      setError(validation.message)
+      toast.error(validation.message)
       return
     }
 
     try {
       setIsSubmitting(true)
 
-      await register(formData)
+      await register(validation.data)
+      toast.success("Account created successfully.")
       navigate(redirectPath)
     } catch (error) {
-      setError(error.message)
+      const message = error.message || "Registration failed. Please try again."
+      setError(message)
+      toast.error(message)
     } finally {
       setIsSubmitting(false)
     }

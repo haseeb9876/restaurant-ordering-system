@@ -6,6 +6,25 @@ import { useCart } from "../../cart/context/CartContext"
 import { useAuth } from "../../auth/context/AuthContext"
 import { createOrder } from "../../../services/api"
 
+const paymentAccounts = {
+  CASH_ON_DELIVERY: {
+    title: "Cash on Delivery",
+    description: "Pay when your food is delivered.",
+  },
+  EASYPAISA: {
+    title: "Easypaisa",
+    description: "Send payment to your Easypaisa account and enter transaction ID.",
+  },
+  JAZZCASH: {
+    title: "JazzCash",
+    description: "Send payment to your JazzCash account and enter transaction ID.",
+  },
+  BANK_TRANSFER: {
+    title: "Bank Transfer",
+    description: "Transfer payment to Meezan Bank and enter transaction ID.",
+  },
+}
+
 function Checkout() {
   const { cartItems, clearCart, saveLatestOrder } = useCart()
   const { user } = useAuth()
@@ -18,6 +37,8 @@ function Checkout() {
     email: user?.email || "",
     address: "",
     notes: "",
+    paymentMethod: "CASH_ON_DELIVERY",
+    transactionId: "",
   })
 
   const [error, setError] = useState("")
@@ -64,6 +85,14 @@ function Checkout() {
       return
     }
 
+    if (
+      formData.paymentMethod !== "CASH_ON_DELIVERY" &&
+      !formData.transactionId.trim()
+    ) {
+      setError("Transaction ID is required for online payment.")
+      return
+    }
+
     try {
       setIsSubmitting(true)
 
@@ -73,10 +102,12 @@ function Checkout() {
         customerEmail: formData.email,
         address: formData.address,
         notes: formData.notes,
-        subtotal,
-        deliveryFee,
-        total,
-        items: cartItems,
+        paymentMethod: formData.paymentMethod,
+        transactionId: formData.transactionId,
+        items: cartItems.map((item) => ({
+          id: item.id,
+          quantity: item.quantity,
+        })),
       }
 
       const createdOrder = await createOrder(orderPayload)
@@ -100,6 +131,10 @@ function Checkout() {
         deliveryFee: createdOrder.deliveryFee,
         total: createdOrder.total,
         status: createdOrder.status,
+        paymentMethod: createdOrder.paymentMethod,
+        paymentStatus: createdOrder.paymentStatus,
+        transactionId: createdOrder.transactionId,
+        estimatedTime: createdOrder.estimatedTime,
         createdAt: new Date(createdOrder.createdAt).toLocaleString(),
       }
 
@@ -189,6 +224,60 @@ function Checkout() {
                 ></textarea>
               </div>
 
+              <div className="mt-8">
+                <h2 className="text-2xl font-bold mb-5">Payment Method</h2>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  {Object.entries(paymentAccounts).map(([key, method]) => (
+                    <label
+                      key={key}
+                      className={`cursor-pointer border rounded-2xl p-5 transition ${
+                        formData.paymentMethod === key
+                          ? "border-orange-500 bg-orange-500/10"
+                          : "border-white/10 bg-black hover:border-orange-500/50"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value={key}
+                        checked={formData.paymentMethod === key}
+                        onChange={handleChange}
+                        className="hidden"
+                      />
+
+                      <p className="font-bold">{method.title}</p>
+                      <p className="text-gray-400 text-sm mt-2">
+                        {method.description}
+                      </p>
+                    </label>
+                  ))}
+                </div>
+
+                {formData.paymentMethod !== "CASH_ON_DELIVERY" && (
+                  <div className="mt-5 bg-black border border-white/10 rounded-2xl p-5">
+                    <p className="text-orange-500 font-bold mb-2">
+                      Payment Instructions
+                    </p>
+
+                    <p className="text-gray-300 text-sm mb-4">
+                      Send payment using your selected method, then enter the
+                      transaction/reference ID below. Account details will be
+                      connected later from restaurant settings.
+                    </p>
+
+                    <input
+                      type="text"
+                      name="transactionId"
+                      placeholder="Transaction / Reference ID *"
+                      value={formData.transactionId}
+                      onChange={handleChange}
+                      className="w-full bg-zinc-950 border border-white/10 rounded-xl px-4 py-4 outline-none focus:border-orange-500"
+                    />
+                  </div>
+                )}
+              </div>
+
               <button
                 type="button"
                 onClick={handlePlaceOrder}
@@ -236,6 +325,16 @@ function Checkout() {
                 <div className="flex justify-between text-gray-300">
                   <span>Delivery Fee</span>
                   <span>Rs. {deliveryFee}</span>
+                </div>
+
+                <div className="flex justify-between text-gray-300">
+                  <span>Estimated Time</span>
+                  <span>20–60 min</span>
+                </div>
+
+                <div className="flex justify-between text-gray-300">
+                  <span>Payment</span>
+                  <span>{paymentAccounts[formData.paymentMethod].title}</span>
                 </div>
 
                 <div className="flex justify-between text-xl font-extrabold text-orange-500 pt-3">

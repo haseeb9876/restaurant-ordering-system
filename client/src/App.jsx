@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router-dom"
 
 import ProtectedRoute from "./features/auth/components/ProtectedRoute"
+import PublicOnlyRoute from "./features/auth/components/PublicOnlyRoute"
 
 import Home from "./features/customer/pages/Home"
 import Checkout from "./features/customer/pages/Checkout"
@@ -16,6 +17,7 @@ import AdminOrders from "./features/admin/pages/AdminOrders"
 import AdminProducts from "./features/admin/pages/AdminProducts"
 import AdminAddProduct from "./features/admin/pages/AdminAddProduct"
 import AdminEditProduct from "./features/admin/pages/AdminEditProduct"
+import AdminCustomers from "./features/admin/pages/AdminCustomers"
 
 import NotFound from "./features/customer/pages/NotFound"
 
@@ -24,6 +26,24 @@ function App() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="*" element={<NotFound />} />
+
+      <Route
+        path="/login"
+        element={
+          <PublicOnlyRoute>
+            <Login />
+          </PublicOnlyRoute>
+        }
+      />
+
+      <Route
+        path="/register"
+        element={
+          <PublicOnlyRoute>
+            <Register />
+          </PublicOnlyRoute>
+        }
+      />
 
       <Route
         path="/checkout"
@@ -57,9 +77,6 @@ function App() {
           </ProtectedRoute>
         }
       />
-
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
 
       <Route
         path="/admin"
@@ -102,6 +119,15 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["ADMIN"]}>
             <AdminEditProduct />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/customers"
+        element={
+          <ProtectedRoute allowedRoles={["ADMIN"]}>
+            <AdminCustomers />
           </ProtectedRoute>
         }
       />

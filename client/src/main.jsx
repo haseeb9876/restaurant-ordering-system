@@ -1,6 +1,7 @@
 import React from "react"
 import ReactDOM from "react-dom/client"
 import { BrowserRouter } from "react-router-dom"
+import { Toaster } from "react-hot-toast"
 import App from "./App.jsx"
 import "./index.css"
 import { CartProvider } from "./features/cart/context/CartContext.jsx"
@@ -12,6 +13,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       <AuthProvider>
         <CartProvider>
           <App />
+          <Toaster position="top-right" />
         </CartProvider>
       </AuthProvider>
     </BrowserRouter>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
+import toast from "react-hot-toast"
 import { deleteProduct, getProducts } from "../../../services/api"
 import AdminLayout from "../layouts/AdminLayout"
 
@@ -11,10 +12,14 @@ function AdminProducts() {
 
   const fetchProducts = async () => {
     try {
+      setError("")
+
       const data = await getProducts()
       setProducts(data)
     } catch (error) {
-      setError(error.message)
+      const message = error.message || "Failed to load products."
+      setError(message)
+      toast.error(message)
     } finally {
       setLoading(false)
     }
@@ -35,13 +40,19 @@ function AdminProducts() {
 
     try {
       setDeletingId(productId)
+      setError("")
+
       await deleteProduct(productId)
 
       setProducts((prevProducts) =>
         prevProducts.filter((product) => product.id !== productId)
       )
+
+      toast.success("Product deleted successfully.")
     } catch (error) {
-      setError(error.message)
+      const message = error.message || "Failed to delete product."
+      setError(message)
+      toast.error(message)
     } finally {
       setDeletingId(null)
     }
@@ -135,7 +146,9 @@ function AdminProducts() {
                         disabled={deletingId === product.id}
                         className="flex-1 border border-red-500/40 text-red-400 hover:bg-red-500 hover:text-white disabled:opacity-60 disabled:cursor-not-allowed py-2 rounded-full font-semibold transition"
                       >
-                        {deletingId === product.id ? "Deleting..." : "Delete"}
+                        {deletingId === product.id
+                          ? "Deleting..."
+                          : "Delete"}
                       </button>
                     </div>
                   </div>

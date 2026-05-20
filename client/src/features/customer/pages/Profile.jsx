@@ -1,16 +1,133 @@
+import { useEffect, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
+import toast from "react-hot-toast"
 import Navbar from "../components/Navbar"
 import CartSidebar from "../../cart/components/CartSidebar"
 import { useAuth } from "../../auth/context/AuthContext"
-import { useCart } from "../../cart/context/CartContext"
+import { getMyOrders } from "../../../services/api"
+
+const trackingSteps = ["PENDING", "PREPARING", "READY", "COMPLETED"]
+
+function getStatusClass(status) {
+  if (status === "PENDING") return "bg-yellow-500/20 text-yellow-400"
+  if (status === "PREPARING") return "bg-blue-500/20 text-blue-400"
+  if (status === "READY") return "bg-green-500/20 text-green-400"
+  if (status === "COMPLETED") return "bg-orange-500/20 text-orange-400"
+  if (status === "CANCELLED") return "bg-red-500/20 text-red-400"
+
+  return "bg-white/10 text-gray-300"
+}
+
+function getStepLabel(status) {
+  if (status === "PENDING") return "Order Placed"
+  if (status === "PREPARING") return "Preparing"
+  if (status === "READY") return "Ready"
+  if (status === "COMPLETED") return "Completed"
+
+  return status
+}
+
+function OrderTimeline({ status }) {
+  if (status === "CANCELLED") {
+    return (
+      <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-5">
+        <p className="text-red-400 font-bold">
+          This order has been cancelled.
+        </p>
+      </div>
+    )
+  }
+
+  const currentStepIndex = trackingSteps.indexOf(status)
+
+  return (
+    <div className="bg-black border border-white/10 rounded-2xl p-5">
+      <h3 className="font-bold mb-5">Order Tracking</h3>
+
+      <div className="grid md:grid-cols-4 gap-4">
+        {trackingSteps.map((step, index) => {
+          const isActive = index <= currentStepIndex
+
+          return (
+            <div
+              key={step}
+              className={`rounded-2xl p-4 border transition ${
+                isActive
+                  ? "bg-orange-500/10 border-orange-500/40"
+                  : "bg-white/5 border-white/10"
+              }`}
+            >
+              <div
+                className={`w-9 h-9 rounded-full flex items-center justify-center font-bold mb-3 ${
+                  isActive
+                    ? "bg-orange-500 text-white"
+                    : "bg-white/10 text-gray-500"
+                }`}
+              >
+                {index + 1}
+              </div>
+
+              <p
+                className={`font-bold ${
+                  isActive ? "text-white" : "text-gray-500"
+                }`}
+              >
+                {getStepLabel(step)}
+              </p>
+
+              <p className="text-xs text-gray-500 mt-1">
+                {isActive ? "Updated" : "Waiting"}
+              </p>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
 
 function Profile() {
   const { user, logout } = useAuth()
-  const { latestOrder } = useCart()
   const navigate = useNavigate()
+
+  const [orders, setOrders] = useState([])
+  const [loadingOrders, setLoadingOrders] = useState(true)
+  const [error, setError] = useState("")
+
+  const latestOrder = orders[0]
+
+  useEffect(() => {
+    const fetchMyOrders = async () => {
+      if (!user) {
+        setLoadingOrders(false)
+        return
+      }
+
+      try {
+        setError("")
+
+        const data = await getMyOrders()
+        setOrders(data)
+      } catch (error) {
+        const message = error.message || "Failed to load your orders."
+        setError(message)
+      } finally {
+        setLoadingOrders(false)
+      }
+    }
+
+    fetchMyOrders()
+
+    const interval = setInterval(() => {
+      fetchMyOrders()
+    }, 5000)
+
+    return () => clearInterval(interval)
+  }, [user])
 
   const handleLogout = () => {
     logout()
+    toast.success("Logged out successfully.")
     navigate("/")
   }
 
@@ -25,7 +142,7 @@ function Profile() {
       <CartSidebar />
 
       <main className="pt-32 px-6 pb-20">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <div className="mb-10">
             <p className="text-orange-500 font-semibold mb-3">
               Customer Account
@@ -37,7 +154,7 @@ function Profile() {
           </div>
 
           <div className="grid lg:grid-cols-3 gap-8">
-            <div className="bg-zinc-950 border border-white/10 rounded-[2rem] p-8">
+            <div className="bg-zinc-950 border border-white/10 rounded-[2rem] p-8 h-fit">
               <div className="w-24 h-24 rounded-full bg-orange-500 flex items-center justify-center text-4xl font-extrabold mb-6">
                 {user.fullName.charAt(0).toUpperCase()}
               </div>
@@ -50,81 +167,189 @@ function Profile() {
                 {user.role}
               </p>
 
+              <div className="mt-8 bg-black border border-white/10 rounded-2xl p-5">
+                <p className="text-gray-400 text-sm">Total Orders</p>
+
+                <p className="text-3xl font-extrabold text-orange-500 mt-2">
+                  {orders.length}
+                </p>
+              </div>
+
               <button
                 onClick={handleLogout}
-                className="mt-8 w-full border border-red-500/40 text-red-400 hover:bg-red-500 hover:text-white py-3 rounded-full font-bold transition"
+                className="mt-6 w-full border border-red-500/40 text-red-400 hover:bg-red-500 hover:text-white py-3 rounded-full font-bold transition"
               >
                 Logout
               </button>
             </div>
 
-            <div className="lg:col-span-2 bg-zinc-950 border border-white/10 rounded-[2rem] p-8">
-              <h2 className="text-2xl font-bold mb-6">Latest Order</h2>
+            <div className="lg:col-span-2 space-y-8">
+              {loadingOrders && (
+                <div className="bg-zinc-950 border border-white/10 rounded-[2rem] p-8">
+                  <p className="text-gray-400">Loading your orders...</p>
+                </div>
+              )}
 
-              {latestOrder ? (
-                <div className="space-y-5">
-                  <div className="grid md:grid-cols-2 gap-5">
-                    <div className="bg-black border border-white/10 rounded-2xl p-5">
-                      <p className="text-gray-400 text-sm">Order ID</p>
-                      <p className="text-orange-500 font-bold mt-2">
-                        {latestOrder.orderId}
-                      </p>
-                    </div>
+              {error && (
+                <div className="bg-red-500/10 border border-red-500/30 text-red-300 px-4 py-3 rounded-xl">
+                  {error}
+                </div>
+              )}
 
-                    <div className="bg-black border border-white/10 rounded-2xl p-5">
-                      <p className="text-gray-400 text-sm">Status</p>
-                      <p className="text-yellow-400 font-bold mt-2">
-                        {latestOrder.status}
-                      </p>
-                    </div>
+              {!loadingOrders && (
+                <>
+                  <section className="bg-zinc-950 border border-white/10 rounded-[2rem] p-8">
+                    <h2 className="text-2xl font-bold mb-6">
+                      Latest Order
+                    </h2>
 
-                    <div className="bg-black border border-white/10 rounded-2xl p-5">
-                      <p className="text-gray-400 text-sm">Total</p>
-                      <p className="font-bold mt-2">
-                        Rs. {latestOrder.total}
-                      </p>
-                    </div>
+                    {latestOrder ? (
+                      <div className="space-y-5">
+                        <div className="grid md:grid-cols-2 gap-5">
+                          <div className="bg-black border border-white/10 rounded-2xl p-5">
+                            <p className="text-gray-400 text-sm">Order ID</p>
 
-                    <div className="bg-black border border-white/10 rounded-2xl p-5">
-                      <p className="text-gray-400 text-sm">Created At</p>
-                      <p className="font-bold mt-2">
-                        {latestOrder.createdAt}
-                      </p>
-                    </div>
-                  </div>
+                            <p className="text-orange-500 font-bold mt-2">
+                              {latestOrder.orderNumber}
+                            </p>
+                          </div>
 
-                  <div className="bg-black border border-white/10 rounded-2xl p-5">
-                    <h3 className="font-bold mb-4">Items</h3>
+                          <div className="bg-black border border-white/10 rounded-2xl p-5">
+                            <p className="text-gray-400 text-sm">Status</p>
 
-                    <div className="space-y-3">
-                      {latestOrder.items.map((item) => (
-                        <div
-                          key={item.id}
-                          className="flex justify-between gap-4 text-gray-300"
-                        >
-                          <span>
-                            {item.name} × {item.quantity}
-                          </span>
+                            <p
+                              className={`inline-block px-3 py-1 rounded-full text-sm font-bold mt-2 ${getStatusClass(
+                                latestOrder.status
+                              )}`}
+                            >
+                              {latestOrder.status}
+                            </p>
+                          </div>
 
-                          <span>Rs. {item.price * item.quantity}</span>
+                          <div className="bg-black border border-white/10 rounded-2xl p-5">
+                            <p className="text-gray-400 text-sm">Total</p>
+
+                            <p className="font-bold mt-2">
+                              Rs. {latestOrder.total}
+                            </p>
+                          </div>
+
+                          <div className="bg-black border border-white/10 rounded-2xl p-5">
+                            <p className="text-gray-400 text-sm">
+                              Created At
+                            </p>
+
+                            <p className="font-bold mt-2">
+                              {new Date(latestOrder.createdAt).toLocaleString()}
+                            </p>
+                          </div>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-black border border-white/10 rounded-2xl p-8 text-center">
-                  <p className="text-gray-400 mb-6">
-                    You have no recent orders yet.
-                  </p>
 
-                  <Link
-                    to="/"
-                    className="inline-block bg-orange-500 hover:bg-orange-600 px-6 py-3 rounded-full font-bold transition"
-                  >
-                    Start Ordering
-                  </Link>
-                </div>
+                        <OrderTimeline status={latestOrder.status} />
+
+                        <div className="bg-black border border-white/10 rounded-2xl p-5">
+                          <h3 className="font-bold mb-4">Items</h3>
+
+                          <div className="space-y-3">
+                            {latestOrder.items.map((item) => (
+                              <div
+                                key={item.id}
+                                className="flex justify-between gap-4 text-gray-300"
+                              >
+                                <span>
+                                  {item.product.name} × {item.quantity}
+                                </span>
+
+                                <span>
+                                  Rs. {item.price * item.quantity}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-black border border-white/10 rounded-2xl p-8 text-center">
+                        <p className="text-gray-400 mb-6">
+                          You have no recent orders yet.
+                        </p>
+
+                        <Link
+                          to="/"
+                          className="inline-block bg-orange-500 hover:bg-orange-600 px-6 py-3 rounded-full font-bold transition"
+                        >
+                          Start Ordering
+                        </Link>
+                      </div>
+                    )}
+                  </section>
+
+                  <section className="bg-zinc-950 border border-white/10 rounded-[2rem] p-8">
+                    <h2 className="text-2xl font-bold mb-6">
+                      Order History
+                    </h2>
+
+                    {orders.length === 0 ? (
+                      <div className="bg-black border border-white/10 rounded-2xl p-8 text-center">
+                        <p className="text-gray-400">
+                          Your order history will appear here after placing orders.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-5">
+                        {orders.map((order) => (
+                          <div
+                            key={order.id}
+                            className="bg-black border border-white/10 rounded-2xl p-5"
+                          >
+                            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
+                              <div>
+                                <p className="text-orange-500 font-bold">
+                                  {order.orderNumber}
+                                </p>
+
+                                <p className="text-gray-400 text-sm mt-1">
+                                  {new Date(order.createdAt).toLocaleString()}
+                                </p>
+                              </div>
+
+                              <div className="flex items-center gap-3">
+                                <span
+                                  className={`px-3 py-1 rounded-full text-sm font-bold ${getStatusClass(
+                                    order.status
+                                  )}`}
+                                >
+                                  {order.status}
+                                </span>
+
+                                <span className="font-bold">
+                                  Rs. {order.total}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="space-y-2">
+                              {order.items.map((item) => (
+                                <div
+                                  key={item.id}
+                                  className="flex justify-between gap-4 text-gray-300 text-sm"
+                                >
+                                  <span>
+                                    {item.product.name} × {item.quantity}
+                                  </span>
+
+                                  <span>
+                                    Rs. {item.price * item.quantity}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </section>
+                </>
               )}
             </div>
           </div>

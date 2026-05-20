@@ -3,24 +3,42 @@ import { Link } from "react-router-dom"
 import { getOrders } from "../../../services/api"
 import AdminLayout from "../layouts/AdminLayout"
 
+function getStatusClass(status) {
+  if (status === "PENDING") return "bg-yellow-500/20 text-yellow-400"
+  if (status === "PREPARING") return "bg-blue-500/20 text-blue-400"
+  if (status === "READY") return "bg-green-500/20 text-green-400"
+  if (status === "COMPLETED") return "bg-orange-500/20 text-orange-400"
+  if (status === "CANCELLED") return "bg-red-500/20 text-red-400"
+
+  return "bg-white/10 text-gray-300"
+}
+
 function AdminDashboard() {
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const data = await getOrders()
-        setOrders(data)
-      } catch (error) {
-        setError(error.message)
-      } finally {
-        setLoading(false)
-      }
-    }
+  const fetchOrders = async () => {
+    try {
+      setError("")
 
+      const data = await getOrders()
+      setOrders(data)
+    } catch (error) {
+      setError(error.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
     fetchOrders()
+
+    const interval = setInterval(() => {
+      fetchOrders()
+    }, 5000)
+
+    return () => clearInterval(interval)
   }, [])
 
   const totalOrders = orders.length
@@ -164,7 +182,11 @@ function AdminDashboard() {
                             Rs. {order.total}
                           </span>
 
-                          <span className="bg-white/10 px-4 py-2 rounded-full text-sm font-bold">
+                          <span
+                            className={`px-4 py-2 rounded-full text-sm font-bold ${getStatusClass(
+                              order.status
+                            )}`}
+                          >
                             {order.status}
                           </span>
                         </div>

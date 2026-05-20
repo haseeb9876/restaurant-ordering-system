@@ -1,8 +1,10 @@
 import { useState } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
+import toast from "react-hot-toast"
 import Navbar from "../../customer/components/Navbar"
 import CartSidebar from "../../cart/components/CartSidebar"
 import { useAuth } from "../context/AuthContext"
+import { validateLoginForm } from "../../../utils/validation"
 
 function Login() {
   const { login } = useAuth()
@@ -31,15 +33,20 @@ function Login() {
   const handleLogin = async () => {
     setError("")
 
-    if (!formData.email || !formData.password) {
-      setError("Please fill all fields.")
+    const validation = validateLoginForm(formData)
+
+    if (!validation.isValid) {
+      setError(validation.message)
+      toast.error(validation.message)
       return
     }
 
     try {
       setIsSubmitting(true)
 
-      const loggedInUser = await login(formData)
+      const loggedInUser = await login(validation.data)
+
+      toast.success("Login successful.")
 
       if (redirectPath) {
         navigate(redirectPath)
@@ -58,7 +65,9 @@ function Login() {
 
       navigate("/")
     } catch (error) {
-      setError(error.message)
+      const message = error.message || "Login failed. Please try again."
+      setError(message)
+      toast.error(message)
     } finally {
       setIsSubmitting(false)
     }

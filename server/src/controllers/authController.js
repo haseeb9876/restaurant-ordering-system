@@ -2,14 +2,34 @@ import bcrypt from "bcryptjs"
 import prisma from "../config/prisma.js"
 import authResponse from "../utils/authResponse.js"
 
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+
 export async function registerUser(req, res) {
   try {
-    const { fullName, email, password } = req.body
+    const fullName = req.body.fullName?.trim()
+    const email = req.body.email?.trim().toLowerCase()
+    const password = req.body.password
 
     if (!fullName || !email || !password) {
       return res.status(400).json({
         status: "error",
         message: "Full name, email, and password are required.",
+      })
+    }
+
+    if (!isValidEmail(email)) {
+      return res.status(400).json({
+        status: "error",
+        message: "Please provide a valid email address.",
+      })
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({
+        status: "error",
+        message: "Password must be at least 6 characters long.",
       })
     }
 
@@ -53,7 +73,8 @@ export async function registerUser(req, res) {
 
 export async function loginUser(req, res) {
   try {
-    const { email, password } = req.body
+    const email = req.body.email?.trim().toLowerCase()
+    const password = req.body.password
 
     if (!email || !password) {
       return res.status(400).json({

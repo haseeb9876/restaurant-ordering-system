@@ -13,6 +13,11 @@ export function CartProvider({ children }) {
     return savedOrder ? JSON.parse(savedOrder) : null
   })
 
+  const [orderHistory, setOrderHistory] = useState(() => {
+    const savedOrders = localStorage.getItem("orderHistory")
+    return savedOrders ? JSON.parse(savedOrders) : []
+  })
+
   const [isCartOpen, setIsCartOpen] = useState(false)
 
   useEffect(() => {
@@ -22,6 +27,10 @@ export function CartProvider({ children }) {
   useEffect(() => {
     localStorage.setItem("latestOrder", JSON.stringify(latestOrder))
   }, [latestOrder])
+
+  useEffect(() => {
+    localStorage.setItem("orderHistory", JSON.stringify(orderHistory))
+  }, [orderHistory])
 
   const addToCart = (item) => {
     setCartItems((prevItems) => {
@@ -71,12 +80,42 @@ export function CartProvider({ children }) {
     )
   }
 
+  const syncCartWithAvailableProducts = (availableProducts) => {
+    const availableProductIds = availableProducts.map(
+      (product) => product.id
+    )
+
+    let removedItems = []
+
+    setCartItems((prevItems) => {
+      removedItems = prevItems.filter(
+        (item) => !availableProductIds.includes(item.id)
+      )
+
+      return prevItems.filter((item) =>
+        availableProductIds.includes(item.id)
+      )
+    })
+
+    return removedItems
+  }
+
   const clearCart = () => {
     setCartItems([])
   }
 
   const saveLatestOrder = (order) => {
     setLatestOrder(order)
+
+    setOrderHistory((prevOrders) => [
+      order,
+      ...prevOrders,
+    ])
+  }
+
+  const clearOrderHistory = () => {
+    setOrderHistory([])
+    localStorage.removeItem("orderHistory")
   }
 
   const openCart = () => setIsCartOpen(true)
@@ -91,9 +130,12 @@ export function CartProvider({ children }) {
         increaseQuantity,
         decreaseQuantity,
         removeFromCart,
+        syncCartWithAvailableProducts,
         clearCart,
         latestOrder,
+        orderHistory,
         saveLatestOrder,
+        clearOrderHistory,
         isCartOpen,
         openCart,
         closeCart,

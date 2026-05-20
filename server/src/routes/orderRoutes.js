@@ -1,16 +1,35 @@
 import express from "express"
 import {
   createOrder,
+  getMyOrders,
   getOrders,
   updateOrderStatus,
 } from "../controllers/orderController.js"
-import { allowRoles, protect } from "../middleware/authMiddleware.js"
+
+import {
+  allowRoles,
+  optionalProtect,
+  protect,
+} from "../middleware/authMiddleware.js"
 
 const router = express.Router()
 
-router.post("/", createOrder)
+router.post("/", optionalProtect, createOrder)
 
-router.get("/", protect, allowRoles("ADMIN", "STAFF"), getOrders)
+router.get(
+  "/my-orders",
+  protect,
+  allowRoles("CUSTOMER"),
+  getMyOrders
+)
+
+router.get(
+  "/",
+  protect,
+  allowRoles("ADMIN", "STAFF"),
+  getOrders
+)
+
 router.patch(
   "/:id/status",
   protect,

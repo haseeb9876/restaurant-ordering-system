@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import toast from "react-hot-toast"
 import { getOrders, updateOrderStatus } from "../../../services/api"
 import AdminLayout from "../layouts/AdminLayout"
 
@@ -10,6 +11,32 @@ const orderStatuses = [
   "CANCELLED",
 ]
 
+function getStatusClass(status) {
+  if (status === "PENDING") return "bg-yellow-500/20 text-yellow-400"
+  if (status === "PREPARING") return "bg-blue-500/20 text-blue-400"
+  if (status === "READY") return "bg-green-500/20 text-green-400"
+  if (status === "COMPLETED") return "bg-orange-500/20 text-orange-400"
+  if (status === "CANCELLED") return "bg-red-500/20 text-red-400"
+
+  return "bg-white/10 text-gray-300"
+}
+
+function getPaymentStatusClass(status) {
+  if (status === "PAID") return "bg-green-500/20 text-green-400"
+  if (status === "FAILED") return "bg-red-500/20 text-red-400"
+
+  return "bg-yellow-500/20 text-yellow-400"
+}
+
+function getPaymentLabel(method) {
+  if (method === "CASH_ON_DELIVERY") return "Cash on Delivery"
+  if (method === "JAZZCASH") return "JazzCash"
+  if (method === "EASYPAISA") return "Easypaisa"
+  if (method === "BANK_TRANSFER") return "Bank Transfer"
+
+  return method || "Not selected"
+}
+
 function AdminOrders() {
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
@@ -18,10 +45,14 @@ function AdminOrders() {
 
   const fetchOrders = async () => {
     try {
+      setError("")
+
       const data = await getOrders()
       setOrders(data)
     } catch (error) {
-      setError(error.message)
+      const message = error.message || "Failed to load orders."
+      setError(message)
+      toast.error(message)
     } finally {
       setLoading(false)
     }
@@ -29,11 +60,19 @@ function AdminOrders() {
 
   useEffect(() => {
     fetchOrders()
+
+    const interval = setInterval(() => {
+      fetchOrders()
+    }, 5000)
+
+    return () => clearInterval(interval)
   }, [])
 
   const handleStatusChange = async (orderId, status) => {
     try {
       setUpdatingOrderId(orderId)
+      setError("")
+
       const updatedOrder = await updateOrderStatus(orderId, status)
 
       setOrders((prevOrders) =>
@@ -41,8 +80,12 @@ function AdminOrders() {
           order.id === orderId ? updatedOrder : order
         )
       )
+
+      toast.success(`Order marked as ${status.toLowerCase()}.`)
     } catch (error) {
-      setError(error.message)
+      const message = error.message || "Failed to update order status."
+      setError(message)
+      toast.error(message)
     } finally {
       setUpdatingOrderId(null)
     }
@@ -62,23 +105,13 @@ function AdminOrders() {
             </h1>
           </div>
 
-          {loading && (
-            <p className="text-gray-400">
-              Loading orders...
-            </p>
-          )}
+          {loading && <p className="text-gray-400">Loading orders...</p>}
 
-          {error && (
-            <p className="text-red-400 mb-6">
-              {error}
-            </p>
-          )}
+          {error && <p className="text-red-400 mb-6">{error}</p>}
 
           {!loading && !error && orders.length === 0 && (
             <div className="bg-zinc-950 border border-white/10 rounded-[2rem] p-8 text-center">
-              <p className="text-gray-400">
-                No orders found yet.
-              </p>
+              <p className="text-gray-400">No orders found yet.</p>
             </div>
           )}
 
@@ -98,6 +131,24 @@ function AdminOrders() {
                       <p className="text-gray-400 mt-1">
                         {new Date(order.createdAt).toLocaleString()}
                       </p>
+
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        <span
+                          className={`inline-block px-3 py-1 rounded-full text-sm font-bold ${getStatusClass(
+                            order.status
+                          )}`}
+                        >
+                          {order.status}
+                        </span>
+
+                        <span
+                          className={`inline-block px-3 py-1 rounded-full text-sm font-bold ${getPaymentStatusClass(
+                            order.paymentStatus
+                          )}`}
+                        >
+                          {order.paymentStatus || "PENDING"}
+                        </span>
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-3">
@@ -107,7 +158,7 @@ function AdminOrders() {
                           handleStatusChange(order.id, e.target.value)
                         }
                         disabled={updatingOrderId === order.id}
-                        className="bg-black border border-white/10 rounded-full px-4 py-2 outline-none focus:border-orange-500"
+                        className="bg-black border border-white/10 rounded-full px-4 py-2 outline-none focus:border-orange-500 disabled:opacity-60 disabled:cursor-not-allowed"
                       >
                         {orderStatuses.map((status) => (
                           <option
@@ -128,7 +179,7 @@ function AdminOrders() {
                     </div>
                   </div>
 
-                  <div className="grid md:grid-cols-3 gap-6">
+                  <div className="grid md:grid-cols-4 gap-6">
                     <div>
                       <h3 className="font-bold mb-3">Customer</h3>
 
@@ -153,7 +204,36 @@ function AdminOrders() {
                     </div>
 
                     <div>
-                      <h3 className="font-bold mb-3">Payment Summary</h3>
+                      <h3 className="font-bold mb-3">Payment</h3>
+
+                      <div className="space-y-2 text-gray-400">
+                        <p>Method: {getPaymentLabel(order.paymentMethod)}</p>
+
+                        <p>
+                          Status:{" "}
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-bold ${getPaymentStatusClass(
+                              order.paymentStatus
+                            )}`}
+                          >
+                            {order.paymentStatus || "PENDING"}
+                          </span>
+                        </p>
+
+                        {order.transactionId && (
+                          <p className="break-all">
+                            Ref: {order.transactionId}
+                          </p>
+                        )}
+
+                        {order.estimatedTime && (
+                          <p>ETA: {order.estimatedTime} min</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="font-bold mb-3">Summary</h3>
 
                       <div className="space-y-2 text-gray-400">
                         <p>Subtotal: Rs. {order.subtotal}</p>

@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
+import toast from "react-hot-toast"
 import { useCart } from "../../cart/context/CartContext"
 import { useAuth } from "../../auth/context/AuthContext"
 
@@ -16,6 +17,11 @@ function Navbar() {
 
   const closeMobileMenu = () => {
     setIsMenuOpen(false)
+  }
+
+  const handleLogout = () => {
+    logout()
+    toast.success("Logged out successfully.")
   }
 
   return (
@@ -96,7 +102,7 @@ function Navbar() {
               </Link>
 
               <button
-                onClick={logout}
+                onClick={handleLogout}
                 className="border border-white/10 hover:border-red-500 hover:text-red-400 px-5 py-2 rounded-full font-semibold transition"
               >
                 Logout
@@ -170,8 +176,7 @@ function Navbar() {
               </a>
             </li>
 
-            {(user?.role === "ADMIN" ||
-              user?.role === "STAFF") && (
+            {(user?.role === "ADMIN" || user?.role === "STAFF") && (
               <li>
                 <Link
                   to="/kitchen"
@@ -228,7 +233,7 @@ function Navbar() {
                 <li>
                   <button
                     onClick={() => {
-                      logout()
+                      handleLogout()
                       closeMobileMenu()
                     }}
                     className="text-red-400 hover:text-red-300"

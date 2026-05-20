@@ -1,13 +1,20 @@
 import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
+import toast from "react-hot-toast"
 import AdminLayout from "../layouts/AdminLayout"
-import { getCategories, getProduct, updateProduct } from "../../../services/api"
+import {
+  getCategories,
+  getProduct,
+  updateProduct,
+  uploadProductImage,
+} from "../../../services/api"
 
 function AdminEditProduct() {
   const { id } = useParams()
   const navigate = useNavigate()
 
   const [categories, setCategories] = useState([])
+
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -20,10 +27,13 @@ function AdminEditProduct() {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setError("")
+
         const [product, categoryData] = await Promise.all([
           getProduct(id),
           getCategories(),
@@ -40,7 +50,9 @@ function AdminEditProduct() {
           isAvailable: product.isAvailable,
         })
       } catch (error) {
-        setError(error.message)
+        const message = error.message || "Failed to load product."
+        setError(message)
+        toast.error(message)
       } finally {
         setLoading(false)
       }
@@ -58,31 +70,132 @@ function AdminEditProduct() {
     })
   }
 
+  const handleImageUpload = async (e) => {
+    const imageFile = e.target.files[0]
+
+    if (!imageFile) return
+
+    if (!imageFile.type.startsWith("image/")) {
+      const message = "Please select a valid image file."
+      setError(message)
+      toast.error(message)
+      return
+    }
+
+    if (imageFile.size > 5 * 1024 * 1024) {
+      const message = "Image size must be less than 5MB."
+      setError(message)
+      toast.error(message)
+      return
+    }
+
+    try {
+      setUploadingImage(true)
+      setError("")
+      toast.loading("Uploading new image...", {
+        id: "edit-product-image-upload",
+      })
+
+      const imageUrl = await uploadProductImage(imageFile)
+
+      setFormData((prevData) => ({
+        ...prevData,
+        image: imageUrl,
+      }))
+
+      toast.success("Image updated successfully.", {
+        id: "edit-product-image-upload",
+      })
+    } catch (error) {
+      const message =
+        error.message ||
+        "Image upload failed. Please try again."
+
+      setError(message)
+      toast.error(message, {
+        id: "edit-product-image-upload",
+      })
+    } finally {
+      setUploadingImage(false)
+    }
+  }
+
+  const validateForm = () => {
+    const trimmedName = formData.name.trim()
+    const trimmedDescription = formData.description.trim()
+    const trimmedImage = formData.image.trim()
+
+    if (!trimmedName) {
+      return {
+        isValid: false,
+        message: "Product name is required.",
+      }
+    }
+
+    if (!formData.price || Number(formData.price) <= 0) {
+      return {
+        isValid: false,
+        message: "Price must be greater than 0.",
+      }
+    }
+
+    if (!trimmedImage) {
+      return {
+        isValid: false,
+        message:
+          "Product image is required. Upload an image first or paste an image URL.",
+      }
+    }
+
+    if (!formData.categoryId) {
+      return {
+        isValid: false,
+        message: "Please select a category.",
+      }
+    }
+
+    return {
+      isValid: true,
+      data: {
+        name: trimmedName,
+        description: trimmedDescription,
+        price: Number(formData.price),
+        image: trimmedImage,
+        categoryId: Number(formData.categoryId),
+        isAvailable: formData.isAvailable,
+      },
+    }
+  }
+
   const handleSubmit = async () => {
     setError("")
 
-    if (
-      !formData.name ||
-      !formData.price ||
-      !formData.image ||
-      !formData.categoryId
-    ) {
-      setError("Name, price, image, and category are required.")
+    if (uploadingImage) {
+      const message = "Please wait until image upload completes."
+      setError(message)
+      toast.error(message)
+      return
+    }
+
+    const validation = validateForm()
+
+    if (!validation.isValid) {
+      setError(validation.message)
+      toast.error(validation.message)
       return
     }
 
     try {
       setSubmitting(true)
 
-      await updateProduct(id, {
-        ...formData,
-        price: Number(formData.price),
-        categoryId: Number(formData.categoryId),
-      })
+      await updateProduct(id, validation.data)
 
+      toast.success("Product updated successfully.")
       navigate("/admin/products")
     } catch (error) {
-      setError(error.message)
+      const message = error.message || "Failed to update product."
+      setError(message)
+      toast.error(message)
     } finally {
       setSubmitting(false)
     }
@@ -140,14 +253,58 @@ function AdminEditProduct() {
                   className="bg-black border border-white/10 rounded-xl px-4 py-4 outline-none focus:border-orange-500"
                 />
 
-                <input
-                  type="text"
-                  name="image"
-                  placeholder="Image URL *"
-                  value={formData.image}
-                  onChange={handleChange}
-                  className="bg-black border border-white/10 rounded-xl px-4 py-4 outline-none focus:border-orange-500"
-                />
+                <div className="bg-black border border-white/10 rounded-xl p-4">
+                  <label className="block text-gray-300 font-semibold mb-3">
+                    Product Image *
+                  </label>
+
+                  <label className="block cursor-pointer border border-dashed border-orange-500/50 hover:border-orange-500 rounded-xl p-5 text-center transition">
+                    <span className="text-orange-500 font-bold">
+                      Click to upload new image
+                    </span>
+
+                    <p className="text-xs text-gray-500 mt-2">
+                      JPG, PNG, WEBP supported. Max 5MB.
+                    </p>
+
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      disabled={uploadingImage}
+                      className="hidden"
+                    />
+                  </label>
+
+                  <input
+                    type="text"
+                    name="image"
+                    placeholder="Or paste image URL here"
+                    value={formData.image}
+                    onChange={handleChange}
+                    className="mt-4 w-full bg-zinc-950 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-orange-500"
+                  />
+
+                  {uploadingImage && (
+                    <p className="text-orange-500 text-sm mt-3">
+                      Uploading image...
+                    </p>
+                  )}
+
+                  {formData.image && (
+                    <div className="mt-4">
+                      <img
+                        src={formData.image}
+                        alt="Product preview"
+                        className="w-full h-56 object-cover rounded-xl border border-white/10"
+                      />
+
+                      <p className="text-xs text-green-400 mt-2">
+                        Image ready.
+                      </p>
+                    </div>
+                  )}
+                </div>
 
                 <select
                   name="categoryId"
@@ -181,7 +338,7 @@ function AdminEditProduct() {
                 <button
                   type="button"
                   onClick={handleSubmit}
-                  disabled={submitting}
+                  disabled={submitting || uploadingImage}
                   className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-600 disabled:cursor-not-allowed py-4 rounded-full font-bold transition"
                 >
                   {submitting ? "Updating Product..." : "Update Product"}

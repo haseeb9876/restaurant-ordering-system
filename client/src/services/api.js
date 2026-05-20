@@ -24,6 +24,7 @@ const clearAuthStorage = () => {
 
 const apiRequest = async (endpoint, options = {}) => {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, options)
+
   const result = await response.json()
 
   if (response.status === 401) {
@@ -120,6 +121,22 @@ export const deleteProduct = async (productId) => {
   return result
 }
 
+export const uploadProductImage = async (imageFile) => {
+  const formData = new FormData()
+
+  formData.append("image", imageFile)
+
+  const result = await apiRequest("/uploads/image", {
+    method: "POST",
+    headers: {
+      ...getAuthHeaders(),
+    },
+    body: formData,
+  })
+
+  return result.data.imageUrl
+}
+
 export const getCategories = async () => {
   const result = await apiRequest("/categories")
 
@@ -131,6 +148,7 @@ export const createOrder = async (orderData) => {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...getAuthHeaders(),
     },
     body: JSON.stringify(orderData),
   })
@@ -148,6 +166,16 @@ export const getOrders = async () => {
   return result.data
 }
 
+export const getMyOrders = async () => {
+  const result = await apiRequest("/orders/my-orders", {
+    headers: {
+      ...getAuthHeaders(),
+    },
+  })
+
+  return result.data
+}
+
 export const updateOrderStatus = async (orderId, status) => {
   const result = await apiRequest(`/orders/${orderId}/status`, {
     method: "PATCH",
@@ -156,6 +184,29 @@ export const updateOrderStatus = async (orderId, status) => {
       ...getAuthHeaders(),
     },
     body: JSON.stringify({ status }),
+  })
+
+  return result.data
+}
+
+export const getUsers = async () => {
+  const result = await apiRequest("/users", {
+    headers: {
+      ...getAuthHeaders(),
+    },
+  })
+
+  return result.data
+}
+
+export const createStaffUser = async (staffData) => {
+  const result = await apiRequest("/users/staff", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(staffData),
   })
 
   return result.data

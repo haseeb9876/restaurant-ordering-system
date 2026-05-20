@@ -12,79 +12,117 @@ function OrderSuccess() {
       <CartSidebar />
 
       <main className="pt-32 px-6 pb-20">
-        <div className="max-w-3xl mx-auto text-center bg-zinc-950 border border-white/10 rounded-[2rem] p-10">
-          <div className="text-7xl mb-6">✅</div>
+        <div className="max-w-4xl mx-auto bg-zinc-950 border border-white/10 rounded-[2rem] p-8 md:p-10">
+          <div className="text-center mb-10">
+            <div className="text-7xl mb-6">✅</div>
 
-          <p className="text-orange-500 font-semibold mb-3">
-            Order Confirmed
-          </p>
+            <p className="text-orange-500 font-semibold mb-3">
+              Order Confirmed
+            </p>
 
-          <h1 className="text-4xl md:text-5xl font-extrabold mb-5">
-            Thank You For Your Order!
-          </h1>
+            <h1 className="text-4xl md:text-5xl font-extrabold mb-5">
+              Your Order Has Been Placed
+            </h1>
 
-          <p className="text-gray-300 text-lg mb-8">
-            Your order has been received successfully. Our kitchen team will
-            start preparing it soon.
-          </p>
+            <p className="text-gray-300 text-lg">
+              Our kitchen team has received your order. You can track live
+              status updates from your profile.
+            </p>
+          </div>
 
           {latestOrder ? (
-            <div className="bg-black border border-white/10 rounded-2xl p-6 mb-8 text-left space-y-4">
-              <div className="flex justify-between gap-4">
-                <span className="text-gray-400">Order ID</span>
-                <span className="font-bold text-orange-500">
+            <div className="grid md:grid-cols-2 gap-5 mb-8">
+              <div className="bg-black border border-white/10 rounded-2xl p-5">
+                <p className="text-gray-400 text-sm">Order ID</p>
+                <p className="text-orange-500 font-bold mt-2">
                   {latestOrder.orderId}
-                </span>
+                </p>
               </div>
 
-              <div className="flex justify-between gap-4">
-                <span className="text-gray-400">Customer</span>
-                <span className="font-bold">
-                  {latestOrder.customer.fullName}
-                </span>
-              </div>
-
-              <div className="flex justify-between gap-4">
-                <span className="text-gray-400">Total</span>
-                <span className="font-bold">Rs. {latestOrder.total}</span>
-              </div>
-
-              <div className="flex justify-between gap-4">
-                <span className="text-gray-400">Status</span>
-                <span className="font-bold text-yellow-400">
+              <div className="bg-black border border-white/10 rounded-2xl p-5">
+                <p className="text-gray-400 text-sm">Status</p>
+                <p className="text-yellow-400 font-bold mt-2">
                   {latestOrder.status}
-                </span>
+                </p>
               </div>
 
-              <div className="flex justify-between gap-4">
-                <span className="text-gray-400">Created At</span>
-                <span className="font-bold">{latestOrder.createdAt}</span>
+              <div className="bg-black border border-white/10 rounded-2xl p-5">
+                <p className="text-gray-400 text-sm">Customer</p>
+                <p className="font-bold mt-2">
+                  {latestOrder.customer.fullName}
+                </p>
+              </div>
+
+              <div className="bg-black border border-white/10 rounded-2xl p-5">
+                <p className="text-gray-400 text-sm">Total</p>
+                <p className="font-bold mt-2">
+                  Rs. {latestOrder.total}
+                </p>
               </div>
             </div>
           ) : (
-            <div className="bg-black border border-white/10 rounded-2xl p-6 mb-8">
+            <div className="bg-black border border-white/10 rounded-2xl p-6 mb-8 text-center">
               <p className="text-gray-400">
-                No recent order found. Please place an order first.
+                No recent order found.
               </p>
             </div>
           )}
 
-          <div className="bg-black border border-white/10 rounded-2xl p-6 mb-8 text-left">
-            <h2 className="text-xl font-bold mb-4">Order Status</h2>
+          <div className="bg-black border border-white/10 rounded-2xl p-6 mb-8">
+            <h2 className="text-2xl font-bold mb-5">
+              What Happens Next?
+            </h2>
 
-            <div className="space-y-3 text-gray-300">
-              <p>🟠 Pending confirmation</p>
-              <p>👨‍🍳 Preparing soon</p>
-              <p>🚚 Delivery will be arranged</p>
+            <div className="grid md:grid-cols-4 gap-4">
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                <div className="text-3xl mb-3">📩</div>
+                <h3 className="font-bold">Order Received</h3>
+                <p className="text-gray-400 text-sm mt-2">
+                  Your order is now visible to the restaurant team.
+                </p>
+              </div>
+
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                <div className="text-3xl mb-3">👨‍🍳</div>
+                <h3 className="font-bold">Preparing</h3>
+                <p className="text-gray-400 text-sm mt-2">
+                  Kitchen staff will start preparing your food.
+                </p>
+              </div>
+
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                <div className="text-3xl mb-3">✅</div>
+                <h3 className="font-bold">Ready</h3>
+                <p className="text-gray-400 text-sm mt-2">
+                  Your food will be ready for pickup or delivery.
+                </p>
+              </div>
+
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                <div className="text-3xl mb-3">🚚</div>
+                <h3 className="font-bold">Completed</h3>
+                <p className="text-gray-400 text-sm mt-2">
+                  Order is completed after delivery or handover.
+                </p>
+              </div>
             </div>
           </div>
 
-          <Link
-            to="/"
-            className="inline-block bg-orange-500 hover:bg-orange-600 px-8 py-4 rounded-full font-bold transition"
-          >
-            Back to Home
-          </Link>
+          <div className="flex flex-col md:flex-row gap-4 justify-center">
+            <Link
+              to="/profile"
+              className="text-center bg-orange-500 hover:bg-orange-600 px-8 py-4 rounded-full font-bold transition"
+            >
+              Track My Order
+            </Link>
+
+            <Link
+              to="/"
+              className="text-center border border-white/10 hover:border-orange-500 px-8 py-4 rounded-full font-bold transition"
+            >
+              Continue Ordering
+            </Link>
+          </div>
         </div>
       </main>
     </div>

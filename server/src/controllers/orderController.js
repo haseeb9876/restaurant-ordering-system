@@ -1,107 +1,269 @@
 import prisma from "../config/prisma.js"
+import asyncHandler from "../utils/asyncHandler.js"
 
-export const createOrder = async (req, res) => {
-  try {
-    const {
+const DELIVERY_FEE = 150
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+
+function isValidOrderItem(item) {
+  return (
+    item &&
+    Number.isInteger(Number(item.id)) &&
+    Number.isInteger(Number(item.quantity)) &&
+    Number(item.quantity) > 0
+  )
+}
+
+export const createOrder = asyncHandler(async (req, res) => {
+  const customerName = req.body.customerName?.trim()
+  const customerPhone = req.body.customerPhone?.trim()
+  const customerEmail = req.body.customerEmail?.trim().toLowerCase()
+
+  const address = req.body.address?.trim()
+
+  const notes = req.body.notes?.trim() || null
+
+  const paymentMethod =
+    req.body.paymentMethod || "CASH_ON_DELIVERY"
+
+  const transactionId =
+    req.body.transactionId?.trim() || null
+
+  const paymentProof =
+    req.body.paymentProof?.trim() || null
+
+  const items = req.body.items
+
+  const allowedPaymentMethods = [
+    "CASH_ON_DELIVERY",
+    "JAZZCASH",
+    "EASYPAISA",
+    "BANK_TRANSFER",
+  ]
+
+  if (
+    !customerName ||
+    !customerPhone ||
+    !customerEmail ||
+    !address ||
+    !items ||
+    items.length === 0
+  ) {
+    res.status(400)
+
+    throw new Error("Missing required order fields.")
+  }
+
+  if (!isValidEmail(customerEmail)) {
+    res.status(400)
+
+    throw new Error(
+      "Please provide a valid customer email."
+    )
+  }
+
+  if (!allowedPaymentMethods.includes(paymentMethod)) {
+    res.status(400)
+
+    throw new Error("Invalid payment method.")
+  }
+
+  if (
+    paymentMethod !== "CASH_ON_DELIVERY" &&
+    !transactionId
+  ) {
+    res.status(400)
+
+    throw new Error(
+      "Transaction ID is required for online payments."
+    )
+  }
+
+  if (
+    !Array.isArray(items) ||
+    !items.every(isValidOrderItem)
+  ) {
+    res.status(400)
+
+    throw new Error("Invalid order items.")
+  }
+
+  const productIds = items.map((item) =>
+    Number(item.id)
+  )
+
+  const products = await prisma.product.findMany({
+    where: {
+      id: {
+        in: productIds,
+      },
+    },
+  })
+
+  if (products.length !== productIds.length) {
+    res.status(400)
+
+    throw new Error(
+      "One or more products are invalid."
+    )
+  }
+
+  const unavailableProduct = products.find(
+    (product) => !product.isAvailable
+  )
+
+  if (unavailableProduct) {
+    res.status(400)
+
+    throw new Error(
+      `${unavailableProduct.name} is currently unavailable.`
+    )
+  }
+
+  const calculatedItems = items.map((item) => {
+    const product = products.find(
+      (product) => product.id === Number(item.id)
+    )
+
+    return {
+      productId: product.id,
+      quantity: Number(item.quantity),
+      price: product.price,
+    }
+  })
+
+  const subtotal = calculatedItems.reduce(
+    (total, item) =>
+      total + item.price * item.quantity,
+    0
+  )
+
+  const deliveryFee =
+    subtotal > 0 ? DELIVERY_FEE : 0
+
+  const total = subtotal + deliveryFee
+
+  const estimatedTime = Math.floor(
+    Math.random() * (60 - 20 + 1) + 20
+  )
+
+  const order = await prisma.order.create({
+    data: {
+      orderNumber: `ORD-${Date.now()}`,
+
+      status: "PENDING",
+
+      paymentMethod,
+
+      paymentStatus:
+        paymentMethod === "CASH_ON_DELIVERY"
+          ? "PENDING"
+          : "PAID",
+
+      transactionId,
+      paymentProof,
+
       customerName,
       customerPhone,
       customerEmail,
+
       address,
       notes,
+
       subtotal,
       deliveryFee,
       total,
-      items,
-    } = req.body
 
-    if (
-      !customerName ||
-      !customerPhone ||
-      !customerEmail ||
-      !address ||
-      !items ||
-      items.length === 0
-    ) {
-      return res.status(400).json({
-        status: "error",
-        message: "Missing required order fields",
-      })
-    }
+      estimatedTime,
 
-    const order = await prisma.order.create({
-      data: {
-        orderNumber: `ORD-${Date.now()}`,
-        customerName,
-        customerPhone,
-        customerEmail,
-        address,
-        notes,
-        subtotal,
-        deliveryFee,
-        total,
-        items: {
-          create: items.map((item) => ({
-            productId: item.id,
-            quantity: item.quantity,
-            price: item.price,
-          })),
+      userId:
+        req.user?.role === "CUSTOMER"
+          ? req.user.id
+          : null,
+
+      items: {
+        create: calculatedItems,
+      },
+    },
+
+    include: {
+      items: {
+        include: {
+          product: true,
         },
       },
-      include: {
-        items: {
-          include: {
-            product: true,
-          },
+    },
+  })
+
+  res.status(201).json({
+    status: "success",
+    message: "Order created successfully",
+    data: order,
+  })
+})
+
+export const getOrders = asyncHandler(async (req, res) => {
+  const orders = await prisma.order.findMany({
+    include: {
+      items: {
+        include: {
+          product: true,
         },
       },
-    })
+    },
 
-    res.status(201).json({
-      status: "success",
-      message: "Order created successfully",
-      data: order,
-    })
-  } catch (error) {
-    res.status(500).json({
-      status: "error",
-      message: "Failed to create order",
-      error: error.message,
-    })
-  }
-}
+    orderBy: {
+      createdAt: "desc",
+    },
+  })
 
-export const getOrders = async (req, res) => {
-  try {
-    const orders = await prisma.order.findMany({
-      include: {
-        items: {
-          include: {
-            product: true,
-          },
+  res.json({
+    status: "success",
+    results: orders.length,
+    data: orders,
+  })
+})
+
+export const getMyOrders = asyncHandler(async (req, res) => {
+  const orders = await prisma.order.findMany({
+    where: {
+      OR: [
+        {
+          userId: req.user.id,
+        },
+
+        {
+          customerEmail: req.user.email,
+        },
+      ],
+    },
+
+    include: {
+      items: {
+        include: {
+          product: true,
         },
       },
-      orderBy: {
-        createdAt: "desc",
-      },
-    })
+    },
 
-    res.json({
-      status: "success",
-      results: orders.length,
-      data: orders,
-    })
-  } catch (error) {
-    res.status(500).json({
-      status: "error",
-      message: "Failed to fetch orders",
-      error: error.message,
-    })
-  }
-}
+    orderBy: {
+      createdAt: "desc",
+    },
+  })
 
-export const updateOrderStatus = async (req, res) => {
-  try {
+  res.json({
+    status: "success",
+    results: orders.length,
+    data: orders,
+  })
+})
+
+export const updateOrderStatus = asyncHandler(
+  async (req, res) => {
     const { id } = req.params
+
     const { status } = req.body
 
     const allowedStatuses = [
@@ -113,19 +275,20 @@ export const updateOrderStatus = async (req, res) => {
     ]
 
     if (!allowedStatuses.includes(status)) {
-      return res.status(400).json({
-        status: "error",
-        message: "Invalid order status",
-      })
+      res.status(400)
+
+      throw new Error("Invalid order status")
     }
 
     const order = await prisma.order.update({
       where: {
         id: Number(id),
       },
+
       data: {
         status,
       },
+
       include: {
         items: {
           include: {
@@ -137,14 +300,10 @@ export const updateOrderStatus = async (req, res) => {
 
     res.json({
       status: "success",
-      message: "Order status updated successfully",
+      message:
+        "Order status updated successfully",
+
       data: order,
     })
-  } catch (error) {
-    res.status(500).json({
-      status: "error",
-      message: "Failed to update order status",
-      error: error.message,
-    })
   }
-}
+)

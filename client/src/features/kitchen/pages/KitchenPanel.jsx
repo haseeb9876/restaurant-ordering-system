@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
+import toast from "react-hot-toast"
 import { getOrders, updateOrderStatus } from "../../../services/api"
 import { useAuth } from "../../auth/context/AuthContext"
 
@@ -40,15 +41,24 @@ function KitchenPanel() {
     return () => clearInterval(interval)
   }, [])
 
+  const handleLogout = () => {
+    logout()
+    toast.success("Logged out successfully.")
+  }
+
   const handleStatusChange = async (orderId, status) => {
     try {
       setUpdatingOrderId(orderId)
+      setError("")
 
       await updateOrderStatus(orderId, status)
 
+      toast.success(`Order marked as ${status.toLowerCase()}.`)
       fetchOrders()
     } catch (error) {
-      setError(error.message)
+      const message = error.message || "Failed to update order status."
+      setError(message)
+      toast.error(message)
     } finally {
       setUpdatingOrderId(null)
     }
@@ -63,7 +73,7 @@ function KitchenPanel() {
           </Link>
 
           <div className="flex flex-wrap items-center gap-3">
-            {user?.role === "admin" && (
+            {user?.role === "ADMIN" && (
               <Link
                 to="/admin"
                 className="border border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white px-5 py-2 rounded-full font-semibold transition"
@@ -89,7 +99,7 @@ function KitchenPanel() {
             )}
 
             <button
-              onClick={logout}
+              onClick={handleLogout}
               className="border border-white/10 hover:border-red-500 hover:text-red-400 px-5 py-2 rounded-full font-semibold transition"
             >
               Logout
@@ -176,7 +186,7 @@ function KitchenPanel() {
                         handleStatusChange(order.id, "PREPARING")
                       }
                       disabled={updatingOrderId === order.id}
-                      className="bg-yellow-500 hover:bg-yellow-600 text-black px-4 py-2 rounded-full font-bold transition"
+                      className="bg-yellow-500 hover:bg-yellow-600 disabled:opacity-60 disabled:cursor-not-allowed text-black px-4 py-2 rounded-full font-bold transition"
                     >
                       Preparing
                     </button>
@@ -186,7 +196,7 @@ function KitchenPanel() {
                         handleStatusChange(order.id, "READY")
                       }
                       disabled={updatingOrderId === order.id}
-                      className="bg-green-500 hover:bg-green-600 text-black px-4 py-2 rounded-full font-bold transition"
+                      className="bg-green-500 hover:bg-green-600 disabled:opacity-60 disabled:cursor-not-allowed text-black px-4 py-2 rounded-full font-bold transition"
                     >
                       Ready
                     </button>
@@ -196,7 +206,7 @@ function KitchenPanel() {
                         handleStatusChange(order.id, "COMPLETED")
                       }
                       disabled={updatingOrderId === order.id}
-                      className="bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded-full font-bold transition"
+                      className="bg-orange-500 hover:bg-orange-600 disabled:opacity-60 disabled:cursor-not-allowed px-4 py-2 rounded-full font-bold transition"
                     >
                       Complete
                     </button>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import toast from "react-hot-toast"
 import { getCategories, getProducts } from "../../../services/api"
 import { useCart } from "../../cart/context/CartContext"
 
@@ -9,11 +10,16 @@ function MenuSection({ selectedCategory, setSelectedCategory }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
-  const { addToCart } = useCart()
+  const {
+    addToCart,
+    syncCartWithAvailableProducts,
+  } = useCart()
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setError("")
+
         const products = await getProducts()
         const categoryData = await getCategories()
 
@@ -22,7 +28,20 @@ function MenuSection({ selectedCategory, setSelectedCategory }) {
         )
 
         setMenuItems(availableProducts)
-        setCategories(["All", ...categoryData.map((category) => category.name)])
+
+        setCategories([
+          "All",
+          ...categoryData.map((category) => category.name),
+        ])
+
+        const removedItems =
+          syncCartWithAvailableProducts(availableProducts)
+
+        if (removedItems.length > 0) {
+          toast.error(
+            `${removedItems[0].name} was removed because it is unavailable.`
+          )
+        }
       } catch (error) {
         setError(error.message)
       } finally {
@@ -31,12 +50,22 @@ function MenuSection({ selectedCategory, setSelectedCategory }) {
     }
 
     fetchData()
+
+    const interval = setInterval(() => {
+      fetchData()
+    }, 5000)
+
+    return () => clearInterval(interval)
   }, [])
 
   const filteredItems = menuItems.filter((item) => {
-    const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase())
+    const matchesSearch = item.name
+      .toLowerCase()
+      .includes(search.toLowerCase())
+
     const matchesCategory =
-      selectedCategory === "All" || item.category.name === selectedCategory
+      selectedCategory === "All" ||
+      item.category.name === selectedCategory
 
     return matchesSearch && matchesCategory
   })
@@ -45,7 +74,9 @@ function MenuSection({ selectedCategory, setSelectedCategory }) {
     <section id="menu" className="bg-zinc-950 text-white py-20 px-6">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-10">
-          <p className="text-orange-500 font-semibold mb-3">Full Menu</p>
+          <p className="text-orange-500 font-semibold mb-3">
+            Full Menu
+          </p>
 
           <h2 className="text-4xl md:text-5xl font-extrabold">
             Find Your Favorite Meal
@@ -79,10 +110,16 @@ function MenuSection({ selectedCategory, setSelectedCategory }) {
         </div>
 
         {loading && (
-          <p className="text-center text-gray-400">Loading menu items...</p>
+          <p className="text-center text-gray-400">
+            Loading menu items...
+          </p>
         )}
 
-        {error && <p className="text-center text-red-400">{error}</p>}
+        {error && (
+          <p className="text-center text-red-400">
+            {error}
+          </p>
+        )}
 
         {!loading && !error && (
           <div className="grid md:grid-cols-3 gap-8">
@@ -108,7 +145,9 @@ function MenuSection({ selectedCategory, setSelectedCategory }) {
                     </span>
                   </div>
 
-                  <h3 className="text-2xl font-bold mb-3">{item.name}</h3>
+                  <h3 className="text-2xl font-bold mb-3">
+                    {item.name}
+                  </h3>
 
                   <p className="text-gray-400 text-sm mb-5">
                     {item.description}

@@ -3,6 +3,23 @@ import Navbar from "../components/Navbar"
 import CartSidebar from "../../cart/components/CartSidebar"
 import { useCart } from "../../cart/context/CartContext"
 
+function getPaymentStatusClass(status) {
+  if (status === "PAID") return "bg-green-500/20 text-green-400"
+  if (status === "FAILED") return "bg-red-500/20 text-red-400"
+  if (status === "PENDING") return "bg-yellow-500/20 text-yellow-400"
+
+  return "bg-white/10 text-gray-300"
+}
+
+function formatPaymentMethod(method) {
+  if (method === "CASH_ON_DELIVERY") return "Cash on Delivery"
+  if (method === "JAZZCASH") return "JazzCash"
+  if (method === "EASYPAISA") return "Easypaisa"
+  if (method === "BANK_TRANSFER") return "Bank Transfer"
+
+  return method || "Not selected"
+}
+
 function OrderSuccess() {
   const { latestOrder } = useCart()
 
@@ -31,35 +48,78 @@ function OrderSuccess() {
           </div>
 
           {latestOrder ? (
-            <div className="grid md:grid-cols-2 gap-5 mb-8">
-              <div className="bg-black border border-white/10 rounded-2xl p-5">
-                <p className="text-gray-400 text-sm">Order ID</p>
-                <p className="text-orange-500 font-bold mt-2">
-                  {latestOrder.orderId}
-                </p>
+            <>
+              <div className="grid md:grid-cols-2 gap-5 mb-8">
+                <div className="bg-black border border-white/10 rounded-2xl p-5">
+                  <p className="text-gray-400 text-sm">Order ID</p>
+                  <p className="text-orange-500 font-bold mt-2">
+                    {latestOrder.orderId}
+                  </p>
+                </div>
+
+                <div className="bg-black border border-white/10 rounded-2xl p-5">
+                  <p className="text-gray-400 text-sm">Status</p>
+                  <p className="text-yellow-400 font-bold mt-2">
+                    {latestOrder.status}
+                  </p>
+                </div>
+
+                <div className="bg-black border border-white/10 rounded-2xl p-5">
+                  <p className="text-gray-400 text-sm">Customer</p>
+                  <p className="font-bold mt-2">
+                    {latestOrder.customer.fullName}
+                  </p>
+                </div>
+
+                <div className="bg-black border border-white/10 rounded-2xl p-5">
+                  <p className="text-gray-400 text-sm">Total</p>
+                  <p className="font-bold mt-2">
+                    Rs. {latestOrder.total}
+                  </p>
+                </div>
               </div>
 
-              <div className="bg-black border border-white/10 rounded-2xl p-5">
-                <p className="text-gray-400 text-sm">Status</p>
-                <p className="text-yellow-400 font-bold mt-2">
-                  {latestOrder.status}
-                </p>
-              </div>
+              <div className="bg-black border border-white/10 rounded-2xl p-6 mb-8">
+                <h2 className="text-2xl font-bold mb-5">
+                  Payment Details
+                </h2>
 
-              <div className="bg-black border border-white/10 rounded-2xl p-5">
-                <p className="text-gray-400 text-sm">Customer</p>
-                <p className="font-bold mt-2">
-                  {latestOrder.customer.fullName}
-                </p>
-              </div>
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                    <p className="text-gray-400 text-sm">Payment Method</p>
+                    <p className="font-bold mt-2">
+                      {formatPaymentMethod(latestOrder.paymentMethod)}
+                    </p>
+                  </div>
 
-              <div className="bg-black border border-white/10 rounded-2xl p-5">
-                <p className="text-gray-400 text-sm">Total</p>
-                <p className="font-bold mt-2">
-                  Rs. {latestOrder.total}
-                </p>
+                  <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                    <p className="text-gray-400 text-sm">Payment Status</p>
+                    <p
+                      className={`inline-block px-3 py-1 rounded-full text-sm font-bold mt-2 ${getPaymentStatusClass(
+                        latestOrder.paymentStatus
+                      )}`}
+                    >
+                      {latestOrder.paymentStatus || "PENDING"}
+                    </p>
+                  </div>
+
+                  <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                    <p className="text-gray-400 text-sm">Transaction ID</p>
+                    <p className="font-bold mt-2 break-words">
+                      {latestOrder.transactionId || "Not provided"}
+                    </p>
+                  </div>
+                </div>
+
+                {latestOrder.paymentMethod !== "CASH_ON_DELIVERY" && (
+                  <p className="text-gray-400 text-sm mt-4">
+                    Your payment will be verified by the restaurant admin. If
+                    payment is already sent, please keep your transaction ID
+                    safe.
+                  </p>
+                )}
               </div>
-            </div>
+            </>
           ) : (
             <div className="bg-black border border-white/10 rounded-2xl p-6 mb-8 text-center">
               <p className="text-gray-400">

@@ -18,6 +18,23 @@ function getStatusClass(status) {
   return "bg-white/10 text-gray-300"
 }
 
+function getPaymentStatusClass(status) {
+  if (status === "PAID") return "bg-green-500/20 text-green-400"
+  if (status === "FAILED") return "bg-red-500/20 text-red-400"
+  if (status === "PENDING") return "bg-yellow-500/20 text-yellow-400"
+
+  return "bg-white/10 text-gray-300"
+}
+
+function formatPaymentMethod(method) {
+  if (method === "CASH_ON_DELIVERY") return "Cash on Delivery"
+  if (method === "JAZZCASH") return "JazzCash"
+  if (method === "EASYPAISA") return "Easypaisa"
+  if (method === "BANK_TRANSFER") return "Bank Transfer"
+
+  return method || "Not selected"
+}
+
 function getStepLabel(status) {
   if (status === "PENDING") return "Order Placed"
   if (status === "PREPARING") return "Preparing"
@@ -25,6 +42,48 @@ function getStepLabel(status) {
   if (status === "COMPLETED") return "Completed"
 
   return status
+}
+
+function PaymentDetails({ order }) {
+  return (
+    <div className="bg-black border border-white/10 rounded-2xl p-5">
+      <h3 className="font-bold mb-4">Payment Details</h3>
+
+      <div className="grid md:grid-cols-3 gap-4">
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+          <p className="text-gray-400 text-sm">Payment Method</p>
+          <p className="font-bold mt-2">
+            {formatPaymentMethod(order.paymentMethod)}
+          </p>
+        </div>
+
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+          <p className="text-gray-400 text-sm">Payment Status</p>
+          <p
+            className={`inline-block px-3 py-1 rounded-full text-sm font-bold mt-2 ${getPaymentStatusClass(
+              order.paymentStatus
+            )}`}
+          >
+            {order.paymentStatus || "PENDING"}
+          </p>
+        </div>
+
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+          <p className="text-gray-400 text-sm">Transaction ID</p>
+          <p className="font-bold mt-2 break-words">
+            {order.transactionId || "Not provided"}
+          </p>
+        </div>
+      </div>
+
+      {order.paymentMethod !== "CASH_ON_DELIVERY" && (
+        <p className="text-gray-400 text-sm mt-4">
+          Your payment will be verified by the restaurant admin. If payment is
+          already sent, please keep your transaction ID safe.
+        </p>
+      )}
+    </div>
+  )
 }
 
 function OrderTimeline({ status }) {
@@ -245,6 +304,8 @@ function Profile() {
                           </div>
                         </div>
 
+                        <PaymentDetails order={latestOrder} />
+
                         <OrderTimeline status={latestOrder.status} />
 
                         <div className="bg-black border border-white/10 rounded-2xl p-5">
@@ -292,7 +353,8 @@ function Profile() {
                     {orders.length === 0 ? (
                       <div className="bg-black border border-white/10 rounded-2xl p-8 text-center">
                         <p className="text-gray-400">
-                          Your order history will appear here after placing orders.
+                          Your order history will appear here after placing
+                          orders.
                         </p>
                       </div>
                     ) : (
@@ -302,7 +364,7 @@ function Profile() {
                             key={order.id}
                             className="bg-black border border-white/10 rounded-2xl p-5"
                           >
-                            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
+                            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-5">
                               <div>
                                 <p className="text-orange-500 font-bold">
                                   {order.orderNumber}
@@ -311,6 +373,23 @@ function Profile() {
                                 <p className="text-gray-400 text-sm mt-1">
                                   {new Date(order.createdAt).toLocaleString()}
                                 </p>
+
+                                <p className="text-gray-400 text-sm mt-2">
+                                  {formatPaymentMethod(order.paymentMethod)} •{" "}
+                                  <span
+                                    className={`px-2 py-0.5 rounded-full text-xs font-bold ${getPaymentStatusClass(
+                                      order.paymentStatus
+                                    )}`}
+                                  >
+                                    {order.paymentStatus || "PENDING"}
+                                  </span>
+                                </p>
+
+                                {order.transactionId && (
+                                  <p className="text-gray-500 text-sm mt-2 break-words">
+                                    Transaction ID: {order.transactionId}
+                                  </p>
+                                )}
                               </div>
 
                               <div className="flex items-center gap-3">

@@ -1,21 +1,50 @@
+import { useEffect, useState } from "react"
+import { getPublicSettings } from "../../../services/api"
+
 function About() {
+  const [settings, setSettings] = useState({
+    restaurantName: "FoodieHub",
+    aboutTitle: "Fresh Food, Fast Delivery, Better Experience",
+    aboutDescription:
+      "FoodieHub is a modern restaurant ordering platform designed to make food ordering simple, beautiful, and fast. Customers can explore meals, add items to cart, checkout securely, and track their order experience with ease.",
+  })
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const data = await getPublicSettings()
+
+        setSettings({
+          restaurantName: data.restaurantName || "FoodieHub",
+          aboutTitle:
+            data.aboutTitle ||
+            "Fresh Food, Fast Delivery, Better Experience",
+          aboutDescription:
+            data.aboutDescription ||
+            "FoodieHub is a modern restaurant ordering platform designed to make food ordering simple, beautiful, and fast.",
+        })
+      } catch {
+        // Keep fallback values
+      }
+    }
+
+    fetchSettings()
+  }, [])
+
   return (
     <section id="about" className="bg-black text-white py-20 px-6">
       <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center">
         <div>
           <p className="text-orange-500 font-semibold mb-3">
-            About FoodieHub
+            About {settings.restaurantName}
           </p>
 
           <h2 className="text-4xl md:text-5xl font-extrabold mb-6">
-            Fresh Food, Fast Delivery, Better Experience
+            {settings.aboutTitle}
           </h2>
 
           <p className="text-gray-300 text-lg leading-relaxed">
-            FoodieHub is a modern restaurant ordering platform designed to make
-            food ordering simple, beautiful, and fast. Customers can explore
-            meals, add items to cart, checkout securely, and track their order
-            experience with ease.
+            {settings.aboutDescription}
           </p>
 
           <div className="grid grid-cols-3 gap-4 mt-8">
@@ -25,8 +54,8 @@ function About() {
             </div>
 
             <div className="bg-zinc-950 border border-white/10 rounded-2xl p-5 text-center">
-              <h3 className="text-3xl font-extrabold text-orange-500">20k+</h3>
-              <p className="text-gray-400 text-sm mt-2">Orders</p>
+              <h3 className="text-3xl font-extrabold text-orange-500">Fast</h3>
+              <p className="text-gray-400 text-sm mt-2">Service</p>
             </div>
 
             <div className="bg-zinc-950 border border-white/10 rounded-2xl p-5 text-center">

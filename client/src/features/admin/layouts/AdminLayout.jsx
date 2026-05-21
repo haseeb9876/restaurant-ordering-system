@@ -1,13 +1,31 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Link, useLocation } from "react-router-dom"
 import toast from "react-hot-toast"
 import { useAuth } from "../../auth/context/AuthContext"
+import { getPublicSettings } from "../../../services/api"
 
 function AdminLayout({ children }) {
   const { user, logout } = useAuth()
   const location = useLocation()
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [settings, setSettings] = useState(null)
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const data = await getPublicSettings()
+        setSettings(data)
+      } catch (error) {
+        console.error("Failed to load restaurant settings:", error.message)
+      }
+    }
+
+    fetchSettings()
+  }, [])
+
+  const restaurantName = settings?.restaurantName || "FoodieHub"
+  const logoUrl = settings?.logoUrl || ""
 
   const handleLogout = () => {
     logout()
@@ -22,6 +40,22 @@ function AdminLayout({ children }) {
     { label: "Settings", path: "/admin/settings" },
     { label: "Kitchen Panel", path: "/kitchen" },
   ]
+
+  const renderBrand = () => (
+    <div className="flex items-center gap-3">
+      {logoUrl && (
+        <img
+          src={logoUrl}
+          alt={restaurantName}
+          className="h-11 w-11 rounded-2xl object-cover border border-white/10"
+        />
+      )}
+
+      <span className="text-2xl font-extrabold text-orange-500 leading-tight">
+        {restaurantName}
+      </span>
+    </div>
+  )
 
   const renderNavLinks = (isMobile = false) => (
     <nav className="space-y-3">
@@ -66,11 +100,8 @@ function AdminLayout({ children }) {
     <div className="min-h-screen bg-black text-white">
       <aside className="fixed left-0 top-0 h-full w-64 bg-zinc-950 border-r border-white/10 hidden lg:flex lg:flex-col">
         <div className="p-6 border-b border-white/10">
-          <Link
-            to="/admin"
-            className="text-3xl font-extrabold text-orange-500"
-          >
-            Foodie<span className="text-white">Hub</span>
+          <Link to="/admin">
+            {renderBrand()}
           </Link>
 
           <p className="text-gray-500 text-sm mt-2">
@@ -113,7 +144,7 @@ function AdminLayout({ children }) {
           <div className="flex items-center justify-between gap-4">
             <div>
               <h1 className="font-bold text-lg">
-                Restaurant Admin
+                {restaurantName} Admin
               </h1>
 
               {user && (
@@ -150,6 +181,15 @@ function AdminLayout({ children }) {
 
           {isMobileMenuOpen && (
             <div className="lg:hidden mt-5 bg-zinc-950 border border-white/10 rounded-2xl p-5">
+              <div className="mb-5">
+                <Link
+                  to="/admin"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  {renderBrand()}
+                </Link>
+              </div>
+
               {user && (
                 <div className="mb-5 bg-black border border-white/10 rounded-2xl p-4">
                   <p className="text-sm text-gray-400">

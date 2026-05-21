@@ -21,7 +21,6 @@ function formatPaymentMethod(method) {
 function Checkout() {
   const { cartItems, clearCart, saveLatestOrder } = useCart()
   const { user } = useAuth()
-
   const navigate = useNavigate()
 
   const [settings, setSettings] = useState(null)
@@ -40,10 +39,37 @@ function Checkout() {
   const [error, setError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  const subtotal = cartItems.reduce(
+    (total, item) => total + item.price * item.quantity,
+    0
+  )
+
+  const baseDeliveryFee = settings?.deliveryFee || 0
+  const freeDeliveryEnabled = settings?.freeDeliveryEnabled || false
+  const freeDeliveryMinimumOrder =
+    settings?.freeDeliveryMinimumOrder || 600
+
+  const isFreeDeliveryApplied =
+    cartItems.length > 0 &&
+    freeDeliveryEnabled &&
+    subtotal >= freeDeliveryMinimumOrder
+
+  const remainingForFreeDelivery =
+    freeDeliveryEnabled && subtotal < freeDeliveryMinimumOrder
+      ? freeDeliveryMinimumOrder - subtotal
+      : 0
+
+  const deliveryFee =
+    cartItems.length > 0
+      ? isFreeDeliveryApplied
+        ? 0
+        : baseDeliveryFee
+      : 0
+
+  const total = subtotal + deliveryFee
+
   const paymentAccounts = useMemo(() => {
-    if (!settings) {
-      return []
-    }
+    if (!settings) return []
 
     const methods = []
 
@@ -126,9 +152,7 @@ function Checkout() {
   }, [])
 
   useEffect(() => {
-    if (paymentAccounts.length === 0) {
-      return
-    }
+    if (paymentAccounts.length === 0) return
 
     const selectedStillAvailable = paymentAccounts.some(
       (method) => method.key === formData.paymentMethod
@@ -142,14 +166,6 @@ function Checkout() {
       }))
     }
   }, [paymentAccounts, formData.paymentMethod])
-
-  const subtotal = cartItems.reduce(
-    (total, item) => total + item.price * item.quantity,
-    0
-  )
-
-  const deliveryFee = cartItems.length > 0 ? settings?.deliveryFee || 0 : 0
-  const total = subtotal + deliveryFee
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -251,9 +267,7 @@ function Checkout() {
     }
   }
 
-  if (!user) {
-    return null
-  }
+  if (!user) return null
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -465,6 +479,21 @@ function Checkout() {
                 )}
               </div>
 
+              {cartItems.length > 0 && freeDeliveryEnabled && (
+                <div className="mb-5 bg-orange-500/10 border border-orange-500/30 rounded-2xl p-4">
+                  {isFreeDeliveryApplied ? (
+                    <p className="text-green-400 font-bold">
+                      Free delivery applied to this order.
+                    </p>
+                  ) : (
+                    <p className="text-orange-300 font-semibold">
+                      Add Rs. {remainingForFreeDelivery} more to get free
+                      delivery.
+                    </p>
+                  )}
+                </div>
+              )}
+
               <div className="border-t border-white/10 pt-5 space-y-3">
                 <div className="flex justify-between text-gray-300">
                   <span>Subtotal</span>
@@ -473,7 +502,15 @@ function Checkout() {
 
                 <div className="flex justify-between text-gray-300">
                   <span>Delivery Fee</span>
-                  <span>Rs. {deliveryFee}</span>
+                  <span>
+                    {isFreeDeliveryApplied ? (
+                      <span className="text-green-400 font-bold">
+                        Free
+                      </span>
+                    ) : (
+                      `Rs. ${deliveryFee}`
+                    )}
+                  </span>
                 </div>
 
                 <div className="flex justify-between text-gray-300">

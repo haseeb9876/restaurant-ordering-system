@@ -23,6 +23,8 @@ dotenv.config()
 
 const app = express()
 
+const isProduction = process.env.NODE_ENV === "production"
+
 const allowedOrigins = [
   process.env.CLIENT_URL,
   "http://localhost:5173",
@@ -37,7 +39,7 @@ app.use(
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 3000,
+  max: isProduction ? 300 : 3000,
   message: {
     status: "error",
     message: "Too many requests. Please try again later.",
@@ -48,7 +50,7 @@ const apiLimiter = rateLimit({
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 1000,
+  max: isProduction ? 100 : 1000,
   message: {
     status: "error",
     message: "Too many login attempts. Please try again later.",
@@ -73,8 +75,10 @@ app.use(
 
 app.use(express.json({ limit: "100kb" }))
 
-app.use("/api", apiLimiter)
-app.use("/api/auth", authLimiter)
+if (isProduction) {
+  app.use("/api", apiLimiter)
+  app.use("/api/auth", authLimiter)
+}
 
 app.get("/", (req, res) => {
   res.json({

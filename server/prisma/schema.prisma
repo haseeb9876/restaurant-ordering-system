@@ -131,6 +131,16 @@ model RestaurantSettings {
   email               String?
   address             String?
 
+  openingHours        String?
+  aboutTitle          String?
+  aboutDescription    String?
+  facebookUrl         String?
+  instagramUrl        String?
+  whatsappNumber      String?
+  logoUrl             String?
+
+
+
   jazzcashTitle       String?
   jazzcashNumber      String?
   easypaisaTitle      String?
@@ -140,9 +150,13 @@ model RestaurantSettings {
   bankAccountNumber   String?
   bankIban            String?
 
-  deliveryFee         Int      @default(150)
-  isOnlinePaymentOn   Boolean  @default(true)
-  isCashOnDeliveryOn  Boolean  @default(true)
+  deliveryFee               Int      @default(150)
+
+  freeDeliveryEnabled       Boolean  @default(false)
+  freeDeliveryMinimumOrder  Int      @default(600)
+
+  isOnlinePaymentOn         Boolean  @default(true)
+  isCashOnDeliveryOn        Boolean  @default(true)
 
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt

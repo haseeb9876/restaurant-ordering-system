@@ -17,7 +17,9 @@ function isValidOrderItem(item) {
 export const createOrder = asyncHandler(async (req, res) => {
   const customerName = req.body.customerName?.trim()
   const customerPhone = req.body.customerPhone?.trim()
-  const customerEmail = req.body.customerEmail?.trim().toLowerCase()
+  const customerEmail = req.body.customerEmail
+    ?.trim()
+    .toLowerCase()
 
   const address = req.body.address?.trim()
 
@@ -145,10 +147,27 @@ export const createOrder = asyncHandler(async (req, res) => {
       },
     })
 
-  const deliveryFee =
-    subtotal > 0
-      ? settings?.deliveryFee || 0
-      : 0
+  let deliveryFee = 0
+
+  if (subtotal > 0) {
+    const baseDeliveryFee =
+      settings?.deliveryFee || 0
+
+    const freeDeliveryEnabled =
+      settings?.freeDeliveryEnabled || false
+
+    const freeDeliveryMinimumOrder =
+      settings?.freeDeliveryMinimumOrder || 600
+
+    if (
+      freeDeliveryEnabled &&
+      subtotal >= freeDeliveryMinimumOrder
+    ) {
+      deliveryFee = 0
+    } else {
+      deliveryFee = baseDeliveryFee
+    }
+  }
 
   const total = subtotal + deliveryFee
 
@@ -370,6 +389,7 @@ export const updatePaymentStatus = asyncHandler(
       status: "success",
       message:
         "Payment status updated successfully.",
+
       data: updatedOrder,
     })
   }

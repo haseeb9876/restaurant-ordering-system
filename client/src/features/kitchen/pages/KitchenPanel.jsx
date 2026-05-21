@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import toast from "react-hot-toast"
-import { getOrders, updateOrderStatus } from "../../../services/api"
+import {
+  getOrders,
+  getPublicSettings,
+  updateOrderStatus,
+} from "../../../services/api"
 import { useAuth } from "../../auth/context/AuthContext"
 
 function getStatusClass(status) {
@@ -27,6 +31,23 @@ function KitchenPanel() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [updatingOrderId, setUpdatingOrderId] = useState(null)
+  const [settings, setSettings] = useState(null)
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const data = await getPublicSettings()
+        setSettings(data)
+      } catch (error) {
+        console.error("Failed to load restaurant settings:", error.message)
+      }
+    }
+
+    fetchSettings()
+  }, [])
+
+  const restaurantName = settings?.restaurantName || "FoodieHub"
+  const logoUrl = settings?.logoUrl || ""
 
   const fetchOrders = async () => {
     try {
@@ -106,21 +127,36 @@ function KitchenPanel() {
     }
   }
 
+  const renderBrand = () => (
+    <div className="flex items-center gap-4">
+      {logoUrl && (
+        <img
+          src={logoUrl}
+          alt={restaurantName}
+          className="h-14 w-14 rounded-2xl object-cover border border-white/10"
+        />
+      )}
+
+      <div>
+        <h1 className="text-3xl md:text-4xl font-extrabold text-orange-500 leading-tight">
+          {restaurantName}
+        </h1>
+
+        <p className="text-gray-400 mt-1 text-sm md:text-base">
+          Kitchen Operations Panel
+        </p>
+      </div>
+    </div>
+  )
+
   return (
     <div className="min-h-screen bg-black text-white">
       <header className="sticky top-0 z-40 bg-black/90 backdrop-blur-md border-b border-white/10 px-4 md:px-6 py-4">
         <div className="max-w-7xl mx-auto flex flex-col xl:flex-row xl:items-center xl:justify-between gap-5">
           <div>
-            <Link
-              to="/"
-              className="text-3xl md:text-4xl font-extrabold text-orange-500"
-            >
-              Foodie<span className="text-white">Hub</span>
+            <Link to="/">
+              {renderBrand()}
             </Link>
-
-            <p className="text-gray-400 mt-2 text-sm md:text-base">
-              Kitchen Operations Panel
-            </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -261,68 +297,67 @@ function KitchenPanel() {
                       </div>
                     </div>
 
-                    <span
-                      className={`border px-5 py-3 rounded-2xl text-sm md:text-base font-extrabold ${getStatusClass(
-                        order.status
-                      )}`}
-                    >
-                      {order.status}
-                    </span>
+                    <div>
+                      <span
+                        className={`inline-flex px-5 py-3 rounded-2xl border text-sm font-bold ${getStatusClass(
+                          order.status
+                        )}`}
+                      >
+                        {order.status}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="space-y-4 mb-8">
                     {order.items.map((item) => (
                       <div
                         key={item.id}
-                        className="flex items-center justify-between bg-black border border-white/10 rounded-2xl p-5"
+                        className="bg-black border border-white/10 rounded-2xl p-5 flex items-center justify-between gap-4"
                       >
                         <div>
-                          <p className="font-bold text-lg md:text-xl">
-                            {item.product.name}
-                          </p>
+                          <h3 className="font-bold text-xl">
+                            {item.productName}
+                          </h3>
 
-                          <p className="text-gray-500 text-sm mt-1">
-                            Rs. {item.price} each
+                          <p className="text-gray-400 mt-1">
+                            Quantity: {item.quantity}
                           </p>
                         </div>
 
-                        <div className="text-3xl font-extrabold text-orange-500">
+                        <p className="text-orange-500 font-bold text-xl">
                           × {item.quantity}
-                        </div>
+                        </p>
                       </div>
                     ))}
                   </div>
 
-                  <div className="grid md:grid-cols-3 gap-4">
-                    <button
-                      onClick={() =>
-                        handleStatusChange(order.id, "PREPARING")
-                      }
-                      disabled={updatingOrderId === order.id}
-                      className="bg-yellow-500 hover:bg-yellow-600 disabled:opacity-60 disabled:cursor-not-allowed text-black px-5 py-5 rounded-2xl font-extrabold text-lg transition"
-                    >
-                      Preparing
-                    </button>
+                  <div className="flex flex-wrap gap-4">
+                    {order.status === "PENDING" && (
+                      <button
+                        onClick={() =>
+                          handleStatusChange(
+                            order.id,
+                            "PREPARING"
+                          )
+                        }
+                        disabled={updatingOrderId === order.id}
+                        className="flex-1 min-w-[180px] bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white py-4 rounded-2xl font-bold text-lg transition"
+                      >
+                        Start Preparing
+                      </button>
+                    )}
 
-                    <button
-                      onClick={() =>
-                        handleStatusChange(order.id, "READY")
-                      }
-                      disabled={updatingOrderId === order.id}
-                      className="bg-green-500 hover:bg-green-600 disabled:opacity-60 disabled:cursor-not-allowed text-black px-5 py-5 rounded-2xl font-extrabold text-lg transition"
-                    >
-                      Ready
-                    </button>
-
-                    <button
-                      onClick={() =>
-                        handleStatusChange(order.id, "COMPLETED")
-                      }
-                      disabled={updatingOrderId === order.id}
-                      className="bg-orange-500 hover:bg-orange-600 disabled:opacity-60 disabled:cursor-not-allowed px-5 py-5 rounded-2xl font-extrabold text-lg transition"
-                    >
-                      Complete
-                    </button>
+                    {order.status === "PREPARING" && (
+                      <button
+                        onClick={() =>
+                          handleStatusChange(order.id, "READY")
+                        }
+                        disabled={updatingOrderId === order.id}
+                        className="flex-1 min-w-[180px] bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white py-4 rounded-2xl font-bold text-lg transition"
+                      >
+                        Mark Ready
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}

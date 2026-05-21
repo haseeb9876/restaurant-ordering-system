@@ -1,19 +1,49 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import toast from "react-hot-toast"
 import { useCart } from "../../cart/context/CartContext"
 import { useAuth } from "../../auth/context/AuthContext"
+import { getPublicSettings } from "../../../services/api"
 
 function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [branding, setBranding] = useState({
+    restaurantName: "FoodieHub",
+    logoUrl: "",
+  })
 
   const { cartItems, openCart } = useCart()
   const { user, logout } = useAuth()
+
+  useEffect(() => {
+    const fetchBranding = async () => {
+      try {
+        const settings = await getPublicSettings()
+
+        setBranding({
+          restaurantName: settings.restaurantName || "FoodieHub",
+          logoUrl: settings.logoUrl || "",
+        })
+      } catch {
+        setBranding({
+          restaurantName: "FoodieHub",
+          logoUrl: "",
+        })
+      }
+    }
+
+    fetchBranding()
+  }, [])
 
   const totalCartItems = cartItems.reduce(
     (total, item) => total + item.quantity,
     0
   )
+
+  const goHomeTop = () => {
+    setIsMenuOpen(false)
+    window.location.href = "/"
+  }
 
   const closeMobileMenu = () => {
     setIsMenuOpen(false)
@@ -27,15 +57,29 @@ function Navbar() {
   return (
     <header className="fixed top-0 left-0 w-full z-50 bg-black/80 backdrop-blur-md border-b border-white/10">
       <nav className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-        <Link to="/" className="text-2xl font-bold text-orange-500">
-          Foodie<span className="text-white">Hub</span>
-        </Link>
+        <button
+          type="button"
+          onClick={goHomeTop}
+          className="flex items-center gap-3"
+        >
+          {branding.logoUrl && (
+            <img
+              src={branding.logoUrl}
+              alt={branding.restaurantName}
+              className="w-10 h-10 rounded-full object-cover border border-white/10"
+            />
+          )}
+
+          <span className="text-2xl font-bold text-orange-500">
+            {branding.restaurantName}
+          </span>
+        </button>
 
         <ul className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-300">
           <li>
-            <Link to="/" className="hover:text-orange-500">
+            <button onClick={goHomeTop} className="hover:text-orange-500">
               Home
-            </Link>
+            </button>
           </li>
 
           <li>
@@ -137,13 +181,12 @@ function Navbar() {
         <div className="md:hidden bg-black border-t border-white/10 px-6 py-6">
           <ul className="space-y-5 text-gray-300 font-medium">
             <li>
-              <Link
-                to="/"
-                onClick={closeMobileMenu}
+              <button
+                onClick={goHomeTop}
                 className="block hover:text-orange-500"
               >
                 Home
-              </Link>
+              </button>
             </li>
 
             <li>

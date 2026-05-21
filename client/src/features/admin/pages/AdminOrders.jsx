@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import toast from "react-hot-toast"
 import {
   getOrders,
@@ -19,6 +19,13 @@ const paymentStatuses = [
   "PENDING",
   "PAID",
   "FAILED",
+]
+
+const paymentMethods = [
+  "CASH_ON_DELIVERY",
+  "JAZZCASH",
+  "EASYPAISA",
+  "BANK_TRANSFER",
 ]
 
 function getStatusClass(status) {
@@ -55,6 +62,11 @@ function AdminOrders() {
   const [updatingOrderId, setUpdatingOrderId] = useState(null)
   const [updatingPaymentOrderId, setUpdatingPaymentOrderId] = useState(null)
 
+  const [searchTerm, setSearchTerm] = useState("")
+  const [orderStatusFilter, setOrderStatusFilter] = useState("ALL")
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState("ALL")
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState("ALL")
+
   const fetchOrders = async () => {
     try {
       setError("")
@@ -79,6 +91,65 @@ function AdminOrders() {
 
     return () => clearInterval(interval)
   }, [])
+
+  const filteredOrders = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase()
+
+    return orders.filter((order) => {
+      const matchesSearch =
+        !normalizedSearch ||
+        [
+          order.orderNumber,
+          order.customerName,
+          order.customerPhone,
+          order.customerEmail,
+          order.address,
+          order.transactionId,
+        ]
+          .filter(Boolean)
+          .some((value) =>
+            String(value).toLowerCase().includes(normalizedSearch)
+          )
+
+      const matchesOrderStatus =
+        orderStatusFilter === "ALL" ||
+        order.status === orderStatusFilter
+
+      const matchesPaymentStatus =
+        paymentStatusFilter === "ALL" ||
+        order.paymentStatus === paymentStatusFilter
+
+      const matchesPaymentMethod =
+        paymentMethodFilter === "ALL" ||
+        order.paymentMethod === paymentMethodFilter
+
+      return (
+        matchesSearch &&
+        matchesOrderStatus &&
+        matchesPaymentStatus &&
+        matchesPaymentMethod
+      )
+    })
+  }, [
+    orders,
+    searchTerm,
+    orderStatusFilter,
+    paymentStatusFilter,
+    paymentMethodFilter,
+  ])
+
+  const hasActiveFilters =
+    searchTerm ||
+    orderStatusFilter !== "ALL" ||
+    paymentStatusFilter !== "ALL" ||
+    paymentMethodFilter !== "ALL"
+
+  const clearFilters = () => {
+    setSearchTerm("")
+    setOrderStatusFilter("ALL")
+    setPaymentStatusFilter("ALL")
+    setPaymentMethodFilter("ALL")
+  }
 
   const handleStatusChange = async (orderId, status) => {
     try {
@@ -149,9 +220,118 @@ function AdminOrders() {
 
             <p className="text-gray-400 mt-3 max-w-3xl">
               Manage order preparation status and securely verify customer
-              payments. Payment verification is an admin-only action.
+              payments. Use filters to quickly find important orders.
             </p>
           </div>
+
+          <section className="bg-zinc-950 border border-white/10 rounded-[2rem] p-6 mb-8">
+            <div className="grid lg:grid-cols-5 gap-4">
+              <div className="lg:col-span-2">
+                <label className="block text-sm text-gray-400 mb-2">
+                  Search Orders
+                </label>
+
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  placeholder="Order, customer, phone, email, transaction ID"
+                  className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-orange-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">
+                  Order Status
+                </label>
+
+                <select
+                  value={orderStatusFilter}
+                  onChange={(event) =>
+                    setOrderStatusFilter(event.target.value)
+                  }
+                  className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-orange-500"
+                >
+                  <option value="ALL" className="bg-black">
+                    All Orders
+                  </option>
+                  {orderStatuses.map((status) => (
+                    <option key={status} value={status} className="bg-black">
+                      {status}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">
+                  Payment Status
+                </label>
+
+                <select
+                  value={paymentStatusFilter}
+                  onChange={(event) =>
+                    setPaymentStatusFilter(event.target.value)
+                  }
+                  className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-orange-500"
+                >
+                  <option value="ALL" className="bg-black">
+                    All Payments
+                  </option>
+                  {paymentStatuses.map((status) => (
+                    <option key={status} value={status} className="bg-black">
+                      {status}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">
+                  Payment Method
+                </label>
+
+                <select
+                  value={paymentMethodFilter}
+                  onChange={(event) =>
+                    setPaymentMethodFilter(event.target.value)
+                  }
+                  className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-orange-500"
+                >
+                  <option value="ALL" className="bg-black">
+                    All Methods
+                  </option>
+                  {paymentMethods.map((method) => (
+                    <option key={method} value={method} className="bg-black">
+                      {getPaymentLabel(method)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="mt-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <p className="text-gray-400 text-sm">
+                Showing{" "}
+                <span className="text-orange-500 font-bold">
+                  {filteredOrders.length}
+                </span>{" "}
+                of{" "}
+                <span className="text-white font-bold">{orders.length}</span>{" "}
+                orders
+              </p>
+
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="border border-white/10 hover:border-orange-500 px-5 py-2 rounded-full font-bold transition"
+                >
+                  Clear Filters
+                </button>
+              )}
+            </div>
+          </section>
 
           {loading && <p className="text-gray-400">Loading orders...</p>}
 
@@ -163,9 +343,25 @@ function AdminOrders() {
             </div>
           )}
 
-          {!loading && orders.length > 0 && (
+          {!loading && orders.length > 0 && filteredOrders.length === 0 && (
+            <div className="bg-zinc-950 border border-white/10 rounded-[2rem] p-8 text-center">
+              <p className="text-gray-400">
+                No orders match your current filters.
+              </p>
+
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="mt-5 bg-orange-500 hover:bg-orange-600 px-6 py-3 rounded-full font-bold transition"
+              >
+                Clear Filters
+              </button>
+            </div>
+          )}
+
+          {!loading && filteredOrders.length > 0 && (
             <div className="space-y-6">
-              {orders.map((order) => (
+              {filteredOrders.map((order) => (
                 <div
                   key={order.id}
                   className="bg-zinc-950 border border-white/10 rounded-[2rem] p-6"

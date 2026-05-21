@@ -11,6 +11,7 @@ import {
 const initialFormData = {
   restaurantName: "",
   logoUrl: "",
+  heroImageUrl: "",
   phone: "",
   email: "",
   address: "",
@@ -19,6 +20,7 @@ const initialFormData = {
   aboutDescription: "",
   facebookUrl: "",
   instagramUrl: "",
+  tiktokUrl: "",
   whatsappNumber: "",
   jazzcashTitle: "",
   jazzcashNumber: "",
@@ -40,7 +42,38 @@ function AdminSettings() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [uploadingLogo, setUploadingLogo] = useState(false)
+  const [uploadingHero, setUploadingHero] = useState(false)
   const [error, setError] = useState("")
+
+  const normalizeSettings = (settings) => ({
+    restaurantName: settings.restaurantName || "",
+    logoUrl: settings.logoUrl || "",
+    heroImageUrl: settings.heroImageUrl || "",
+    phone: settings.phone || "",
+    email: settings.email || "",
+    address: settings.address || "",
+    openingHours: settings.openingHours || "",
+    aboutTitle: settings.aboutTitle || "",
+    aboutDescription: settings.aboutDescription || "",
+    facebookUrl: settings.facebookUrl || "",
+    instagramUrl: settings.instagramUrl || "",
+    tiktokUrl: settings.tiktokUrl || "",
+    whatsappNumber: settings.whatsappNumber || "",
+    jazzcashTitle: settings.jazzcashTitle || "",
+    jazzcashNumber: settings.jazzcashNumber || "",
+    easypaisaTitle: settings.easypaisaTitle || "",
+    easypaisaNumber: settings.easypaisaNumber || "",
+    bankName: settings.bankName || "",
+    bankAccountTitle: settings.bankAccountTitle || "",
+    bankAccountNumber: settings.bankAccountNumber || "",
+    bankIban: settings.bankIban || "",
+    deliveryFee: settings.deliveryFee ?? 150,
+    freeDeliveryEnabled: settings.freeDeliveryEnabled ?? false,
+    freeDeliveryMinimumOrder:
+      settings.freeDeliveryMinimumOrder ?? 600,
+    isOnlinePaymentOn: settings.isOnlinePaymentOn ?? true,
+    isCashOnDeliveryOn: settings.isCashOnDeliveryOn ?? true,
+  })
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -50,34 +83,7 @@ function AdminSettings() {
         const response = await getAdminSettings()
         const settings = response.data ? response.data : response
 
-        setFormData({
-          restaurantName: settings.restaurantName || "",
-          logoUrl: settings.logoUrl || "",
-          phone: settings.phone || "",
-          email: settings.email || "",
-          address: settings.address || "",
-          openingHours: settings.openingHours || "",
-          aboutTitle: settings.aboutTitle || "",
-          aboutDescription: settings.aboutDescription || "",
-          facebookUrl: settings.facebookUrl || "",
-          instagramUrl: settings.instagramUrl || "",
-          whatsappNumber: settings.whatsappNumber || "",
-          jazzcashTitle: settings.jazzcashTitle || "",
-          jazzcashNumber: settings.jazzcashNumber || "",
-          easypaisaTitle: settings.easypaisaTitle || "",
-          easypaisaNumber: settings.easypaisaNumber || "",
-          bankName: settings.bankName || "",
-          bankAccountTitle: settings.bankAccountTitle || "",
-          bankAccountNumber: settings.bankAccountNumber || "",
-          bankIban: settings.bankIban || "",
-          deliveryFee: settings.deliveryFee ?? 150,
-          freeDeliveryEnabled:
-            settings.freeDeliveryEnabled ?? false,
-          freeDeliveryMinimumOrder:
-            settings.freeDeliveryMinimumOrder ?? 600,
-          isOnlinePaymentOn: settings.isOnlinePaymentOn ?? true,
-          isCashOnDeliveryOn: settings.isCashOnDeliveryOn ?? true,
-        })
+        setFormData(normalizeSettings(settings))
       } catch (error) {
         setError(error.message || "Failed to load settings.")
       } finally {
@@ -97,27 +103,41 @@ function AdminSettings() {
     }))
   }
 
-  const handleLogoUpload = async (event) => {
-    const file = event.target.files?.[0]
-
+  const uploadImageToField = async (file, fieldName, setUploading) => {
     if (!file) return
 
     try {
-      setUploadingLogo(true)
+      setUploading(true)
 
       const imageUrl = await uploadProductImage(file)
 
       setFormData((currentData) => ({
         ...currentData,
-        logoUrl: imageUrl,
+        [fieldName]: imageUrl,
       }))
 
-      toast.success("Logo uploaded successfully.")
+      toast.success("Image uploaded successfully.")
     } catch (error) {
-      toast.error(error.message || "Failed to upload logo.")
+      toast.error(error.message || "Failed to upload image.")
     } finally {
-      setUploadingLogo(false)
+      setUploading(false)
     }
+  }
+
+  const handleLogoUpload = async (event) => {
+    await uploadImageToField(
+      event.target.files?.[0],
+      "logoUrl",
+      setUploadingLogo
+    )
+  }
+
+  const handleHeroUpload = async (event) => {
+    await uploadImageToField(
+      event.target.files?.[0],
+      "heroImageUrl",
+      setUploadingHero
+    )
   }
 
   const handleSubmit = async (event) => {
@@ -149,36 +169,7 @@ function AdminSettings() {
         ),
       })
 
-      setFormData({
-        restaurantName: updatedSettings.restaurantName || "",
-        logoUrl: updatedSettings.logoUrl || "",
-        phone: updatedSettings.phone || "",
-        email: updatedSettings.email || "",
-        address: updatedSettings.address || "",
-        openingHours: updatedSettings.openingHours || "",
-        aboutTitle: updatedSettings.aboutTitle || "",
-        aboutDescription: updatedSettings.aboutDescription || "",
-        facebookUrl: updatedSettings.facebookUrl || "",
-        instagramUrl: updatedSettings.instagramUrl || "",
-        whatsappNumber: updatedSettings.whatsappNumber || "",
-        jazzcashTitle: updatedSettings.jazzcashTitle || "",
-        jazzcashNumber: updatedSettings.jazzcashNumber || "",
-        easypaisaTitle: updatedSettings.easypaisaTitle || "",
-        easypaisaNumber: updatedSettings.easypaisaNumber || "",
-        bankName: updatedSettings.bankName || "",
-        bankAccountTitle: updatedSettings.bankAccountTitle || "",
-        bankAccountNumber: updatedSettings.bankAccountNumber || "",
-        bankIban: updatedSettings.bankIban || "",
-        deliveryFee: updatedSettings.deliveryFee ?? 150,
-        freeDeliveryEnabled:
-          updatedSettings.freeDeliveryEnabled ?? false,
-        freeDeliveryMinimumOrder:
-          updatedSettings.freeDeliveryMinimumOrder ?? 600,
-        isOnlinePaymentOn:
-          updatedSettings.isOnlinePaymentOn ?? true,
-        isCashOnDeliveryOn:
-          updatedSettings.isCashOnDeliveryOn ?? true,
-      })
+      setFormData(normalizeSettings(updatedSettings))
 
       toast.success("Restaurant settings saved successfully.")
     } catch (error) {
@@ -210,8 +201,8 @@ function AdminSettings() {
             </h1>
 
             <p className="text-gray-400 mt-3">
-              Manage branding, contact information, social links, delivery
-              rules, payment details, and customer-facing business settings.
+              Manage branding, hero image, contact information, social links,
+              delivery rules, payment details, and customer-facing settings.
             </p>
           </div>
 
@@ -275,6 +266,55 @@ function AdminSettings() {
                     src={formData.logoUrl}
                     alt="Restaurant Logo"
                     className="w-28 h-28 object-cover rounded-2xl border border-white/10 bg-black"
+                  />
+                </div>
+              )}
+            </section>
+
+            <section className="bg-zinc-950 border border-white/10 rounded-[2rem] p-6">
+              <h2 className="text-2xl font-bold mb-6">
+                Hero Cover Image
+              </h2>
+
+              <input
+                type="text"
+                name="heroImageUrl"
+                value={formData.heroImageUrl}
+                onChange={handleChange}
+                placeholder="Hero Image URL"
+                className="w-full bg-black border border-white/10 rounded-2xl px-5 py-4 outline-none focus:border-orange-500"
+              />
+
+              <div className="mt-5">
+                <label className="block text-sm text-gray-400 mb-2">
+                  Upload Hero Image
+                </label>
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleHeroUpload}
+                  disabled={uploadingHero}
+                  className="w-full bg-black border border-white/10 rounded-2xl px-5 py-4 outline-none focus:border-orange-500"
+                />
+
+                {uploadingHero && (
+                  <p className="text-orange-500 text-sm mt-3">
+                    Uploading hero image...
+                  </p>
+                )}
+              </div>
+
+              {formData.heroImageUrl && (
+                <div className="mt-6">
+                  <p className="text-sm text-gray-400 mb-3">
+                    Hero Preview
+                  </p>
+
+                  <img
+                    src={formData.heroImageUrl}
+                    alt="Hero Preview"
+                    className="w-full max-h-80 object-cover rounded-2xl border border-white/10 bg-black"
                   />
                 </div>
               )}
@@ -367,18 +407,10 @@ function AdminSettings() {
                   className="bg-black border border-white/10 rounded-2xl px-5 py-4 outline-none focus:border-orange-500"
                 />
               </div>
-
-              <p className="text-gray-400 text-sm mt-4">
-                Current rule: {formData.freeDeliveryEnabled
-                  ? `orders of Rs. ${formData.freeDeliveryMinimumOrder} or above get free delivery.`
-                  : `delivery fee applies to all orders.`}
-              </p>
             </section>
 
             <section className="bg-zinc-950 border border-white/10 rounded-[2rem] p-6">
-              <h2 className="text-2xl font-bold mb-6">
-                About Section
-              </h2>
+              <h2 className="text-2xl font-bold mb-6">About Section</h2>
 
               <div className="space-y-5">
                 <input
@@ -412,7 +444,7 @@ function AdminSettings() {
                   name="facebookUrl"
                   value={formData.facebookUrl}
                   onChange={handleChange}
-                  placeholder="Facebook URL"
+                  placeholder="Facebook URL e.g. https://facebook.com"
                   className="bg-black border border-white/10 rounded-2xl px-5 py-4 outline-none focus:border-orange-500"
                 />
 
@@ -421,7 +453,16 @@ function AdminSettings() {
                   name="instagramUrl"
                   value={formData.instagramUrl}
                   onChange={handleChange}
-                  placeholder="Instagram URL"
+                  placeholder="Instagram URL e.g. https://instagram.com"
+                  className="bg-black border border-white/10 rounded-2xl px-5 py-4 outline-none focus:border-orange-500"
+                />
+
+                <input
+                  type="text"
+                  name="tiktokUrl"
+                  value={formData.tiktokUrl}
+                  onChange={handleChange}
+                  placeholder="TikTok URL e.g. https://tiktok.com"
                   className="bg-black border border-white/10 rounded-2xl px-5 py-4 outline-none focus:border-orange-500"
                 />
 
@@ -577,7 +618,7 @@ function AdminSettings() {
             <div className="flex justify-end">
               <button
                 type="submit"
-                disabled={saving || uploadingLogo}
+                disabled={saving || uploadingLogo || uploadingHero}
                 className="bg-orange-500 hover:bg-orange-600 disabled:opacity-60 disabled:cursor-not-allowed px-8 py-4 rounded-full font-bold transition"
               >
                 {saving ? "Saving Settings..." : "Save Settings"}

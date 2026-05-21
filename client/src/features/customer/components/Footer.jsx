@@ -1,19 +1,43 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
+import {
+  FaFacebookF,
+  FaInstagram,
+  FaTiktok,
+  FaWhatsapp,
+} from "react-icons/fa"
 import { getPublicSettings } from "../../../services/api"
+
+const normalizeUrl = (url, fallbackUrl = "") => {
+  if (!url) return fallbackUrl
+
+  const cleanUrl = url.trim()
+
+  if (!cleanUrl) return fallbackUrl
+
+  if (
+    cleanUrl.startsWith("http://") ||
+    cleanUrl.startsWith("https://")
+  ) {
+    return cleanUrl
+  }
+
+  return `https://${cleanUrl}`
+}
 
 function Footer() {
   const [settings, setSettings] = useState({
-    restaurantName: "FoodieHub",
+    restaurantName: "Restaurant",
     logoUrl: "",
     aboutDescription:
       "Modern restaurant ordering experience with delicious meals, fast delivery, and premium customer service.",
     address: "Peshawar, Pakistan",
     phone: "+92 300 1234567",
-    email: "support@foodiehub.com",
+    email: "support@restaurant.com",
     openingHours: "11 AM - 11 PM",
-    facebookUrl: "",
-    instagramUrl: "",
+    facebookUrl: "https://facebook.com",
+    instagramUrl: "https://instagram.com",
+    tiktokUrl: "https://tiktok.com",
     whatsappNumber: "",
   })
 
@@ -23,17 +47,27 @@ function Footer() {
         const data = await getPublicSettings()
 
         setSettings({
-          restaurantName: data.restaurantName || "FoodieHub",
+          restaurantName: data.restaurantName || "Restaurant",
           logoUrl: data.logoUrl || "",
           aboutDescription:
             data.aboutDescription ||
             "Modern restaurant ordering experience with delicious meals, fast delivery, and premium customer service.",
           address: data.address || "Peshawar, Pakistan",
           phone: data.phone || "+92 300 1234567",
-          email: data.email || "support@foodiehub.com",
+          email: data.email || "support@restaurant.com",
           openingHours: data.openingHours || "11 AM - 11 PM",
-          facebookUrl: data.facebookUrl || "",
-          instagramUrl: data.instagramUrl || "",
+          facebookUrl: normalizeUrl(
+            data.facebookUrl,
+            "https://facebook.com"
+          ),
+          instagramUrl: normalizeUrl(
+            data.instagramUrl,
+            "https://instagram.com"
+          ),
+          tiktokUrl: normalizeUrl(
+            data.tiktokUrl,
+            "https://tiktok.com"
+          ),
           whatsappNumber: data.whatsappNumber || "",
         })
       } catch {
@@ -115,48 +149,49 @@ function Footer() {
         <div>
           <h3 className="text-xl font-bold mb-5">Follow Us</h3>
 
-          <div className="flex gap-4">
-            {settings.facebookUrl && (
-              <a
-                href={settings.facebookUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="w-12 h-12 rounded-full bg-zinc-950 border border-white/10 hover:border-orange-500 transition text-xl flex items-center justify-center"
-              >
-                📘
-              </a>
-            )}
+          <div className="flex gap-4 flex-wrap">
+            <a
+              href={settings.facebookUrl}
+              target="_blank"
+              rel="noreferrer"
+              title="Facebook"
+              className="w-12 h-12 rounded-full bg-zinc-950 border border-white/10 hover:border-blue-500 transition flex items-center justify-center text-lg"
+            >
+              <FaFacebookF />
+            </a>
 
-            {settings.instagramUrl && (
-              <a
-                href={settings.instagramUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="w-12 h-12 rounded-full bg-zinc-950 border border-white/10 hover:border-orange-500 transition text-xl flex items-center justify-center"
-              >
-                📸
-              </a>
-            )}
+            <a
+              href={settings.instagramUrl}
+              target="_blank"
+              rel="noreferrer"
+              title="Instagram"
+              className="w-12 h-12 rounded-full bg-zinc-950 border border-white/10 hover:border-pink-500 transition flex items-center justify-center text-lg"
+            >
+              <FaInstagram />
+            </a>
+
+            <a
+              href={settings.tiktokUrl}
+              target="_blank"
+              rel="noreferrer"
+              title="TikTok"
+              className="w-12 h-12 rounded-full bg-zinc-950 border border-white/10 hover:border-white transition flex items-center justify-center text-lg"
+            >
+              <FaTiktok />
+            </a>
 
             {whatsappLink && (
               <a
                 href={whatsappLink}
                 target="_blank"
                 rel="noreferrer"
-                className="w-12 h-12 rounded-full bg-zinc-950 border border-white/10 hover:border-green-500 transition text-xl flex items-center justify-center"
+                title="WhatsApp"
+                className="w-12 h-12 rounded-full bg-zinc-950 border border-white/10 hover:border-green-500 transition flex items-center justify-center text-lg"
               >
-                💬
+                <FaWhatsapp />
               </a>
             )}
           </div>
-
-          {!settings.facebookUrl &&
-            !settings.instagramUrl &&
-            !whatsappLink && (
-              <p className="text-gray-500 text-sm">
-                Social links will appear here after admin adds them.
-              </p>
-            )}
         </div>
       </div>
 

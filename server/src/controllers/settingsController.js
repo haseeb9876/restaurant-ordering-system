@@ -35,6 +35,7 @@ export const getPublicSettings = asyncHandler(async (req, res) => {
   res.json({
     restaurantName: settings.restaurantName,
     logoUrl: settings.logoUrl,
+    heroImageUrl: settings.heroImageUrl,
 
     phone: settings.phone,
     email: settings.email,
@@ -46,6 +47,7 @@ export const getPublicSettings = asyncHandler(async (req, res) => {
 
     facebookUrl: settings.facebookUrl,
     instagramUrl: settings.instagramUrl,
+    tiktokUrl: settings.tiktokUrl,
     whatsappNumber: settings.whatsappNumber,
 
     jazzcashTitle: settings.jazzcashTitle,
@@ -95,9 +97,13 @@ export const updateAdminSettings = asyncHandler(async (req, res) => {
     data: {
       restaurantName:
         cleanNullableString(req.body.restaurantName) ||
-        "FoodieHub",
+        "Restaurant",
 
       logoUrl: cleanNullableString(req.body.logoUrl),
+
+      heroImageUrl: cleanNullableString(
+        req.body.heroImageUrl
+      ),
 
       phone: cleanNullableString(req.body.phone),
       email: cleanNullableString(req.body.email),
@@ -121,6 +127,10 @@ export const updateAdminSettings = asyncHandler(async (req, res) => {
 
       instagramUrl: cleanNullableString(
         req.body.instagramUrl
+      ),
+
+      tiktokUrl: cleanNullableString(
+        req.body.tiktokUrl
       ),
 
       whatsappNumber: cleanNullableString(

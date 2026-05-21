@@ -1,6 +1,28 @@
 import { motion } from "framer-motion"
+import { useEffect, useState } from "react"
+import { getPublicSettings } from "../../../services/api"
 
 function Hero() {
+  const [heroImage, setHeroImage] = useState(
+    "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38"
+  )
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const settings = await getPublicSettings()
+
+        if (settings.heroImageUrl) {
+          setHeroImage(settings.heroImageUrl)
+        }
+      } catch {
+        // Keep fallback image
+      }
+    }
+
+    fetchSettings()
+  }, [])
+
   return (
     <section className="min-h-screen flex items-center pt-24 px-6 bg-gradient-to-br from-black via-zinc-950 to-orange-950">
       <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center">
@@ -51,8 +73,8 @@ function Hero() {
             }}
           >
             <img
-              src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38"
-              alt="Delicious pizza"
+              src={heroImage}
+              alt="Restaurant hero"
               className="rounded-[2rem] w-full h-[420px] object-cover"
             />
           </motion.div>

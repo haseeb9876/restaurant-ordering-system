@@ -294,10 +294,14 @@ export const updateOrderStatus = asyncHandler(
 
     const allowedStatuses = [
       "PENDING",
+      "CONFIRMED",
       "PREPARING",
       "READY",
+      "OUT_FOR_DELIVERY",
+      "DELIVERED",
       "COMPLETED",
       "CANCELLED",
+      
     ]
 
     if (!allowedStatuses.includes(status)) {

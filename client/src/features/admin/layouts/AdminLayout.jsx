@@ -24,7 +24,7 @@ function AdminLayout({ children }) {
     fetchSettings()
   }, [])
 
-  const restaurantName = settings?.restaurantName || "FoodieHub"
+  const restaurantName = settings?.restaurantName || "Restaurant"
   const logoUrl = settings?.logoUrl || ""
 
   const handleLogout = () => {

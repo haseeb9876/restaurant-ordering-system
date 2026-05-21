@@ -67,7 +67,7 @@ function Register() {
         <div className="max-w-md mx-auto bg-zinc-950 border border-white/10 rounded-[2rem] p-8">
           <div className="text-center mb-8">
             <p className="text-orange-500 font-semibold mb-3">
-              Join FoodieHub
+              Join Restaurant
             </p>
 
             <h1 className="text-4xl font-extrabold">Create Account</h1>

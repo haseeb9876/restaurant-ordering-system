@@ -13,6 +13,10 @@ function getStatusClass(status) {
     return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
   }
 
+  if (status === "CONFIRMED") {
+    return "bg-cyan-500/20 text-cyan-400 border-cyan-500/30"
+  }
+
   if (status === "PREPARING") {
     return "bg-blue-500/20 text-blue-400 border-blue-500/30"
   }
@@ -22,6 +26,10 @@ function getStatusClass(status) {
   }
 
   return "bg-white/10 text-gray-300 border-white/10"
+}
+
+function formatOrderStatus(status) {
+  return status.replaceAll("_", " ")
 }
 
 function KitchenPanel() {
@@ -46,7 +54,7 @@ function KitchenPanel() {
     fetchSettings()
   }, [])
 
-  const restaurantName = settings?.restaurantName || "FoodieHub"
+  const restaurantName = settings?.restaurantName || "Restaurant"
   const logoUrl = settings?.logoUrl || ""
 
   const fetchOrders = async () => {
@@ -56,6 +64,7 @@ function KitchenPanel() {
       const kitchenOrders = data.filter(
         (order) =>
           order.status === "PENDING" ||
+          order.status === "CONFIRMED" ||
           order.status === "PREPARING" ||
           order.status === "READY"
       )
@@ -82,9 +91,9 @@ function KitchenPanel() {
     return {
       pending: orders.filter((o) => o.status === "PENDING").length,
 
-      preparing: orders.filter(
-        (o) => o.status === "PREPARING"
-      ).length,
+      confirmed: orders.filter((o) => o.status === "CONFIRMED").length,
+
+      preparing: orders.filter((o) => o.status === "PREPARING").length,
 
       ready: orders.filter((o) => o.status === "READY").length,
 
@@ -112,15 +121,15 @@ function KitchenPanel() {
 
       await updateOrderStatus(orderId, status)
 
-      toast.success(`Order marked as ${status.toLowerCase()}.`)
+      toast.success(
+        `Order marked as ${formatOrderStatus(status).toLowerCase()}.`
+      )
 
       fetchOrders()
     } catch (error) {
-      const message =
-        error.message || "Failed to update order status."
+      const message = error.message || "Failed to update order status."
 
       setError(message)
-
       toast.error(message)
     } finally {
       setUpdatingOrderId(null)
@@ -154,9 +163,7 @@ function KitchenPanel() {
       <header className="sticky top-0 z-40 bg-black/90 backdrop-blur-md border-b border-white/10 px-4 md:px-6 py-4">
         <div className="max-w-7xl mx-auto flex flex-col xl:flex-row xl:items-center xl:justify-between gap-5">
           <div>
-            <Link to="/">
-              {renderBrand()}
-            </Link>
+            <Link to="/">{renderBrand()}</Link>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -198,47 +205,42 @@ function KitchenPanel() {
             </h1>
 
             <p className="text-gray-400 mt-4 text-lg max-w-3xl">
-              Manage active kitchen orders in real time with large
-              touch-friendly controls for tablets and kitchen displays.
+              Confirm new orders, prepare food, and mark orders ready for
+              delivery in real time.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-5 mb-10">
+          <div className="grid md:grid-cols-2 xl:grid-cols-5 gap-5 mb-10">
             <div className="bg-zinc-950 border border-white/10 rounded-[2rem] p-6">
-              <p className="text-gray-400 mb-3">
-                Pending Orders
-              </p>
-
+              <p className="text-gray-400 mb-3">Pending Orders</p>
               <h2 className="text-5xl font-extrabold text-yellow-400">
                 {analytics.pending}
               </h2>
             </div>
 
             <div className="bg-zinc-950 border border-white/10 rounded-[2rem] p-6">
-              <p className="text-gray-400 mb-3">
-                Preparing Orders
-              </p>
+              <p className="text-gray-400 mb-3">Confirmed Orders</p>
+              <h2 className="text-5xl font-extrabold text-cyan-400">
+                {analytics.confirmed}
+              </h2>
+            </div>
 
+            <div className="bg-zinc-950 border border-white/10 rounded-[2rem] p-6">
+              <p className="text-gray-400 mb-3">Preparing Orders</p>
               <h2 className="text-5xl font-extrabold text-blue-400">
                 {analytics.preparing}
               </h2>
             </div>
 
             <div className="bg-zinc-950 border border-white/10 rounded-[2rem] p-6">
-              <p className="text-gray-400 mb-3">
-                Ready Orders
-              </p>
-
+              <p className="text-gray-400 mb-3">Ready Orders</p>
               <h2 className="text-5xl font-extrabold text-green-400">
                 {analytics.ready}
               </h2>
             </div>
 
             <div className="bg-zinc-950 border border-white/10 rounded-[2rem] p-6">
-              <p className="text-gray-400 mb-3">
-                Total Items
-              </p>
-
+              <p className="text-gray-400 mb-3">Total Items</p>
               <h2 className="text-5xl font-extrabold text-orange-500">
                 {analytics.totalItems}
               </h2>
@@ -246,16 +248,10 @@ function KitchenPanel() {
           </div>
 
           {loading && (
-            <p className="text-gray-400 text-lg">
-              Loading kitchen orders...
-            </p>
+            <p className="text-gray-400 text-lg">Loading kitchen orders...</p>
           )}
 
-          {error && (
-            <p className="text-red-400 mb-6 text-lg">
-              {error}
-            </p>
-          )}
+          {error && <p className="text-red-400 mb-6 text-lg">{error}</p>}
 
           {!loading && orders.length === 0 && (
             <div className="bg-zinc-950 border border-white/10 rounded-[2rem] p-12 text-center">
@@ -303,7 +299,7 @@ function KitchenPanel() {
                           order.status
                         )}`}
                       >
-                        {order.status}
+                        {formatOrderStatus(order.status)}
                       </span>
                     </div>
                   </div>
@@ -316,7 +312,7 @@ function KitchenPanel() {
                       >
                         <div>
                           <h3 className="font-bold text-xl">
-                            {item.productName}
+                            {item.productName || item.product?.name}
                           </h3>
 
                           <p className="text-gray-400 mt-1">
@@ -335,10 +331,19 @@ function KitchenPanel() {
                     {order.status === "PENDING" && (
                       <button
                         onClick={() =>
-                          handleStatusChange(
-                            order.id,
-                            "PREPARING"
-                          )
+                          handleStatusChange(order.id, "CONFIRMED")
+                        }
+                        disabled={updatingOrderId === order.id}
+                        className="flex-1 min-w-[180px] bg-cyan-500 hover:bg-cyan-600 disabled:opacity-50 text-white py-4 rounded-2xl font-bold text-lg transition"
+                      >
+                        Confirm Order
+                      </button>
+                    )}
+
+                    {order.status === "CONFIRMED" && (
+                      <button
+                        onClick={() =>
+                          handleStatusChange(order.id, "PREPARING")
                         }
                         disabled={updatingOrderId === order.id}
                         className="flex-1 min-w-[180px] bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white py-4 rounded-2xl font-bold text-lg transition"
@@ -349,14 +354,18 @@ function KitchenPanel() {
 
                     {order.status === "PREPARING" && (
                       <button
-                        onClick={() =>
-                          handleStatusChange(order.id, "READY")
-                        }
+                        onClick={() => handleStatusChange(order.id, "READY")}
                         disabled={updatingOrderId === order.id}
                         className="flex-1 min-w-[180px] bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white py-4 rounded-2xl font-bold text-lg transition"
                       >
                         Mark Ready
                       </button>
+                    )}
+
+                    {order.status === "READY" && (
+                      <p className="text-green-400 font-bold">
+                        Ready for delivery/admin completion.
+                      </p>
                     )}
                   </div>
                 </div>

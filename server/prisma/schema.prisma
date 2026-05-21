@@ -16,8 +16,11 @@ enum UserRole {
 
 enum OrderStatus {
   PENDING
+  CONFIRMED
   PREPARING
   READY
+  OUT_FOR_DELIVERY
+  DELIVERED
   COMPLETED
   CANCELLED
 }
@@ -126,7 +129,7 @@ model OrderItem {
 model RestaurantSettings {
   id                  Int      @id @default(1)
 
-  restaurantName      String   @default("FoodieHub")
+  restaurantName      String   @default("Restaurant")
   phone               String?
   email               String?
   address             String?
@@ -138,7 +141,8 @@ model RestaurantSettings {
   instagramUrl        String?
   whatsappNumber      String?
   logoUrl             String?
-
+  tiktokUrl           String?
+  heroImageUrl        String?
 
 
   jazzcashTitle       String?

@@ -6,12 +6,22 @@ import CartSidebar from "../../cart/components/CartSidebar"
 import { useAuth } from "../../auth/context/AuthContext"
 import { getMyOrders } from "../../../services/api"
 
-const trackingSteps = ["PENDING", "PREPARING", "READY", "COMPLETED"]
+const trackingSteps = [
+  "PENDING",
+  "CONFIRMED",
+  "PREPARING",
+  "READY",
+  "OUT_FOR_DELIVERY",
+  "DELIVERED",
+]
 
 function getStatusClass(status) {
   if (status === "PENDING") return "bg-yellow-500/20 text-yellow-400"
+  if (status === "CONFIRMED") return "bg-cyan-500/20 text-cyan-400"
   if (status === "PREPARING") return "bg-blue-500/20 text-blue-400"
   if (status === "READY") return "bg-green-500/20 text-green-400"
+  if (status === "OUT_FOR_DELIVERY") return "bg-purple-500/20 text-purple-400"
+  if (status === "DELIVERED") return "bg-emerald-500/20 text-emerald-400"
   if (status === "COMPLETED") return "bg-orange-500/20 text-orange-400"
   if (status === "CANCELLED") return "bg-red-500/20 text-red-400"
 
@@ -37,9 +47,20 @@ function formatPaymentMethod(method) {
 
 function getStepLabel(status) {
   if (status === "PENDING") return "Order Placed"
+  if (status === "CONFIRMED") return "Confirmed"
   if (status === "PREPARING") return "Preparing"
   if (status === "READY") return "Ready"
+  if (status === "OUT_FOR_DELIVERY") return "Out for Delivery"
+  if (status === "DELIVERED") return "Delivered"
   if (status === "COMPLETED") return "Completed"
+
+  return status.replaceAll("_", " ")
+}
+
+function getTrackingStatus(status) {
+  if (status === "COMPLETED") {
+    return "DELIVERED"
+  }
 
   return status
 }
@@ -97,13 +118,14 @@ function OrderTimeline({ status }) {
     )
   }
 
-  const currentStepIndex = trackingSteps.indexOf(status)
+  const normalizedStatus = getTrackingStatus(status)
+  const currentStepIndex = trackingSteps.indexOf(normalizedStatus)
 
   return (
     <div className="bg-black border border-white/10 rounded-2xl p-5">
       <h3 className="font-bold mb-5">Order Tracking</h3>
 
-      <div className="grid md:grid-cols-4 gap-4">
+      <div className="grid md:grid-cols-3 xl:grid-cols-6 gap-4">
         {trackingSteps.map((step, index) => {
           const isActive = index <= currentStepIndex
 
@@ -281,7 +303,7 @@ function Profile() {
                                 latestOrder.status
                               )}`}
                             >
-                              {latestOrder.status}
+                              {getStepLabel(latestOrder.status)}
                             </p>
                           </div>
 
@@ -398,7 +420,7 @@ function Profile() {
                                     order.status
                                   )}`}
                                 >
-                                  {order.status}
+                                  {getStepLabel(order.status)}
                                 </span>
 
                                 <span className="font-bold">

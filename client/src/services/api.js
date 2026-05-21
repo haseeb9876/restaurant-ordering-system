@@ -189,6 +189,19 @@ export const updateOrderStatus = async (orderId, status) => {
   return result.data
 }
 
+export const updatePaymentStatus = async (orderId, paymentStatus) => {
+  const result = await apiRequest(`/orders/${orderId}/payment-status`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify({ paymentStatus }),
+  })
+
+  return result.data
+}
+
 export const getUsers = async () => {
   const result = await apiRequest("/users", {
     headers: {
@@ -210,4 +223,33 @@ export const createStaffUser = async (staffData) => {
   })
 
   return result.data
+}
+
+export const getAdminSettings = async () => {
+  const result = await apiRequest("/settings/admin", {
+    headers: {
+      ...getAuthHeaders(),
+    },
+  })
+
+  return result
+}
+
+export const updateAdminSettings = async (settingsData) => {
+  const result = await apiRequest("/settings/admin", {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(settingsData),
+  })
+
+  return result.settings
+}
+
+export const getPublicSettings = async () => {
+  const result = await apiRequest("/settings/public")
+
+  return result
 }

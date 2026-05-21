@@ -12,6 +12,7 @@ import orderRoutes from "./routes/orderRoutes.js"
 import authRoutes from "./routes/authRoutes.js"
 import uploadRoutes from "./routes/uploadRoutes.js"
 import userRoutes from "./routes/userRoutes.js"
+import settingsRoutes from "./routes/settingsRoutes.js"
 
 import {
   errorHandler,
@@ -25,6 +26,7 @@ const app = express()
 const allowedOrigins = [
   process.env.CLIENT_URL,
   "http://localhost:5173",
+  "http://localhost:5174",
 ].filter(Boolean)
 
 app.use(
@@ -73,7 +75,7 @@ app.use(express.json({ limit: "100kb" }))
 
 app.use("/api", apiLimiter)
 app.use("/api/auth", authLimiter)
-app.use("/api/users", userRoutes)
+
 app.get("/", (req, res) => {
   res.json({
     message: "Restaurant Ordering System API is running",
@@ -111,6 +113,8 @@ app.use("/api/products", productRoutes)
 app.use("/api/categories", categoryRoutes)
 app.use("/api/orders", orderRoutes)
 app.use("/api/uploads", uploadRoutes)
+app.use("/api/users", userRoutes)
+app.use("/api/settings", settingsRoutes)
 
 app.use(notFound)
 app.use(errorHandler)

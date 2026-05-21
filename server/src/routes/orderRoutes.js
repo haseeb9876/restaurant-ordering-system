@@ -1,9 +1,11 @@
 import express from "express"
+
 import {
   createOrder,
   getMyOrders,
   getOrders,
   updateOrderStatus,
+  updatePaymentStatus,
 } from "../controllers/orderController.js"
 
 import {
@@ -35,6 +37,13 @@ router.patch(
   protect,
   allowRoles("ADMIN", "STAFF"),
   updateOrderStatus
+)
+
+router.patch(
+  "/:id/payment-status",
+  protect,
+  allowRoles("ADMIN"),
+  updatePaymentStatus
 )
 
 export default router

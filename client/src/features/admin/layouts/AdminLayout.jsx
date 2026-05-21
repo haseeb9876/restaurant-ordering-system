@@ -16,6 +16,7 @@ function AdminLayout({ children }) {
     { label: "Orders", path: "/admin/orders" },
     { label: "Products", path: "/admin/products" },
     { label: "Customers", path: "/admin/customers" },
+    { label: "Settings", path: "/admin/settings" },
     { label: "Kitchen Panel", path: "/kitchen" },
   ]
 

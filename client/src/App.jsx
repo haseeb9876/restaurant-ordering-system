@@ -18,6 +18,7 @@ import AdminProducts from "./features/admin/pages/AdminProducts"
 import AdminAddProduct from "./features/admin/pages/AdminAddProduct"
 import AdminEditProduct from "./features/admin/pages/AdminEditProduct"
 import AdminCustomers from "./features/admin/pages/AdminCustomers"
+import AdminSettings from "./features/admin/pages/AdminSettings"
 
 import NotFound from "./features/customer/pages/NotFound"
 
@@ -128,6 +129,15 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["ADMIN"]}>
             <AdminCustomers />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/settings"
+        element={
+          <ProtectedRoute allowedRoles={["ADMIN"]}>
+            <AdminSettings />
           </ProtectedRoute>
         }
       />

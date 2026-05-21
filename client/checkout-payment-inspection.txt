@@ -1,21 +1,29 @@
-import { useEffect, useMemo, useState } from "react"
+===== CHECKOUT JSX =====
+import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import Navbar from "../components/Navbar"
 import CartSidebar from "../../cart/components/CartSidebar"
 import { useCart } from "../../cart/context/CartContext"
 import { useAuth } from "../../auth/context/AuthContext"
-import {
-  createOrder,
-  getPublicSettings,
-} from "../../../services/api"
+import { createOrder } from "../../../services/api"
 
-function formatPaymentMethod(method) {
-  if (method === "CASH_ON_DELIVERY") return "Cash on Delivery"
-  if (method === "JAZZCASH") return "JazzCash"
-  if (method === "EASYPAISA") return "Easypaisa"
-  if (method === "BANK_TRANSFER") return "Bank Transfer"
-
-  return method || "Payment"
+const paymentAccounts = {
+  CASH_ON_DELIVERY: {
+    title: "Cash on Delivery",
+    description: "Pay when your food is delivered.",
+  },
+  EASYPAISA: {
+    title: "Easypaisa",
+    description: "Send payment to your Easypaisa account and enter transaction ID.",
+  },
+  JAZZCASH: {
+    title: "JazzCash",
+    description: "Send payment to your JazzCash account and enter transaction ID.",
+  },
+  BANK_TRANSFER: {
+    title: "Bank Transfer",
+    description: "Transfer payment to Meezan Bank and enter transaction ID.",
+  },
 }
 
 function Checkout() {
@@ -23,9 +31,6 @@ function Checkout() {
   const { user } = useAuth()
 
   const navigate = useNavigate()
-
-  const [settings, setSettings] = useState(null)
-  const [loadingSettings, setLoadingSettings] = useState(true)
 
   const [formData, setFormData] = useState({
     fullName: user?.fullName || "",
@@ -40,115 +45,18 @@ function Checkout() {
   const [error, setError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const paymentAccounts = useMemo(() => {
-    if (!settings) {
-      return []
-    }
-
-    const methods = []
-
-    if (settings.isCashOnDeliveryOn) {
-      methods.push({
-        key: "CASH_ON_DELIVERY",
-        title: "Cash on Delivery",
-        description: "Pay when your food is delivered.",
-      })
-    }
-
-    if (settings.isOnlinePaymentOn) {
-      if (settings.jazzcashNumber) {
-        methods.push({
-          key: "JAZZCASH",
-          title: "JazzCash",
-          description: "Send payment to JazzCash and enter transaction ID.",
-          details: [
-            ["Account Title", settings.jazzcashTitle],
-            ["Number", settings.jazzcashNumber],
-          ],
-        })
-      }
-
-      if (settings.easypaisaNumber) {
-        methods.push({
-          key: "EASYPAISA",
-          title: "Easypaisa",
-          description: "Send payment to Easypaisa and enter transaction ID.",
-          details: [
-            ["Account Title", settings.easypaisaTitle],
-            ["Number", settings.easypaisaNumber],
-          ],
-        })
-      }
-
-      if (settings.bankAccountNumber || settings.bankIban) {
-        methods.push({
-          key: "BANK_TRANSFER",
-          title: "Bank Transfer",
-          description: "Transfer payment to bank and enter transaction ID.",
-          details: [
-            ["Bank Name", settings.bankName],
-            ["Account Title", settings.bankAccountTitle],
-            ["Account Number", settings.bankAccountNumber],
-            ["IBAN", settings.bankIban],
-          ],
-        })
-      }
-    }
-
-    return methods
-  }, [settings])
-
-  const selectedPaymentMethod = paymentAccounts.find(
-    (method) => method.key === formData.paymentMethod
-  )
-
   useEffect(() => {
     if (!user) {
       navigate("/login?redirect=/checkout")
     }
   }, [user, navigate])
 
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        setLoadingSettings(true)
-
-        const publicSettings = await getPublicSettings()
-        setSettings(publicSettings)
-      } catch (error) {
-        setError(error.message || "Failed to load restaurant settings.")
-      } finally {
-        setLoadingSettings(false)
-      }
-    }
-
-    fetchSettings()
-  }, [])
-
-  useEffect(() => {
-    if (paymentAccounts.length === 0) {
-      return
-    }
-
-    const selectedStillAvailable = paymentAccounts.some(
-      (method) => method.key === formData.paymentMethod
-    )
-
-    if (!selectedStillAvailable) {
-      setFormData((currentData) => ({
-        ...currentData,
-        paymentMethod: paymentAccounts[0].key,
-        transactionId: "",
-      }))
-    }
-  }, [paymentAccounts, formData.paymentMethod])
-
   const subtotal = cartItems.reduce(
     (total, item) => total + item.price * item.quantity,
     0
   )
 
-  const deliveryFee = cartItems.length > 0 ? settings?.deliveryFee || 0 : 0
+  const deliveryFee = cartItems.length > 0 ? 150 : 0
   const total = subtotal + deliveryFee
 
   const handleChange = (e) => {
@@ -165,16 +73,6 @@ function Checkout() {
 
     if (cartItems.length === 0) {
       setError("Your cart is empty. Please add food items before checkout.")
-      return
-    }
-
-    if (loadingSettings) {
-      setError("Restaurant settings are still loading. Please wait.")
-      return
-    }
-
-    if (paymentAccounts.length === 0) {
-      setError("No payment method is currently available. Please contact the restaurant.")
       return
     }
 
@@ -263,9 +161,7 @@ function Checkout() {
       <main className="pt-28 px-6 pb-20">
         <div className="max-w-7xl mx-auto">
           <div className="mb-10">
-            <p className="text-orange-500 font-semibold mb-3">
-              Checkout
-            </p>
+            <p className="text-orange-500 font-semibold mb-3">Checkout</p>
 
             <h1 className="text-4xl md:text-5xl font-extrabold">
               Complete Your Order
@@ -274,9 +170,7 @@ function Checkout() {
 
           <div className="grid lg:grid-cols-3 gap-8">
             <form className="lg:col-span-2 bg-zinc-950 border border-white/10 rounded-[2rem] p-6 md:p-8">
-              <h2 className="text-2xl font-bold mb-6">
-                Customer Details
-              </h2>
+              <h2 className="text-2xl font-bold mb-6">Customer Details</h2>
 
               {error && (
                 <div className="mb-5 bg-red-500/10 border border-red-500/30 text-red-300 px-4 py-3 rounded-xl">
@@ -332,103 +226,63 @@ function Checkout() {
               </div>
 
               <div className="mt-8">
-                <h2 className="text-2xl font-bold mb-5">
-                  Payment Method
-                </h2>
+                <h2 className="text-2xl font-bold mb-5">Payment Method</h2>
 
-                {loadingSettings ? (
-                  <div className="bg-black border border-white/10 rounded-2xl p-5">
-                    <p className="text-gray-400">
-                      Loading payment methods...
+                <div className="grid md:grid-cols-2 gap-4">
+                  {Object.entries(paymentAccounts).map(([key, method]) => (
+                    <label
+                      key={key}
+                      className={`cursor-pointer border rounded-2xl p-5 transition ${
+                        formData.paymentMethod === key
+                          ? "border-orange-500 bg-orange-500/10"
+                          : "border-white/10 bg-black hover:border-orange-500/50"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value={key}
+                        checked={formData.paymentMethod === key}
+                        onChange={handleChange}
+                        className="hidden"
+                      />
+
+                      <p className="font-bold">{method.title}</p>
+                      <p className="text-gray-400 text-sm mt-2">
+                        {method.description}
+                      </p>
+                    </label>
+                  ))}
+                </div>
+
+                {formData.paymentMethod !== "CASH_ON_DELIVERY" && (
+                  <div className="mt-5 bg-black border border-white/10 rounded-2xl p-5">
+                    <p className="text-orange-500 font-bold mb-2">
+                      Payment Instructions
                     </p>
-                  </div>
-                ) : paymentAccounts.length === 0 ? (
-                  <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-5">
-                    <p className="text-red-300 font-bold">
-                      No payment method is currently available.
+
+                    <p className="text-gray-300 text-sm mb-4">
+                      Send payment using your selected method, then enter the
+                      transaction/reference ID below. Account details will be
+                      connected later from restaurant settings.
                     </p>
 
-                    <p className="text-red-200/80 text-sm mt-2">
-                      Please contact the restaurant before placing an order.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid md:grid-cols-2 gap-4">
-                    {paymentAccounts.map((method) => (
-                      <label
-                        key={method.key}
-                        className={`cursor-pointer border rounded-2xl p-5 transition ${
-                          formData.paymentMethod === method.key
-                            ? "border-orange-500 bg-orange-500/10"
-                            : "border-white/10 bg-black hover:border-orange-500/50"
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="paymentMethod"
-                          value={method.key}
-                          checked={formData.paymentMethod === method.key}
-                          onChange={handleChange}
-                          className="hidden"
-                        />
-
-                        <p className="font-bold">{method.title}</p>
-
-                        <p className="text-gray-400 text-sm mt-2">
-                          {method.description}
-                        </p>
-                      </label>
-                    ))}
+                    <input
+                      type="text"
+                      name="transactionId"
+                      placeholder="Transaction / Reference ID *"
+                      value={formData.transactionId}
+                      onChange={handleChange}
+                      className="w-full bg-zinc-950 border border-white/10 rounded-xl px-4 py-4 outline-none focus:border-orange-500"
+                    />
                   </div>
                 )}
-
-                {selectedPaymentMethod?.key !== "CASH_ON_DELIVERY" &&
-                  selectedPaymentMethod && (
-                    <div className="mt-5 bg-black border border-white/10 rounded-2xl p-5">
-                      <p className="text-orange-500 font-bold mb-2">
-                        Payment Instructions
-                      </p>
-
-                      <p className="text-gray-300 text-sm mb-4">
-                        Send payment using the account details below, then enter
-                        your transaction/reference ID.
-                      </p>
-
-                      <div className="grid md:grid-cols-2 gap-3 mb-5">
-                        {selectedPaymentMethod?.details
-                          ?.filter((detail) => detail[1])
-                          .map(([label, value]) => (
-                            <div
-                              key={label}
-                              className="bg-zinc-950 border border-white/10 rounded-xl p-4"
-                            >
-                              <p className="text-gray-400 text-xs">
-                                {label}
-                              </p>
-
-                              <p className="font-bold mt-1 break-words">
-                                {value}
-                              </p>
-                            </div>
-                          ))}
-                      </div>
-
-                      <input
-                        type="text"
-                        name="transactionId"
-                        placeholder="Transaction / Reference ID *"
-                        value={formData.transactionId}
-                        onChange={handleChange}
-                        className="w-full bg-zinc-950 border border-white/10 rounded-xl px-4 py-4 outline-none focus:border-orange-500"
-                      />
-                    </div>
-                  )}
               </div>
 
               <button
                 type="button"
                 onClick={handlePlaceOrder}
-                disabled={isSubmitting || loadingSettings}
+                disabled={isSubmitting}
                 className="mt-8 w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-600 disabled:cursor-not-allowed py-4 rounded-full font-bold transition"
               >
                 {isSubmitting ? "Placing Order..." : "Place Order"}
@@ -436,9 +290,7 @@ function Checkout() {
             </form>
 
             <div className="bg-zinc-950 border border-white/10 rounded-[2rem] p-6 md:p-8 h-fit">
-              <h2 className="text-2xl font-bold mb-6">
-                Order Summary
-              </h2>
+              <h2 className="text-2xl font-bold mb-6">Order Summary</h2>
 
               <div className="space-y-4 mb-6">
                 {cartItems.length === 0 ? (
@@ -483,9 +335,7 @@ function Checkout() {
 
                 <div className="flex justify-between text-gray-300">
                   <span>Payment</span>
-                  <span>
-                    {formatPaymentMethod(formData.paymentMethod)}
-                  </span>
+                  <span>{paymentAccounts[formData.paymentMethod].title}</span>
                 </div>
 
                 <div className="flex justify-between text-xl font-extrabold text-orange-500 pt-3">
@@ -502,3 +352,155 @@ function Checkout() {
 }
 
 export default Checkout
+===== CART CONTEXT JSX =====
+import { createContext, useContext, useEffect, useState } from "react"
+
+const CartContext = createContext()
+
+export function CartProvider({ children }) {
+  const [cartItems, setCartItems] = useState(() => {
+    const savedCart = localStorage.getItem("cartItems")
+    return savedCart ? JSON.parse(savedCart) : []
+  })
+
+  const [latestOrder, setLatestOrder] = useState(() => {
+    const savedOrder = localStorage.getItem("latestOrder")
+    return savedOrder ? JSON.parse(savedOrder) : null
+  })
+
+  const [orderHistory, setOrderHistory] = useState(() => {
+    const savedOrders = localStorage.getItem("orderHistory")
+    return savedOrders ? JSON.parse(savedOrders) : []
+  })
+
+  const [isCartOpen, setIsCartOpen] = useState(false)
+
+  useEffect(() => {
+    localStorage.setItem("cartItems", JSON.stringify(cartItems))
+  }, [cartItems])
+
+  useEffect(() => {
+    localStorage.setItem("latestOrder", JSON.stringify(latestOrder))
+  }, [latestOrder])
+
+  useEffect(() => {
+    localStorage.setItem("orderHistory", JSON.stringify(orderHistory))
+  }, [orderHistory])
+
+  const addToCart = (item) => {
+    setCartItems((prevItems) => {
+      const existingItem = prevItems.find(
+        (cartItem) => cartItem.id === item.id
+      )
+
+      if (existingItem) {
+        return prevItems.map((cartItem) =>
+          cartItem.id === item.id
+            ? { ...cartItem, quantity: cartItem.quantity + 1 }
+            : cartItem
+        )
+      }
+
+      return [...prevItems, { ...item, quantity: 1 }]
+    })
+
+    setIsCartOpen(true)
+  }
+
+  const increaseQuantity = (id) => {
+    setCartItems((prevItems) =>
+      prevItems.map((item) =>
+        item.id === id
+          ? { ...item, quantity: item.quantity + 1 }
+          : item
+      )
+    )
+  }
+
+  const decreaseQuantity = (id) => {
+    setCartItems((prevItems) =>
+      prevItems
+        .map((item) =>
+          item.id === id
+            ? { ...item, quantity: item.quantity - 1 }
+            : item
+        )
+        .filter((item) => item.quantity > 0)
+    )
+  }
+
+  const removeFromCart = (id) => {
+    setCartItems((prevItems) =>
+      prevItems.filter((item) => item.id !== id)
+    )
+  }
+
+  const syncCartWithAvailableProducts = (availableProducts) => {
+    const availableProductIds = availableProducts.map(
+      (product) => product.id
+    )
+
+    let removedItems = []
+
+    setCartItems((prevItems) => {
+      removedItems = prevItems.filter(
+        (item) => !availableProductIds.includes(item.id)
+      )
+
+      return prevItems.filter((item) =>
+        availableProductIds.includes(item.id)
+      )
+    })
+
+    return removedItems
+  }
+
+  const clearCart = () => {
+    setCartItems([])
+  }
+
+  const saveLatestOrder = (order) => {
+    setLatestOrder(order)
+
+    setOrderHistory((prevOrders) => [
+      order,
+      ...prevOrders,
+    ])
+  }
+
+  const clearOrderHistory = () => {
+    setOrderHistory([])
+    localStorage.removeItem("orderHistory")
+  }
+
+  const openCart = () => setIsCartOpen(true)
+
+  const closeCart = () => setIsCartOpen(false)
+
+  return (
+    <CartContext.Provider
+      value={{
+        cartItems,
+        addToCart,
+        increaseQuantity,
+        decreaseQuantity,
+        removeFromCart,
+        syncCartWithAvailableProducts,
+        clearCart,
+        latestOrder,
+        orderHistory,
+        saveLatestOrder,
+        clearOrderHistory,
+        isCartOpen,
+        openCart,
+        closeCart,
+      }}
+    >
+      {children}
+    </CartContext.Provider>
+  )
+}
+
+export function useCart() {
+  return useContext(CartContext)
+}

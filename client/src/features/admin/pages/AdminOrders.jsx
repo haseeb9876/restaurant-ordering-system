@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react"
 import toast from "react-hot-toast"
-import { getOrders, updateOrderStatus } from "../../../services/api"
+import {
+  getOrders,
+  updateOrderStatus,
+  updatePaymentStatus,
+} from "../../../services/api"
 import AdminLayout from "../layouts/AdminLayout"
 
 const orderStatuses = [
@@ -9,6 +13,12 @@ const orderStatuses = [
   "READY",
   "COMPLETED",
   "CANCELLED",
+]
+
+const paymentStatuses = [
+  "PENDING",
+  "PAID",
+  "FAILED",
 ]
 
 function getStatusClass(status) {
@@ -24,8 +34,9 @@ function getStatusClass(status) {
 function getPaymentStatusClass(status) {
   if (status === "PAID") return "bg-green-500/20 text-green-400"
   if (status === "FAILED") return "bg-red-500/20 text-red-400"
+  if (status === "PENDING") return "bg-yellow-500/20 text-yellow-400"
 
-  return "bg-yellow-500/20 text-yellow-400"
+  return "bg-white/10 text-gray-300"
 }
 
 function getPaymentLabel(method) {
@@ -42,6 +53,7 @@ function AdminOrders() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [updatingOrderId, setUpdatingOrderId] = useState(null)
+  const [updatingPaymentOrderId, setUpdatingPaymentOrderId] = useState(null)
 
   const fetchOrders = async () => {
     try {
@@ -91,6 +103,37 @@ function AdminOrders() {
     }
   }
 
+  const handlePaymentStatusChange = async (orderId, paymentStatus) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to mark this payment as ${paymentStatus}?`
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    try {
+      setUpdatingPaymentOrderId(orderId)
+      setError("")
+
+      const updatedOrder = await updatePaymentStatus(orderId, paymentStatus)
+
+      setOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          order.id === orderId ? updatedOrder : order
+        )
+      )
+
+      toast.success(`Payment marked as ${paymentStatus.toLowerCase()}.`)
+    } catch (error) {
+      const message = error.message || "Failed to update payment status."
+      setError(message)
+      toast.error(message)
+    } finally {
+      setUpdatingPaymentOrderId(null)
+    }
+  }
+
   return (
     <AdminLayout>
       <main className="px-6 py-10">
@@ -103,6 +146,11 @@ function AdminOrders() {
             <h1 className="text-4xl md:text-5xl font-extrabold">
               Manage Orders
             </h1>
+
+            <p className="text-gray-400 mt-3 max-w-3xl">
+              Manage order preparation status and securely verify customer
+              payments. Payment verification is an admin-only action.
+            </p>
           </div>
 
           {loading && <p className="text-gray-400">Loading orders...</p>}
@@ -122,7 +170,7 @@ function AdminOrders() {
                   key={order.id}
                   className="bg-zinc-950 border border-white/10 rounded-[2rem] p-6"
                 >
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-white/10 pb-5 mb-5">
+                  <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4 border-b border-white/10 pb-5 mb-5">
                     <div>
                       <h2 className="text-2xl font-bold text-orange-500">
                         {order.orderNumber}
@@ -138,7 +186,7 @@ function AdminOrders() {
                             order.status
                           )}`}
                         >
-                          {order.status}
+                          Order: {order.status}
                         </span>
 
                         <span
@@ -146,32 +194,67 @@ function AdminOrders() {
                             order.paymentStatus
                           )}`}
                         >
-                          {order.paymentStatus || "PENDING"}
+                          Payment: {order.paymentStatus || "PENDING"}
                         </span>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                      <select
-                        value={order.status}
-                        onChange={(e) =>
-                          handleStatusChange(order.id, e.target.value)
-                        }
-                        disabled={updatingOrderId === order.id}
-                        className="bg-black border border-white/10 rounded-full px-4 py-2 outline-none focus:border-orange-500 disabled:opacity-60 disabled:cursor-not-allowed"
-                      >
-                        {orderStatuses.map((status) => (
-                          <option
-                            key={status}
-                            value={status}
-                            className="bg-black"
-                          >
-                            {status}
-                          </option>
-                        ))}
-                      </select>
+                    <div className="flex flex-col md:flex-row md:items-center gap-3">
+                      <div>
+                        <p className="text-gray-400 text-xs mb-2">
+                          Order Status
+                        </p>
 
-                      {updatingOrderId === order.id && (
+                        <select
+                          value={order.status}
+                          onChange={(e) =>
+                            handleStatusChange(order.id, e.target.value)
+                          }
+                          disabled={updatingOrderId === order.id}
+                          className="bg-black border border-white/10 rounded-full px-4 py-2 outline-none focus:border-orange-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                          {orderStatuses.map((status) => (
+                            <option
+                              key={status}
+                              value={status}
+                              className="bg-black"
+                            >
+                              {status}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <p className="text-gray-400 text-xs mb-2">
+                          Payment Verification
+                        </p>
+
+                        <select
+                          value={order.paymentStatus || "PENDING"}
+                          onChange={(e) =>
+                            handlePaymentStatusChange(
+                              order.id,
+                              e.target.value
+                            )
+                          }
+                          disabled={updatingPaymentOrderId === order.id}
+                          className="bg-black border border-white/10 rounded-full px-4 py-2 outline-none focus:border-orange-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                          {paymentStatuses.map((status) => (
+                            <option
+                              key={status}
+                              value={status}
+                              className="bg-black"
+                            >
+                              {status}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {(updatingOrderId === order.id ||
+                        updatingPaymentOrderId === order.id) && (
                         <span className="text-sm text-gray-400">
                           Updating...
                         </span>
@@ -188,6 +271,12 @@ function AdminOrders() {
                         <p>{order.customerPhone}</p>
                         <p>{order.customerEmail}</p>
                         <p>{order.address}</p>
+
+                        {order.notes && (
+                          <p className="text-gray-500">
+                            Notes: {order.notes}
+                          </p>
+                        )}
                       </div>
                     </div>
 
@@ -220,10 +309,28 @@ function AdminOrders() {
                           </span>
                         </p>
 
+                        {order.paymentMethod !== "CASH_ON_DELIVERY" &&
+                          !order.transactionId && (
+                            <p className="text-red-400 text-sm">
+                              Warning: No transaction ID provided.
+                            </p>
+                          )}
+
                         {order.transactionId && (
                           <p className="break-all">
                             Ref: {order.transactionId}
                           </p>
+                        )}
+
+                        {order.paymentProof && (
+                          <a
+                            href={order.paymentProof}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-block text-orange-500 hover:underline"
+                          >
+                            View Payment Proof
+                          </a>
                         )}
 
                         {order.estimatedTime && (
@@ -243,6 +350,15 @@ function AdminOrders() {
                         </p>
                       </div>
                     </div>
+                  </div>
+
+                  <div className="mt-5 bg-black border border-white/10 rounded-2xl p-4">
+                    <p className="text-gray-400 text-sm">
+                      Security note: Verify payment manually from JazzCash,
+                      Easypaisa, or bank app before marking payment as PAID.
+                      Never mark payment as PAID by only trusting the
+                      transaction ID text.
+                    </p>
                   </div>
                 </div>
               ))}

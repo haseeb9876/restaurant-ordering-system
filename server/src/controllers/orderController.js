@@ -1,8 +1,6 @@
 import prisma from "../config/prisma.js"
 import asyncHandler from "../utils/asyncHandler.js"
 
-const DELIVERY_FEE = 150
-
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
@@ -140,8 +138,17 @@ export const createOrder = asyncHandler(async (req, res) => {
     0
   )
 
+  const settings =
+    await prisma.restaurantSettings.findUnique({
+      where: {
+        id: 1,
+      },
+    })
+
   const deliveryFee =
-    subtotal > 0 ? DELIVERY_FEE : 0
+    subtotal > 0
+      ? settings?.deliveryFee || 0
+      : 0
 
   const total = subtotal + deliveryFee
 
@@ -160,7 +167,7 @@ export const createOrder = asyncHandler(async (req, res) => {
       paymentStatus:
         paymentMethod === "CASH_ON_DELIVERY"
           ? "PENDING"
-          : "PAID",
+          : "PENDING",
 
       transactionId,
       paymentProof,
@@ -304,6 +311,66 @@ export const updateOrderStatus = asyncHandler(
         "Order status updated successfully",
 
       data: order,
+    })
+  }
+)
+
+export const updatePaymentStatus = asyncHandler(
+  async (req, res) => {
+    const { id } = req.params
+
+    const { paymentStatus } = req.body
+
+    const allowedPaymentStatuses = [
+      "PENDING",
+      "PAID",
+      "FAILED",
+    ]
+
+    if (
+      !allowedPaymentStatuses.includes(paymentStatus)
+    ) {
+      res.status(400)
+
+      throw new Error("Invalid payment status.")
+    }
+
+    const existingOrder =
+      await prisma.order.findUnique({
+        where: {
+          id: Number(id),
+        },
+      })
+
+    if (!existingOrder) {
+      res.status(404)
+
+      throw new Error("Order not found.")
+    }
+
+    const updatedOrder = await prisma.order.update({
+      where: {
+        id: Number(id),
+      },
+
+      data: {
+        paymentStatus,
+      },
+
+      include: {
+        items: {
+          include: {
+            product: true,
+          },
+        },
+      },
+    })
+
+    res.json({
+      status: "success",
+      message:
+        "Payment status updated successfully.",
+      data: updatedOrder,
     })
   }
 )

@@ -20,6 +20,9 @@ function AdminAddProduct() {
     image: "",
     categoryId: "",
     isAvailable: true,
+    trackInventory: false,
+    stockQuantity: 0,
+    lowStockThreshold: 5,
   })
 
   const [error, setError] = useState("")
@@ -100,6 +103,8 @@ function AdminAddProduct() {
     const trimmedName = formData.name.trim()
     const trimmedDescription = formData.description.trim()
     const trimmedImage = formData.image.trim()
+    const stockQuantity = Number(formData.stockQuantity)
+    const lowStockThreshold = Number(formData.lowStockThreshold)
 
     if (!trimmedName) {
       return {
@@ -130,6 +135,26 @@ function AdminAddProduct() {
       }
     }
 
+    if (
+      Number.isNaN(stockQuantity) ||
+      stockQuantity < 0
+    ) {
+      return {
+        isValid: false,
+        message: "Stock quantity cannot be negative.",
+      }
+    }
+
+    if (
+      Number.isNaN(lowStockThreshold) ||
+      lowStockThreshold < 0
+    ) {
+      return {
+        isValid: false,
+        message: "Low stock threshold cannot be negative.",
+      }
+    }
+
     return {
       isValid: true,
       data: {
@@ -139,6 +164,9 @@ function AdminAddProduct() {
         image: trimmedImage,
         categoryId: Number(formData.categoryId),
         isAvailable: formData.isAvailable,
+        trackInventory: formData.trackInventory,
+        stockQuantity,
+        lowStockThreshold,
       },
     }
   }
@@ -297,6 +325,44 @@ function AdminAddProduct() {
                   </option>
                 ))}
               </select>
+
+              <div className="bg-black border border-white/10 rounded-xl p-4">
+                <label className="flex items-center gap-3 text-gray-300 font-semibold">
+                  <input
+                    type="checkbox"
+                    name="trackInventory"
+                    checked={formData.trackInventory}
+                    onChange={handleChange}
+                  />
+                  Track inventory for this product
+                </label>
+
+                <div className="grid md:grid-cols-2 gap-4 mt-4">
+                  <input
+                    type="number"
+                    name="stockQuantity"
+                    placeholder="Stock Quantity"
+                    value={formData.stockQuantity}
+                    onChange={handleChange}
+                    min="0"
+                    className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-4 outline-none focus:border-orange-500"
+                  />
+
+                  <input
+                    type="number"
+                    name="lowStockThreshold"
+                    placeholder="Low Stock Alert Threshold"
+                    value={formData.lowStockThreshold}
+                    onChange={handleChange}
+                    min="0"
+                    className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-4 outline-none focus:border-orange-500"
+                  />
+                </div>
+
+                <p className="text-xs text-gray-500 mt-3">
+                  If inventory tracking is enabled and stock becomes 0, the product will automatically become unavailable.
+                </p>
+              </div>
 
               <label className="flex items-center gap-3 text-gray-300">
                 <input

@@ -17,23 +17,12 @@ function isValidOrderItem(item) {
 export const createOrder = asyncHandler(async (req, res) => {
   const customerName = req.body.customerName?.trim()
   const customerPhone = req.body.customerPhone?.trim()
-  const customerEmail = req.body.customerEmail
-    ?.trim()
-    .toLowerCase()
-
+  const customerEmail = req.body.customerEmail?.trim().toLowerCase()
   const address = req.body.address?.trim()
-
   const notes = req.body.notes?.trim() || null
-
-  const paymentMethod =
-    req.body.paymentMethod || "CASH_ON_DELIVERY"
-
-  const transactionId =
-    req.body.transactionId?.trim() || null
-
-  const paymentProof =
-    req.body.paymentProof?.trim() || null
-
+  const paymentMethod = req.body.paymentMethod || "CASH_ON_DELIVERY"
+  const transactionId = req.body.transactionId?.trim() || null
+  const paymentProof = req.body.paymentProof?.trim() || null
   const items = req.body.items
 
   const allowedPaymentMethods = [
@@ -52,47 +41,30 @@ export const createOrder = asyncHandler(async (req, res) => {
     items.length === 0
   ) {
     res.status(400)
-
     throw new Error("Missing required order fields.")
   }
 
   if (!isValidEmail(customerEmail)) {
     res.status(400)
-
-    throw new Error(
-      "Please provide a valid customer email."
-    )
+    throw new Error("Please provide a valid customer email.")
   }
 
   if (!allowedPaymentMethods.includes(paymentMethod)) {
     res.status(400)
-
     throw new Error("Invalid payment method.")
   }
 
-  if (
-    paymentMethod !== "CASH_ON_DELIVERY" &&
-    !transactionId
-  ) {
+  if (paymentMethod !== "CASH_ON_DELIVERY" && !transactionId) {
     res.status(400)
-
-    throw new Error(
-      "Transaction ID is required for online payments."
-    )
+    throw new Error("Transaction ID is required for online payments.")
   }
 
-  if (
-    !Array.isArray(items) ||
-    !items.every(isValidOrderItem)
-  ) {
+  if (!Array.isArray(items) || !items.every(isValidOrderItem)) {
     res.status(400)
-
     throw new Error("Invalid order items.")
   }
 
-  const productIds = items.map((item) =>
-    Number(item.id)
-  )
+  const productIds = items.map((item) => Number(item.id))
 
   const products = await prisma.product.findMany({
     where: {
@@ -104,10 +76,7 @@ export const createOrder = asyncHandler(async (req, res) => {
 
   if (products.length !== productIds.length) {
     res.status(400)
-
-    throw new Error(
-      "One or more products are invalid."
-    )
+    throw new Error("One or more products are invalid.")
   }
 
   const unavailableProduct = products.find(
@@ -116,15 +85,36 @@ export const createOrder = asyncHandler(async (req, res) => {
 
   if (unavailableProduct) {
     res.status(400)
+    throw new Error(`${unavailableProduct.name} is currently unavailable.`)
+  }
+
+  const insufficientStockItem = items.find((item) => {
+    const product = products.find(
+      (currentProduct) => currentProduct.id === Number(item.id)
+    )
+
+    return (
+      product?.trackInventory &&
+      Number(item.quantity) > product.stockQuantity
+    )
+  })
+
+  if (insufficientStockItem) {
+    const product = products.find(
+      (currentProduct) =>
+        currentProduct.id === Number(insufficientStockItem.id)
+    )
+
+    res.status(400)
 
     throw new Error(
-      `${unavailableProduct.name} is currently unavailable.`
+      `${product.name} has only ${product.stockQuantity} item(s) in stock.`
     )
   }
 
   const calculatedItems = items.map((item) => {
     const product = products.find(
-      (product) => product.id === Number(item.id)
+      (currentProduct) => currentProduct.id === Number(item.id)
     )
 
     return {
@@ -135,27 +125,21 @@ export const createOrder = asyncHandler(async (req, res) => {
   })
 
   const subtotal = calculatedItems.reduce(
-    (total, item) =>
-      total + item.price * item.quantity,
+    (total, item) => total + item.price * item.quantity,
     0
   )
 
-  const settings =
-    await prisma.restaurantSettings.findUnique({
-      where: {
-        id: 1,
-      },
-    })
+  const settings = await prisma.restaurantSettings.findUnique({
+    where: {
+      id: 1,
+    },
+  })
 
   let deliveryFee = 0
 
   if (subtotal > 0) {
-    const baseDeliveryFee =
-      settings?.deliveryFee || 0
-
-    const freeDeliveryEnabled =
-      settings?.freeDeliveryEnabled || false
-
+    const baseDeliveryFee = settings?.deliveryFee || 0
+    const freeDeliveryEnabled = settings?.freeDeliveryEnabled || false
     const freeDeliveryMinimumOrder =
       settings?.freeDeliveryMinimumOrder || 600
 
@@ -175,52 +159,73 @@ export const createOrder = asyncHandler(async (req, res) => {
     Math.random() * (60 - 20 + 1) + 20
   )
 
-  const order = await prisma.order.create({
-    data: {
-      orderNumber: `ORD-${Date.now()}`,
+  const order = await prisma.$transaction(async (tx) => {
+    const createdOrder = await tx.order.create({
+      data: {
+        orderNumber: `ORD-${Date.now()}`,
+        status: "PENDING",
 
-      status: "PENDING",
+        paymentMethod,
+        paymentStatus: "PENDING",
 
-      paymentMethod,
+        transactionId,
+        paymentProof,
 
-      paymentStatus:
-        paymentMethod === "CASH_ON_DELIVERY"
-          ? "PENDING"
-          : "PENDING",
+        customerName,
+        customerPhone,
+        customerEmail,
 
-      transactionId,
-      paymentProof,
+        address,
+        notes,
 
-      customerName,
-      customerPhone,
-      customerEmail,
+        subtotal,
+        deliveryFee,
+        total,
 
-      address,
-      notes,
+        estimatedTime,
 
-      subtotal,
-      deliveryFee,
-      total,
+        userId:
+          req.user?.role === "CUSTOMER"
+            ? req.user.id
+            : null,
 
-      estimatedTime,
-
-      userId:
-        req.user?.role === "CUSTOMER"
-          ? req.user.id
-          : null,
-
-      items: {
-        create: calculatedItems,
-      },
-    },
-
-    include: {
-      items: {
-        include: {
-          product: true,
+        items: {
+          create: calculatedItems,
         },
       },
-    },
+
+      include: {
+        items: {
+          include: {
+            product: true,
+          },
+        },
+      },
+    })
+
+    for (const item of calculatedItems) {
+      const product = products.find(
+        (currentProduct) => currentProduct.id === item.productId
+      )
+
+      if (!product.trackInventory) {
+        continue
+      }
+
+      const newStockQuantity = product.stockQuantity - item.quantity
+
+      await tx.product.update({
+        where: {
+          id: product.id,
+        },
+        data: {
+          stockQuantity: newStockQuantity,
+          isAvailable: newStockQuantity > 0,
+        },
+      })
+    }
+
+    return createdOrder
   })
 
   res.status(201).json({
@@ -259,7 +264,6 @@ export const getMyOrders = asyncHandler(async (req, res) => {
         {
           userId: req.user.id,
         },
-
         {
           customerEmail: req.user.email,
         },
@@ -286,115 +290,83 @@ export const getMyOrders = asyncHandler(async (req, res) => {
   })
 })
 
-export const updateOrderStatus = asyncHandler(
-  async (req, res) => {
-    const { id } = req.params
+export const updateOrderStatus = asyncHandler(async (req, res) => {
+  const { id } = req.params
+  const { status } = req.body
 
-    const { status } = req.body
+  const allowedStatuses = [
+    "PENDING",
+    "CONFIRMED",
+    "PREPARING",
+    "READY",
+    "OUT_FOR_DELIVERY",
+    "DELIVERED",
+    "COMPLETED",
+    "CANCELLED",
+  ]
 
-    const allowedStatuses = [
-      "PENDING",
-      "CONFIRMED",
-      "PREPARING",
-      "READY",
-      "OUT_FOR_DELIVERY",
-      "DELIVERED",
-      "COMPLETED",
-      "CANCELLED",
-      
-    ]
-
-    if (!allowedStatuses.includes(status)) {
-      res.status(400)
-
-      throw new Error("Invalid order status")
-    }
-
-    const order = await prisma.order.update({
-      where: {
-        id: Number(id),
-      },
-
-      data: {
-        status,
-      },
-
-      include: {
-        items: {
-          include: {
-            product: true,
-          },
-        },
-      },
-    })
-
-    res.json({
-      status: "success",
-      message:
-        "Order status updated successfully",
-
-      data: order,
-    })
+  if (!allowedStatuses.includes(status)) {
+    res.status(400)
+    throw new Error("Invalid order status")
   }
-)
 
-export const updatePaymentStatus = asyncHandler(
-  async (req, res) => {
-    const { id } = req.params
+  const order = await prisma.order.update({
+    where: {
+      id: Number(id),
+    },
 
-    const { paymentStatus } = req.body
+    data: {
+      status,
+    },
 
-    const allowedPaymentStatuses = [
-      "PENDING",
-      "PAID",
-      "FAILED",
-    ]
-
-    if (
-      !allowedPaymentStatuses.includes(paymentStatus)
-    ) {
-      res.status(400)
-
-      throw new Error("Invalid payment status.")
-    }
-
-    const existingOrder =
-      await prisma.order.findUnique({
-        where: {
-          id: Number(id),
-        },
-      })
-
-    if (!existingOrder) {
-      res.status(404)
-
-      throw new Error("Order not found.")
-    }
-
-    const updatedOrder = await prisma.order.update({
-      where: {
-        id: Number(id),
-      },
-
-      data: {
-        paymentStatus,
-      },
-
-      include: {
-        items: {
-          include: {
-            product: true,
-          },
+    include: {
+      items: {
+        include: {
+          product: true,
         },
       },
-    })
+    },
+  })
 
-    res.json({
-      status: "success",
-      message:
-        "Payment status updated successfully.",
+  res.json({
+    status: "success",
+    message: "Order status updated successfully",
+    data: order,
+  })
+})
 
-      data: updatedOrder,
-    })
+export const updatePaymentStatus = asyncHandler(async (req, res) => {
+  const { id } = req.params
+  const { paymentStatus } = req.body
+
+  const allowedPaymentStatuses = ["PENDING", "PAID", "FAILED"]
+
+  if (!allowedPaymentStatuses.includes(paymentStatus)) {
+    res.status(400)
+    throw new Error("Invalid payment status")
   }
-)
+
+  const order = await prisma.order.update({
+    where: {
+      id: Number(id),
+    },
+
+    data: {
+      paymentStatus,
+    },
+
+    include: {
+      items: {
+        include: {
+          product: true,
+        },
+      },
+    },
+  })
+
+  res.json({
+    status: "success",
+    message: "Payment status updated successfully",
+    data: order,
+  })
+})

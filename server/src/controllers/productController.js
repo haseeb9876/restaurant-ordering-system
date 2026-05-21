@@ -1,5 +1,43 @@
 import prisma from "../config/prisma.js"
 
+const parseBoolean = (value) => {
+  return value === true || value === "true"
+}
+
+const validateInventoryFields = ({
+  stockQuantity,
+  lowStockThreshold,
+}) => {
+  const parsedStockQuantity = Number(stockQuantity || 0)
+  const parsedLowStockThreshold = Number(lowStockThreshold || 5)
+
+  if (
+    Number.isNaN(parsedStockQuantity) ||
+    parsedStockQuantity < 0
+  ) {
+    return {
+      isValid: false,
+      message: "Stock quantity cannot be negative",
+    }
+  }
+
+  if (
+    Number.isNaN(parsedLowStockThreshold) ||
+    parsedLowStockThreshold < 0
+  ) {
+    return {
+      isValid: false,
+      message: "Low stock threshold cannot be negative",
+    }
+  }
+
+  return {
+    isValid: true,
+    stockQuantity: parsedStockQuantity,
+    lowStockThreshold: parsedLowStockThreshold,
+  }
+}
+
 export const getProducts = async (req, res) => {
   try {
     const products = await prisma.product.findMany({
@@ -67,6 +105,9 @@ export const createProduct = async (req, res) => {
       image,
       categoryId,
       isAvailable,
+      trackInventory,
+      stockQuantity,
+      lowStockThreshold,
     } = req.body
 
     if (!name || !price || !image || !categoryId) {
@@ -76,14 +117,44 @@ export const createProduct = async (req, res) => {
       })
     }
 
+    const parsedPrice = Number(price)
+
+    if (Number.isNaN(parsedPrice) || parsedPrice <= 0) {
+      return res.status(400).json({
+        status: "error",
+        message: "Price must be greater than 0",
+      })
+    }
+
+    const inventoryValidation = validateInventoryFields({
+      stockQuantity,
+      lowStockThreshold,
+    })
+
+    if (!inventoryValidation.isValid) {
+      return res.status(400).json({
+        status: "error",
+        message: inventoryValidation.message,
+      })
+    }
+
+    const shouldTrackInventory = parseBoolean(trackInventory)
+
     const product = await prisma.product.create({
       data: {
         name: name.trim(),
         description: description?.trim() || null,
-        price: Number(price),
+        price: parsedPrice,
         image: image.trim(),
         categoryId: Number(categoryId),
-        isAvailable: isAvailable ?? true,
+        isAvailable:
+          shouldTrackInventory &&
+          inventoryValidation.stockQuantity === 0
+            ? false
+            : isAvailable ?? true,
+        trackInventory: shouldTrackInventory,
+        stockQuantity: inventoryValidation.stockQuantity,
+        lowStockThreshold: inventoryValidation.lowStockThreshold,
       },
 
       include: {
@@ -136,8 +207,7 @@ export const updateProduct = async (req, res) => {
     }
 
     if (req.body.description !== undefined) {
-      updateData.description =
-        req.body.description?.trim() || null
+      updateData.description = req.body.description?.trim() || null
     }
 
     if (req.body.price !== undefined) {
@@ -170,6 +240,54 @@ export const updateProduct = async (req, res) => {
 
     if (req.body.isAvailable !== undefined) {
       updateData.isAvailable = Boolean(req.body.isAvailable)
+    }
+
+    if (req.body.trackInventory !== undefined) {
+      updateData.trackInventory = parseBoolean(req.body.trackInventory)
+    }
+
+    if (req.body.stockQuantity !== undefined) {
+      const parsedStockQuantity = Number(req.body.stockQuantity)
+
+      if (
+        Number.isNaN(parsedStockQuantity) ||
+        parsedStockQuantity < 0
+      ) {
+        return res.status(400).json({
+          status: "error",
+          message: "Stock quantity cannot be negative",
+        })
+      }
+
+      updateData.stockQuantity = parsedStockQuantity
+    }
+
+    if (req.body.lowStockThreshold !== undefined) {
+      const parsedLowStockThreshold = Number(
+        req.body.lowStockThreshold
+      )
+
+      if (
+        Number.isNaN(parsedLowStockThreshold) ||
+        parsedLowStockThreshold < 0
+      ) {
+        return res.status(400).json({
+          status: "error",
+          message: "Low stock threshold cannot be negative",
+        })
+      }
+
+      updateData.lowStockThreshold = parsedLowStockThreshold
+    }
+
+    const finalTrackInventory =
+      updateData.trackInventory ?? existingProduct.trackInventory
+
+    const finalStockQuantity =
+      updateData.stockQuantity ?? existingProduct.stockQuantity
+
+    if (finalTrackInventory && finalStockQuantity === 0) {
+      updateData.isAvailable = false
     }
 
     const product = await prisma.product.update({
@@ -206,12 +324,36 @@ export const deleteProduct = async (req, res) => {
       where: {
         id: Number(id),
       },
+      include: {
+        orderItems: true,
+      },
     })
 
     if (!existingProduct) {
       return res.status(404).json({
         status: "error",
         message: "Product not found",
+      })
+    }
+
+    if (existingProduct.orderItems.length > 0) {
+      const product = await prisma.product.update({
+        where: {
+          id: Number(id),
+        },
+        data: {
+          isAvailable: false,
+        },
+        include: {
+          category: true,
+        },
+      })
+
+      return res.json({
+        status: "success",
+        message:
+          "Product has previous orders, so it was archived instead of deleted.",
+        data: product,
       })
     }
 

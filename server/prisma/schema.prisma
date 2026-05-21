@@ -5,7 +5,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-
 }
 
 enum UserRole {
@@ -62,21 +61,24 @@ model Category {
 }
 
 model Product {
-  id          Int      @id @default(autoincrement())
-  name        String
-  description String?
-  price       Int
-  image       String
+  id                Int      @id @default(autoincrement())
+  name              String
+  description       String?
+  price             Int
+  image             String
 
-  isAvailable Boolean  @default(true)
+  isAvailable       Boolean  @default(true)
+  trackInventory    Boolean  @default(false)
+  stockQuantity     Int      @default(0)
+  lowStockThreshold Int      @default(5)
 
-  categoryId  Int
-  category    Category @relation(fields: [categoryId], references: [id])
+  categoryId        Int
+  category          Category @relation(fields: [categoryId], references: [id])
 
-  orderItems  OrderItem[]
+  orderItems        OrderItem[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
 
 model Order {
@@ -102,7 +104,7 @@ model Order {
   deliveryFee     Int
   total           Int
 
-  estimatedTime   Int? // minutes
+  estimatedTime   Int?
 
   userId          Int?
   user            User?           @relation(fields: [userId], references: [id])
@@ -144,7 +146,6 @@ model RestaurantSettings {
   tiktokUrl           String?
   heroImageUrl        String?
 
-
   jazzcashTitle       String?
   jazzcashNumber      String?
   easypaisaTitle      String?
@@ -155,7 +156,6 @@ model RestaurantSettings {
   bankIban            String?
 
   deliveryFee               Int      @default(150)
-
   freeDeliveryEnabled       Boolean  @default(false)
   freeDeliveryMinimumOrder  Int      @default(600)
 

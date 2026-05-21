@@ -189,15 +189,21 @@ export const updateOrderStatus = async (orderId, status) => {
   return result.data
 }
 
-export const updatePaymentStatus = async (orderId, paymentStatus) => {
-  const result = await apiRequest(`/orders/${orderId}/payment-status`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      ...getAuthHeaders(),
-    },
-    body: JSON.stringify({ paymentStatus }),
-  })
+export const updatePaymentStatus = async (
+  orderId,
+  paymentStatus
+) => {
+  const result = await apiRequest(
+    `/orders/${orderId}/payment-status`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeaders(),
+      },
+      body: JSON.stringify({ paymentStatus }),
+    }
+  )
 
   return result.data
 }
@@ -223,6 +229,30 @@ export const createStaffUser = async (staffData) => {
   })
 
   return result.data
+}
+
+export const updateUserRole = async (userId, role) => {
+  const result = await apiRequest(`/users/${userId}/role`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify({ role }),
+  })
+
+  return result.data
+}
+
+export const deleteUser = async (userId) => {
+  const result = await apiRequest(`/users/${userId}`, {
+    method: "DELETE",
+    headers: {
+      ...getAuthHeaders(),
+    },
+  })
+
+  return result
 }
 
 export const getAdminSettings = async () => {

@@ -1,8 +1,24 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import toast from "react-hot-toast"
 import { getOrders, updateOrderStatus } from "../../../services/api"
 import { useAuth } from "../../auth/context/AuthContext"
+
+function getStatusClass(status) {
+  if (status === "PENDING") {
+    return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
+  }
+
+  if (status === "PREPARING") {
+    return "bg-blue-500/20 text-blue-400 border-blue-500/30"
+  }
+
+  if (status === "READY") {
+    return "bg-green-500/20 text-green-400 border-green-500/30"
+  }
+
+  return "bg-white/10 text-gray-300 border-white/10"
+}
 
 function KitchenPanel() {
   const { user, logout } = useAuth()
@@ -41,6 +57,28 @@ function KitchenPanel() {
     return () => clearInterval(interval)
   }, [])
 
+  const analytics = useMemo(() => {
+    return {
+      pending: orders.filter((o) => o.status === "PENDING").length,
+
+      preparing: orders.filter(
+        (o) => o.status === "PREPARING"
+      ).length,
+
+      ready: orders.filter((o) => o.status === "READY").length,
+
+      totalItems: orders.reduce((total, order) => {
+        return (
+          total +
+          order.items.reduce(
+            (itemTotal, item) => itemTotal + item.quantity,
+            0
+          )
+        )
+      }, 0),
+    }
+  }, [orders])
+
   const handleLogout = () => {
     logout()
     toast.success("Logged out successfully.")
@@ -54,10 +92,14 @@ function KitchenPanel() {
       await updateOrderStatus(orderId, status)
 
       toast.success(`Order marked as ${status.toLowerCase()}.`)
+
       fetchOrders()
     } catch (error) {
-      const message = error.message || "Failed to update order status."
+      const message =
+        error.message || "Failed to update order status."
+
       setError(message)
+
       toast.error(message)
     } finally {
       setUpdatingOrderId(null)
@@ -66,17 +108,26 @@ function KitchenPanel() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <header className="sticky top-0 z-40 bg-black/80 backdrop-blur-md border-b border-white/10 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <Link to="/" className="text-2xl font-bold text-orange-500">
-            Foodie<span className="text-white">Hub</span>
-          </Link>
+      <header className="sticky top-0 z-40 bg-black/90 backdrop-blur-md border-b border-white/10 px-4 md:px-6 py-4">
+        <div className="max-w-7xl mx-auto flex flex-col xl:flex-row xl:items-center xl:justify-between gap-5">
+          <div>
+            <Link
+              to="/"
+              className="text-3xl md:text-4xl font-extrabold text-orange-500"
+            >
+              Foodie<span className="text-white">Hub</span>
+            </Link>
+
+            <p className="text-gray-400 mt-2 text-sm md:text-base">
+              Kitchen Operations Panel
+            </p>
+          </div>
 
           <div className="flex flex-wrap items-center gap-3">
             {user?.role === "ADMIN" && (
               <Link
                 to="/admin"
-                className="border border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white px-5 py-2 rounded-full font-semibold transition"
+                className="border border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white px-5 md:px-6 py-3 rounded-2xl font-bold transition text-sm md:text-base"
               >
                 Admin Panel
               </Link>
@@ -84,23 +135,14 @@ function KitchenPanel() {
 
             <Link
               to="/"
-              className="border border-white/10 hover:border-orange-500 px-5 py-2 rounded-full font-semibold transition"
+              className="border border-white/10 hover:border-orange-500 px-5 md:px-6 py-3 rounded-2xl font-bold transition text-sm md:text-base"
             >
               Customer Website
             </Link>
 
-            {user && (
-              <span className="text-sm text-gray-300">
-                Hi,{" "}
-                <span className="text-orange-500 font-bold">
-                  {user.fullName}
-                </span>
-              </span>
-            )}
-
             <button
               onClick={handleLogout}
-              className="border border-white/10 hover:border-red-500 hover:text-red-400 px-5 py-2 rounded-full font-semibold transition"
+              className="border border-red-500/40 text-red-400 hover:bg-red-500 hover:text-white px-5 md:px-6 py-3 rounded-2xl font-bold transition text-sm md:text-base"
             >
               Logout
             </button>
@@ -108,85 +150,156 @@ function KitchenPanel() {
         </div>
       </header>
 
-      <main className="px-6 py-10">
+      <main className="px-4 md:px-6 py-8 md:py-10">
         <div className="max-w-7xl mx-auto">
           <div className="mb-10">
-            <p className="text-orange-500 font-semibold mb-3">
+            <p className="text-orange-500 font-semibold mb-3 text-lg">
               Restaurant Kitchen
             </p>
 
-            <h1 className="text-4xl md:text-5xl font-extrabold">
+            <h1 className="text-4xl md:text-6xl font-extrabold leading-tight">
               Live Orders Queue
             </h1>
+
+            <p className="text-gray-400 mt-4 text-lg max-w-3xl">
+              Manage active kitchen orders in real time with large
+              touch-friendly controls for tablets and kitchen displays.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-5 mb-10">
+            <div className="bg-zinc-950 border border-white/10 rounded-[2rem] p-6">
+              <p className="text-gray-400 mb-3">
+                Pending Orders
+              </p>
+
+              <h2 className="text-5xl font-extrabold text-yellow-400">
+                {analytics.pending}
+              </h2>
+            </div>
+
+            <div className="bg-zinc-950 border border-white/10 rounded-[2rem] p-6">
+              <p className="text-gray-400 mb-3">
+                Preparing Orders
+              </p>
+
+              <h2 className="text-5xl font-extrabold text-blue-400">
+                {analytics.preparing}
+              </h2>
+            </div>
+
+            <div className="bg-zinc-950 border border-white/10 rounded-[2rem] p-6">
+              <p className="text-gray-400 mb-3">
+                Ready Orders
+              </p>
+
+              <h2 className="text-5xl font-extrabold text-green-400">
+                {analytics.ready}
+              </h2>
+            </div>
+
+            <div className="bg-zinc-950 border border-white/10 rounded-[2rem] p-6">
+              <p className="text-gray-400 mb-3">
+                Total Items
+              </p>
+
+              <h2 className="text-5xl font-extrabold text-orange-500">
+                {analytics.totalItems}
+              </h2>
+            </div>
           </div>
 
           {loading && (
-            <p className="text-gray-400">
+            <p className="text-gray-400 text-lg">
               Loading kitchen orders...
             </p>
           )}
 
           {error && (
-            <p className="text-red-400 mb-6">
+            <p className="text-red-400 mb-6 text-lg">
               {error}
             </p>
           )}
 
           {!loading && orders.length === 0 && (
-            <div className="bg-zinc-950 border border-white/10 rounded-[2rem] p-10 text-center">
-              <p className="text-gray-400 text-xl">
+            <div className="bg-zinc-950 border border-white/10 rounded-[2rem] p-12 text-center">
+              <p className="text-gray-400 text-2xl">
                 No active kitchen orders.
               </p>
             </div>
           )}
 
           {!loading && orders.length > 0 && (
-            <div className="grid lg:grid-cols-2 gap-8">
+            <div className="grid xl:grid-cols-2 gap-8">
               {orders.map((order) => (
                 <div
                   key={order.id}
-                  className="bg-zinc-950 border border-white/10 rounded-[2rem] p-6"
+                  className="bg-zinc-950 border border-white/10 rounded-[2.5rem] p-7 md:p-8"
                 >
-                  <div className="flex items-center justify-between mb-6">
+                  <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-5 mb-7">
                     <div>
-                      <h2 className="text-2xl font-bold text-orange-500">
+                      <h2 className="text-3xl md:text-4xl font-extrabold text-orange-500">
                         {order.orderNumber}
                       </h2>
 
-                      <p className="text-gray-400 mt-1">
+                      <p className="text-gray-300 mt-3 text-lg">
                         {order.customerName}
                       </p>
+
+                      <div className="flex flex-wrap gap-3 mt-4">
+                        <span className="bg-black border border-white/10 px-4 py-2 rounded-full text-sm font-bold">
+                          {order.items.length} Items
+                        </span>
+
+                        <span className="bg-black border border-white/10 px-4 py-2 rounded-full text-sm font-bold">
+                          Rs. {order.total}
+                        </span>
+
+                        <span className="bg-black border border-white/10 px-4 py-2 rounded-full text-sm font-bold">
+                          {order.estimatedTime || 30} min
+                        </span>
+                      </div>
                     </div>
 
-                    <span className="bg-white/10 px-4 py-2 rounded-full text-sm font-bold">
+                    <span
+                      className={`border px-5 py-3 rounded-2xl text-sm md:text-base font-extrabold ${getStatusClass(
+                        order.status
+                      )}`}
+                    >
                       {order.status}
                     </span>
                   </div>
 
-                  <div className="space-y-3 mb-6">
+                  <div className="space-y-4 mb-8">
                     {order.items.map((item) => (
                       <div
                         key={item.id}
-                        className="flex justify-between bg-black border border-white/10 rounded-xl p-4"
+                        className="flex items-center justify-between bg-black border border-white/10 rounded-2xl p-5"
                       >
-                        <span className="font-semibold">
-                          {item.product.name}
-                        </span>
+                        <div>
+                          <p className="font-bold text-lg md:text-xl">
+                            {item.product.name}
+                          </p>
 
-                        <span className="text-orange-500 font-bold">
+                          <p className="text-gray-500 text-sm mt-1">
+                            Rs. {item.price} each
+                          </p>
+                        </div>
+
+                        <div className="text-3xl font-extrabold text-orange-500">
                           × {item.quantity}
-                        </span>
+                        </div>
                       </div>
                     ))}
                   </div>
 
-                  <div className="flex flex-wrap gap-3">
+                  <div className="grid md:grid-cols-3 gap-4">
                     <button
                       onClick={() =>
                         handleStatusChange(order.id, "PREPARING")
                       }
                       disabled={updatingOrderId === order.id}
-                      className="bg-yellow-500 hover:bg-yellow-600 disabled:opacity-60 disabled:cursor-not-allowed text-black px-4 py-2 rounded-full font-bold transition"
+                      className="bg-yellow-500 hover:bg-yellow-600 disabled:opacity-60 disabled:cursor-not-allowed text-black px-5 py-5 rounded-2xl font-extrabold text-lg transition"
                     >
                       Preparing
                     </button>
@@ -196,7 +309,7 @@ function KitchenPanel() {
                         handleStatusChange(order.id, "READY")
                       }
                       disabled={updatingOrderId === order.id}
-                      className="bg-green-500 hover:bg-green-600 disabled:opacity-60 disabled:cursor-not-allowed text-black px-4 py-2 rounded-full font-bold transition"
+                      className="bg-green-500 hover:bg-green-600 disabled:opacity-60 disabled:cursor-not-allowed text-black px-5 py-5 rounded-2xl font-extrabold text-lg transition"
                     >
                       Ready
                     </button>
@@ -206,7 +319,7 @@ function KitchenPanel() {
                         handleStatusChange(order.id, "COMPLETED")
                       }
                       disabled={updatingOrderId === order.id}
-                      className="bg-orange-500 hover:bg-orange-600 disabled:opacity-60 disabled:cursor-not-allowed px-4 py-2 rounded-full font-bold transition"
+                      className="bg-orange-500 hover:bg-orange-600 disabled:opacity-60 disabled:cursor-not-allowed px-5 py-5 rounded-2xl font-extrabold text-lg transition"
                     >
                       Complete
                     </button>

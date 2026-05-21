@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { Link, useLocation } from "react-router-dom"
 import toast from "react-hot-toast"
 import { useAuth } from "../../auth/context/AuthContext"
@@ -5,6 +6,8 @@ import { useAuth } from "../../auth/context/AuthContext"
 function AdminLayout({ children }) {
   const { user, logout } = useAuth()
   const location = useLocation()
+
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const handleLogout = () => {
     logout()
@@ -19,6 +22,45 @@ function AdminLayout({ children }) {
     { label: "Settings", path: "/admin/settings" },
     { label: "Kitchen Panel", path: "/kitchen" },
   ]
+
+  const renderNavLinks = (isMobile = false) => (
+    <nav className="space-y-3">
+      {navLinks.map((link) => {
+        const isActive = location.pathname === link.path
+
+        return (
+          <Link
+            key={link.path}
+            to={link.path}
+            onClick={() => {
+              if (isMobile) {
+                setIsMobileMenuOpen(false)
+              }
+            }}
+            className={`block px-4 py-3 rounded-xl font-semibold transition ${
+              isActive
+                ? "bg-orange-500 text-white"
+                : "hover:bg-orange-500"
+            }`}
+          >
+            {link.label}
+          </Link>
+        )
+      })}
+
+      <Link
+        to="/"
+        onClick={() => {
+          if (isMobile) {
+            setIsMobileMenuOpen(false)
+          }
+        }}
+        className="block px-4 py-3 rounded-xl hover:bg-white/10 text-gray-400 font-semibold transition"
+      >
+        Customer Website
+      </Link>
+    </nav>
+  )
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -53,32 +95,7 @@ function AdminLayout({ children }) {
             </div>
           )}
 
-          <nav className="space-y-3">
-            {navLinks.map((link) => {
-              const isActive = location.pathname === link.path
-
-              return (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  className={`block px-4 py-3 rounded-xl font-semibold transition ${
-                    isActive
-                      ? "bg-orange-500 text-white"
-                      : "hover:bg-orange-500"
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              )
-            })}
-
-            <Link
-              to="/"
-              className="block px-4 py-3 rounded-xl hover:bg-white/10 text-gray-400 font-semibold transition"
-            >
-              Customer Website
-            </Link>
-          </nav>
+          {renderNavLinks()}
         </div>
 
         <div className="p-6 border-t border-white/10">
@@ -92,8 +109,8 @@ function AdminLayout({ children }) {
       </aside>
 
       <div className="lg:ml-64">
-        <header className="sticky top-0 z-40 bg-black/80 backdrop-blur-md border-b border-white/10 px-6 py-4">
-          <div className="flex items-center justify-between">
+        <header className="sticky top-0 z-40 bg-black/90 backdrop-blur-md border-b border-white/10 px-6 py-4">
+          <div className="flex items-center justify-between gap-4">
             <div>
               <h1 className="font-bold text-lg">
                 Restaurant Admin
@@ -106,13 +123,59 @@ function AdminLayout({ children }) {
               )}
             </div>
 
-            <Link
-              to="/"
-              className="border border-white/10 hover:border-orange-500 px-5 py-2 rounded-full font-semibold transition"
+            <div className="hidden md:flex items-center gap-3">
+              <Link
+                to="/"
+                className="border border-white/10 hover:border-orange-500 px-5 py-2 rounded-full font-semibold transition"
+              >
+                Visit Website
+              </Link>
+
+              <button
+                onClick={handleLogout}
+                className="lg:hidden border border-red-500/40 text-red-400 hover:bg-red-500 hover:text-white px-5 py-2 rounded-full font-semibold transition"
+              >
+                Logout
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsMobileMenuOpen((current) => !current)}
+              className="lg:hidden border border-white/10 hover:border-orange-500 px-4 py-2 rounded-full font-bold transition"
             >
-              Visit Website
-            </Link>
+              {isMobileMenuOpen ? "Close" : "Menu"}
+            </button>
           </div>
+
+          {isMobileMenuOpen && (
+            <div className="lg:hidden mt-5 bg-zinc-950 border border-white/10 rounded-2xl p-5">
+              {user && (
+                <div className="mb-5 bg-black border border-white/10 rounded-2xl p-4">
+                  <p className="text-sm text-gray-400">
+                    Logged in as
+                  </p>
+
+                  <h3 className="font-bold text-orange-500 mt-1">
+                    {user.fullName}
+                  </h3>
+
+                  <p className="text-xs text-gray-500 mt-1">
+                    {user.role}
+                  </p>
+                </div>
+              )}
+
+              {renderNavLinks(true)}
+
+              <button
+                onClick={handleLogout}
+                className="mt-5 w-full border border-red-500/40 text-red-400 hover:bg-red-500 hover:text-white py-3 rounded-full font-bold transition"
+              >
+                Logout
+              </button>
+            </div>
+          )}
         </header>
 
         {children}

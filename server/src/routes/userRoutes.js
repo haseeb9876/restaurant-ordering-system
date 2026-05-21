@@ -2,7 +2,9 @@ import express from "express"
 
 import {
   createStaffUser,
+  deleteUser,
   getUsers,
+  updateUserRole,
 } from "../controllers/userController.js"
 
 import {
@@ -24,6 +26,20 @@ router.post(
   protect,
   allowRoles("ADMIN"),
   createStaffUser
+)
+
+router.patch(
+  "/:id/role",
+  protect,
+  allowRoles("ADMIN"),
+  updateUserRole
+)
+
+router.delete(
+  "/:id",
+  protect,
+  allowRoles("ADMIN"),
+  deleteUser
 )
 
 export default router

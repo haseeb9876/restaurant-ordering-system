@@ -23,14 +23,18 @@ function formatPaymentMethod(method) {
 function OrderSuccess() {
   const { latestOrder } = useCart()
 
+  const handlePrintInvoice = () => {
+    window.print()
+  }
+
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-black text-white print:bg-white print:text-black">
       <Navbar />
       <CartSidebar />
 
-      <main className="pt-32 px-6 pb-20">
-        <div className="max-w-4xl mx-auto bg-zinc-950 border border-white/10 rounded-[2rem] p-8 md:p-10">
-          <div className="text-center mb-10">
+      <main className="pt-32 px-6 pb-20 print:pt-8">
+        <div className="max-w-5xl mx-auto">
+          <div className="print:hidden text-center mb-10">
             <div className="text-7xl mb-6">✅</div>
 
             <p className="text-orange-500 font-semibold mb-3">
@@ -49,140 +53,295 @@ function OrderSuccess() {
 
           {latestOrder ? (
             <>
-              <div className="grid md:grid-cols-2 gap-5 mb-8">
-                <div className="bg-black border border-white/10 rounded-2xl p-5">
-                  <p className="text-gray-400 text-sm">Order ID</p>
-                  <p className="text-orange-500 font-bold mt-2">
-                    {latestOrder.orderId}
-                  </p>
-                </div>
+              <section className="bg-zinc-950 border border-white/10 rounded-[2rem] p-8 md:p-10 print:bg-white print:border-black">
+                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 border-b border-white/10 print:border-black pb-8 mb-8">
+                  <div>
+                    <p className="text-orange-500 font-bold text-lg">
+                      FOODIEHUB
+                    </p>
 
-                <div className="bg-black border border-white/10 rounded-2xl p-5">
-                  <p className="text-gray-400 text-sm">Status</p>
-                  <p className="text-yellow-400 font-bold mt-2">
-                    {latestOrder.status}
-                  </p>
-                </div>
+                    <h2 className="text-4xl font-extrabold mt-2">
+                      Order Receipt
+                    </h2>
 
-                <div className="bg-black border border-white/10 rounded-2xl p-5">
-                  <p className="text-gray-400 text-sm">Customer</p>
-                  <p className="font-bold mt-2">
-                    {latestOrder.customer.fullName}
-                  </p>
-                </div>
-
-                <div className="bg-black border border-white/10 rounded-2xl p-5">
-                  <p className="text-gray-400 text-sm">Total</p>
-                  <p className="font-bold mt-2">
-                    Rs. {latestOrder.total}
-                  </p>
-                </div>
-              </div>
-
-              <div className="bg-black border border-white/10 rounded-2xl p-6 mb-8">
-                <h2 className="text-2xl font-bold mb-5">
-                  Payment Details
-                </h2>
-
-                <div className="grid md:grid-cols-3 gap-4">
-                  <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
-                    <p className="text-gray-400 text-sm">Payment Method</p>
-                    <p className="font-bold mt-2">
-                      {formatPaymentMethod(latestOrder.paymentMethod)}
+                    <p className="text-gray-400 print:text-gray-700 mt-3">
+                      Thank you for ordering with us.
                     </p>
                   </div>
 
-                  <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
-                    <p className="text-gray-400 text-sm">Payment Status</p>
-                    <p
-                      className={`inline-block px-3 py-1 rounded-full text-sm font-bold mt-2 ${getPaymentStatusClass(
-                        latestOrder.paymentStatus
-                      )}`}
-                    >
-                      {latestOrder.paymentStatus || "PENDING"}
-                    </p>
-                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-gray-400 print:text-gray-700 text-sm">
+                        Order Number
+                      </p>
 
-                  <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
-                    <p className="text-gray-400 text-sm">Transaction ID</p>
-                    <p className="font-bold mt-2 break-words">
-                      {latestOrder.transactionId || "Not provided"}
-                    </p>
+                      <p className="font-bold text-orange-500">
+                        {latestOrder.orderId}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-gray-400 print:text-gray-700 text-sm">
+                        Order Date
+                      </p>
+
+                      <p className="font-semibold">
+                        {latestOrder.createdAt}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-gray-400 print:text-gray-700 text-sm">
+                        Estimated Time
+                      </p>
+
+                      <p className="font-semibold">
+                        {latestOrder.estimatedTime || 30} Minutes
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                {latestOrder.paymentMethod !== "CASH_ON_DELIVERY" && (
-                  <p className="text-gray-400 text-sm mt-4">
-                    Your payment will be verified by the restaurant admin. If
-                    payment is already sent, please keep your transaction ID
-                    safe.
+                <div className="grid md:grid-cols-2 gap-6 mb-8">
+                  <div className="bg-black border border-white/10 rounded-2xl p-6 print:bg-gray-100 print:border-black">
+                    <h3 className="text-xl font-bold mb-5">
+                      Customer Information
+                    </h3>
+
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-gray-400 print:text-gray-700 text-sm">
+                          Full Name
+                        </p>
+
+                        <p className="font-semibold">
+                          {latestOrder.customer.fullName}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-gray-400 print:text-gray-700 text-sm">
+                          Phone Number
+                        </p>
+
+                        <p className="font-semibold">
+                          {latestOrder.customer.phone}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-gray-400 print:text-gray-700 text-sm">
+                          Email Address
+                        </p>
+
+                        <p className="font-semibold break-all">
+                          {latestOrder.customer.email}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-gray-400 print:text-gray-700 text-sm">
+                          Delivery Address
+                        </p>
+
+                        <p className="font-semibold">
+                          {latestOrder.customer.address}
+                        </p>
+                      </div>
+
+                      {latestOrder.customer.notes && (
+                        <div>
+                          <p className="text-gray-400 print:text-gray-700 text-sm">
+                            Order Notes
+                          </p>
+
+                          <p className="font-semibold">
+                            {latestOrder.customer.notes}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="bg-black border border-white/10 rounded-2xl p-6 print:bg-gray-100 print:border-black">
+                    <h3 className="text-xl font-bold mb-5">
+                      Payment Information
+                    </h3>
+
+                    <div className="space-y-4">
+                      <div>
+                        <p className="text-gray-400 print:text-gray-700 text-sm">
+                          Payment Method
+                        </p>
+
+                        <p className="font-semibold">
+                          {formatPaymentMethod(
+                            latestOrder.paymentMethod
+                          )}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-gray-400 print:text-gray-700 text-sm">
+                          Payment Status
+                        </p>
+
+                        <span
+                          className={`inline-block px-3 py-1 rounded-full text-sm font-bold mt-2 ${getPaymentStatusClass(
+                            latestOrder.paymentStatus
+                          )}`}
+                        >
+                          {latestOrder.paymentStatus || "PENDING"}
+                        </span>
+                      </div>
+
+                      {latestOrder.transactionId && (
+                        <div>
+                          <p className="text-gray-400 print:text-gray-700 text-sm">
+                            Transaction ID
+                          </p>
+
+                          <p className="font-semibold break-all">
+                            {latestOrder.transactionId}
+                          </p>
+                        </div>
+                      )}
+
+                      <div>
+                        <p className="text-gray-400 print:text-gray-700 text-sm">
+                          Order Status
+                        </p>
+
+                        <p className="font-semibold">
+                          {latestOrder.status}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto mb-8">
+                  <table className="w-full border border-white/10 print:border-black">
+                    <thead>
+                      <tr className="bg-white/5 print:bg-gray-200">
+                        <th className="text-left px-5 py-4 border-b border-white/10 print:border-black">
+                          Item
+                        </th>
+
+                        <th className="text-center px-5 py-4 border-b border-white/10 print:border-black">
+                          Qty
+                        </th>
+
+                        <th className="text-right px-5 py-4 border-b border-white/10 print:border-black">
+                          Price
+                        </th>
+
+                        <th className="text-right px-5 py-4 border-b border-white/10 print:border-black">
+                          Total
+                        </th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {latestOrder.items.map((item) => (
+                        <tr
+                          key={item.id}
+                          className="border-b border-white/5 print:border-black"
+                        >
+                          <td className="px-5 py-4 font-semibold">
+                            {item.name}
+                          </td>
+
+                          <td className="px-5 py-4 text-center">
+                            {item.quantity}
+                          </td>
+
+                          <td className="px-5 py-4 text-right">
+                            Rs. {item.price}
+                          </td>
+
+                          <td className="px-5 py-4 text-right font-bold">
+                            Rs. {item.price * item.quantity}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="max-w-md ml-auto">
+                  <div className="space-y-4">
+                    <div className="flex justify-between text-gray-300 print:text-gray-700">
+                      <span>Subtotal</span>
+
+                      <span>Rs. {latestOrder.subtotal}</span>
+                    </div>
+
+                    <div className="flex justify-between text-gray-300 print:text-gray-700">
+                      <span>Delivery Fee</span>
+
+                      <span>Rs. {latestOrder.deliveryFee}</span>
+                    </div>
+
+                    <div className="border-t border-white/10 print:border-black pt-4 flex justify-between text-2xl font-extrabold text-orange-500">
+                      <span>Total</span>
+
+                      <span>Rs. {latestOrder.total}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-10 bg-black border border-white/10 rounded-2xl p-5 print:bg-gray-100 print:border-black">
+                  <p className="text-gray-400 print:text-gray-700 text-sm leading-relaxed">
+                    This receipt confirms your order submission. Payment
+                    verification and order preparation are handled securely by
+                    the restaurant administration system.
                   </p>
-                )}
+                </div>
+              </section>
+
+              <div className="print:hidden flex flex-col md:flex-row gap-4 mt-8">
+                <button
+                  type="button"
+                  onClick={handlePrintInvoice}
+                  className="bg-orange-500 hover:bg-orange-600 px-8 py-4 rounded-full font-bold transition"
+                >
+                  Print Invoice
+                </button>
+
+                <Link
+                  to="/profile"
+                  className="border border-white/10 hover:border-orange-500 px-8 py-4 rounded-full font-bold transition text-center"
+                >
+                  Track My Orders
+                </Link>
+
+                <Link
+                  to="/menu"
+                  className="border border-white/10 hover:border-orange-500 px-8 py-4 rounded-full font-bold transition text-center"
+                >
+                  Continue Ordering
+                </Link>
               </div>
             </>
           ) : (
-            <div className="bg-black border border-white/10 rounded-2xl p-6 mb-8 text-center">
-              <p className="text-gray-400">
-                No recent order found.
+            <div className="bg-zinc-950 border border-white/10 rounded-[2rem] p-10 text-center">
+              <h2 className="text-3xl font-bold mb-5">
+                No Recent Order Found
+              </h2>
+
+              <p className="text-gray-400 mb-8">
+                We could not find your recent order receipt.
               </p>
+
+              <Link
+                to="/menu"
+                className="inline-block bg-orange-500 hover:bg-orange-600 px-8 py-4 rounded-full font-bold transition"
+              >
+                Back to Menu
+              </Link>
             </div>
           )}
-
-          <div className="bg-black border border-white/10 rounded-2xl p-6 mb-8">
-            <h2 className="text-2xl font-bold mb-5">
-              What Happens Next?
-            </h2>
-
-            <div className="grid md:grid-cols-4 gap-4">
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
-                <div className="text-3xl mb-3">📩</div>
-                <h3 className="font-bold">Order Received</h3>
-                <p className="text-gray-400 text-sm mt-2">
-                  Your order is now visible to the restaurant team.
-                </p>
-              </div>
-
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
-                <div className="text-3xl mb-3">👨‍🍳</div>
-                <h3 className="font-bold">Preparing</h3>
-                <p className="text-gray-400 text-sm mt-2">
-                  Kitchen staff will start preparing your food.
-                </p>
-              </div>
-
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
-                <div className="text-3xl mb-3">✅</div>
-                <h3 className="font-bold">Ready</h3>
-                <p className="text-gray-400 text-sm mt-2">
-                  Your food will be ready for pickup or delivery.
-                </p>
-              </div>
-
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
-                <div className="text-3xl mb-3">🚚</div>
-                <h3 className="font-bold">Completed</h3>
-                <p className="text-gray-400 text-sm mt-2">
-                  Order is completed after delivery or handover.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col md:flex-row gap-4 justify-center">
-            <Link
-              to="/profile"
-              className="text-center bg-orange-500 hover:bg-orange-600 px-8 py-4 rounded-full font-bold transition"
-            >
-              Track My Order
-            </Link>
-
-            <Link
-              to="/"
-              className="text-center border border-white/10 hover:border-orange-500 px-8 py-4 rounded-full font-bold transition"
-            >
-              Continue Ordering
-            </Link>
-          </div>
         </div>
       </main>
     </div>

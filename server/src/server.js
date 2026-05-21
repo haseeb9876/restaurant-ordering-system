@@ -37,7 +37,7 @@ app.use(
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 300,
+  max: 3000,
   message: {
     status: "error",
     message: "Too many requests. Please try again later.",
@@ -48,7 +48,7 @@ const apiLimiter = rateLimit({
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 1000,
   message: {
     status: "error",
     message: "Too many login attempts. Please try again later.",

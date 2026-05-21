@@ -2,6 +2,29 @@ import { useEffect, useState } from "react"
 import { getProducts } from "../../../services/api"
 import { useCart } from "../../cart/context/CartContext"
 
+const fallbackImage =
+  "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1200&q=80"
+
+function FeaturedSkeleton() {
+  return (
+    <div className="bg-white/5 border border-white/10 rounded-[2rem] overflow-hidden animate-pulse">
+      <div className="h-64 bg-white/10" />
+
+      <div className="p-6">
+        <div className="h-5 w-24 bg-white/10 rounded-full mb-5" />
+        <div className="h-7 w-3/4 bg-white/10 rounded mb-4" />
+        <div className="h-4 w-full bg-white/10 rounded mb-3" />
+        <div className="h-4 w-2/3 bg-white/10 rounded mb-6" />
+
+        <div className="flex items-center justify-between">
+          <div className="h-8 w-24 bg-white/10 rounded" />
+          <div className="h-10 w-24 bg-white/10 rounded-full" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function FeaturedMenu() {
   const [featuredItems, setFeaturedItems] = useState([])
   const [loading, setLoading] = useState(true)
@@ -12,6 +35,8 @@ function FeaturedMenu() {
   useEffect(() => {
     const fetchFeaturedProducts = async () => {
       try {
+        setError("")
+
         const products = await getProducts()
 
         const availableProducts = products.filter(
@@ -20,7 +45,7 @@ function FeaturedMenu() {
 
         setFeaturedItems(availableProducts.slice(0, 3))
       } catch (error) {
-        setError(error.message)
+        setError(error.message || "Failed to load featured dishes.")
       } finally {
         setLoading(false)
       }
@@ -30,7 +55,7 @@ function FeaturedMenu() {
   }, [])
 
   return (
-    <section className="bg-black text-white py-20 px-6">
+    <section className="bg-black text-white py-20 px-4 md:px-6">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
           <div>
@@ -41,6 +66,10 @@ function FeaturedMenu() {
             <h2 className="text-4xl md:text-5xl font-extrabold">
               Customer Favorites
             </h2>
+
+            <p className="text-gray-400 mt-4 max-w-2xl">
+              Popular dishes selected from the live restaurant menu.
+            </p>
           </div>
 
           <a
@@ -52,30 +81,42 @@ function FeaturedMenu() {
         </div>
 
         {loading && (
-          <p className="text-center text-gray-400">
-            Loading featured dishes...
-          </p>
+          <div className="grid md:grid-cols-3 gap-8">
+            {[1, 2, 3].map((item) => (
+              <FeaturedSkeleton key={item} />
+            ))}
+          </div>
         )}
 
-        {error && <p className="text-center text-red-400">{error}</p>}
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/30 rounded-[2rem] p-8 text-center">
+            <p className="text-red-300 font-bold">
+              {error}
+            </p>
+          </div>
+        )}
 
-        {!loading && !error && (
+        {!loading && !error && featuredItems.length > 0 && (
           <div className="grid md:grid-cols-3 gap-8">
             {featuredItems.map((item) => (
               <div
                 key={item.id}
-                className="bg-white/5 border border-white/10 rounded-[2rem] overflow-hidden hover:-translate-y-2 transition duration-300 shadow-xl"
+                className="bg-white/5 border border-white/10 rounded-[2rem] overflow-hidden hover:-translate-y-2 hover:border-orange-500/40 transition duration-300 shadow-xl"
               >
                 <img
-                  src={item.image}
+                  src={item.image || fallbackImage}
                   alt={item.name}
+                  loading="lazy"
+                  onError={(event) => {
+                    event.currentTarget.src = fallbackImage
+                  }}
                   className="h-64 w-full object-cover"
                 />
 
                 <div className="p-6">
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center justify-between gap-3 mb-3">
                     <span className="text-sm bg-orange-500/20 text-orange-400 px-3 py-1 rounded-full">
-                      {item.category.name}
+                      {item.category?.name || "Food"}
                     </span>
 
                     <span className="text-yellow-400 font-semibold">
@@ -83,13 +124,15 @@ function FeaturedMenu() {
                     </span>
                   </div>
 
-                  <h3 className="text-2xl font-bold mb-3">{item.name}</h3>
+                  <h3 className="text-2xl font-bold mb-3">
+                    {item.name}
+                  </h3>
 
-                  <p className="text-gray-400 text-sm mb-5">
-                    {item.description}
+                  <p className="text-gray-400 text-sm mb-5 min-h-10">
+                    {item.description || "Freshly prepared restaurant meal."}
                   </p>
 
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-4">
                     <p className="text-orange-500 text-2xl font-extrabold">
                       Rs. {item.price}
                     </p>
@@ -100,12 +143,12 @@ function FeaturedMenu() {
                         addToCart({
                           id: item.id,
                           name: item.name,
-                          category: item.category.name,
+                          category: item.category?.name || "Food",
                           price: item.price,
-                          image: item.image,
+                          image: item.image || fallbackImage,
                         })
                       }
-                      className="bg-orange-500 hover:bg-orange-600 px-5 py-2 rounded-full font-bold transition"
+                      className="bg-orange-500 hover:bg-orange-600 px-5 py-3 rounded-full font-bold transition"
                     >
                       Add +
                     </button>
@@ -117,9 +160,16 @@ function FeaturedMenu() {
         )}
 
         {!loading && !error && featuredItems.length === 0 && (
-          <p className="text-center text-gray-400">
-            No featured dishes available.
-          </p>
+          <div className="bg-white/5 border border-white/10 rounded-[2rem] p-10 text-center">
+            <p className="text-2xl font-bold mb-3">
+              No featured dishes available
+            </p>
+
+            <p className="text-gray-400">
+              Add available products from the admin panel to display featured
+              dishes here.
+            </p>
+          </div>
         )}
       </div>
     </section>

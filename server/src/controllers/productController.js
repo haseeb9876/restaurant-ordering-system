@@ -60,8 +60,14 @@ export const getProduct = async (req, res) => {
 
 export const createProduct = async (req, res) => {
   try {
-    const { name, description, price, image, categoryId, isAvailable } =
-      req.body
+    const {
+      name,
+      description,
+      price,
+      image,
+      categoryId,
+      isAvailable,
+    } = req.body
 
     if (!name || !price || !image || !categoryId) {
       return res.status(400).json({
@@ -72,13 +78,14 @@ export const createProduct = async (req, res) => {
 
     const product = await prisma.product.create({
       data: {
-        name,
-        description,
+        name: name.trim(),
+        description: description?.trim() || null,
         price: Number(price),
-        image,
+        image: image.trim(),
         categoryId: Number(categoryId),
         isAvailable: isAvailable ?? true,
       },
+
       include: {
         category: true,
       },
@@ -101,28 +108,77 @@ export const createProduct = async (req, res) => {
 export const updateProduct = async (req, res) => {
   try {
     const { id } = req.params
-    const { name, description, price, image, categoryId, isAvailable } =
-      req.body
 
-    if (!name || !price || !image || !categoryId) {
-      return res.status(400).json({
+    const existingProduct = await prisma.product.findUnique({
+      where: {
+        id: Number(id),
+      },
+    })
+
+    if (!existingProduct) {
+      return res.status(404).json({
         status: "error",
-        message: "Name, price, image, and category are required",
+        message: "Product not found",
       })
+    }
+
+    const updateData = {}
+
+    if (req.body.name !== undefined) {
+      if (!req.body.name.trim()) {
+        return res.status(400).json({
+          status: "error",
+          message: "Product name cannot be empty",
+        })
+      }
+
+      updateData.name = req.body.name.trim()
+    }
+
+    if (req.body.description !== undefined) {
+      updateData.description =
+        req.body.description?.trim() || null
+    }
+
+    if (req.body.price !== undefined) {
+      const parsedPrice = Number(req.body.price)
+
+      if (Number.isNaN(parsedPrice) || parsedPrice <= 0) {
+        return res.status(400).json({
+          status: "error",
+          message: "Price must be greater than 0",
+        })
+      }
+
+      updateData.price = parsedPrice
+    }
+
+    if (req.body.image !== undefined) {
+      if (!req.body.image.trim()) {
+        return res.status(400).json({
+          status: "error",
+          message: "Product image is required",
+        })
+      }
+
+      updateData.image = req.body.image.trim()
+    }
+
+    if (req.body.categoryId !== undefined) {
+      updateData.categoryId = Number(req.body.categoryId)
+    }
+
+    if (req.body.isAvailable !== undefined) {
+      updateData.isAvailable = Boolean(req.body.isAvailable)
     }
 
     const product = await prisma.product.update({
       where: {
         id: Number(id),
       },
-      data: {
-        name,
-        description,
-        price: Number(price),
-        image,
-        categoryId: Number(categoryId),
-        isAvailable,
-      },
+
+      data: updateData,
+
       include: {
         category: true,
       },
@@ -145,6 +201,19 @@ export const updateProduct = async (req, res) => {
 export const deleteProduct = async (req, res) => {
   try {
     const { id } = req.params
+
+    const existingProduct = await prisma.product.findUnique({
+      where: {
+        id: Number(id),
+      },
+    })
+
+    if (!existingProduct) {
+      return res.status(404).json({
+        status: "error",
+        message: "Product not found",
+      })
+    }
 
     await prisma.product.delete({
       where: {

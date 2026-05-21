@@ -18,6 +18,7 @@ function AdminProducts() {
   const [searchTerm, setSearchTerm] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("ALL")
   const [availabilityFilter, setAvailabilityFilter] = useState("ALL")
+  const [inventoryFilter, setInventoryFilter] = useState("ALL")
 
   const fetchProducts = async () => {
     try {
@@ -47,6 +48,26 @@ function AdminProducts() {
     ]
   }, [products])
 
+  const inventoryStats = useMemo(() => {
+    const tracked = products.filter((product) => product.trackInventory)
+
+    const lowStock = tracked.filter(
+      (product) =>
+        product.stockQuantity > 0 &&
+        product.stockQuantity <= product.lowStockThreshold
+    )
+
+    const outOfStock = tracked.filter(
+      (product) => product.stockQuantity === 0
+    )
+
+    return {
+      tracked: tracked.length,
+      lowStock: lowStock.length,
+      outOfStock: outOfStock.length,
+    }
+  }, [products])
+
   const filteredProducts = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase()
 
@@ -68,19 +89,47 @@ function AdminProducts() {
         (availabilityFilter === "AVAILABLE" && product.isAvailable) ||
         (availabilityFilter === "UNAVAILABLE" && !product.isAvailable)
 
-      return matchesSearch && matchesCategory && matchesAvailability
+      const isLowStock =
+        product.trackInventory &&
+        product.stockQuantity > 0 &&
+        product.stockQuantity <= product.lowStockThreshold
+
+      const isOutOfStock =
+        product.trackInventory && product.stockQuantity === 0
+
+      const matchesInventory =
+        inventoryFilter === "ALL" ||
+        (inventoryFilter === "TRACKED" && product.trackInventory) ||
+        (inventoryFilter === "LOW_STOCK" && isLowStock) ||
+        (inventoryFilter === "OUT_OF_STOCK" && isOutOfStock) ||
+        (inventoryFilter === "NOT_TRACKED" && !product.trackInventory)
+
+      return (
+        matchesSearch &&
+        matchesCategory &&
+        matchesAvailability &&
+        matchesInventory
+      )
     })
-  }, [products, searchTerm, categoryFilter, availabilityFilter])
+  }, [
+    products,
+    searchTerm,
+    categoryFilter,
+    availabilityFilter,
+    inventoryFilter,
+  ])
 
   const hasActiveFilters =
     searchTerm ||
     categoryFilter !== "ALL" ||
-    availabilityFilter !== "ALL"
+    availabilityFilter !== "ALL" ||
+    inventoryFilter !== "ALL"
 
   const clearFilters = () => {
     setSearchTerm("")
     setCategoryFilter("ALL")
     setAvailabilityFilter("ALL")
+    setInventoryFilter("ALL")
   }
 
   const handleToggleAvailability = async (product) => {
@@ -114,7 +163,7 @@ function AdminProducts() {
 
   const handleDeleteProduct = async (productId) => {
     const confirmDelete = window.confirm(
-      "Are you sure you want to delete this product?"
+      "Delete this product? If it exists in previous orders, it will be archived instead."
     )
 
     if (!confirmDelete) return
@@ -123,13 +172,23 @@ function AdminProducts() {
       setDeletingId(productId)
       setError("")
 
-      await deleteProduct(productId)
+      const result = await deleteProduct(productId)
 
-      setProducts((prevProducts) =>
-        prevProducts.filter((product) => product.id !== productId)
-      )
+      if (result.data) {
+        setProducts((prevProducts) =>
+          prevProducts.map((product) =>
+            product.id === productId ? result.data : product
+          )
+        )
 
-      toast.success("Product deleted successfully.")
+        toast.success(result.message || "Product archived successfully.")
+      } else {
+        setProducts((prevProducts) =>
+          prevProducts.filter((product) => product.id !== productId)
+        )
+
+        toast.success(result.message || "Product deleted successfully.")
+      }
     } catch (error) {
       const message = error.message || "Failed to delete product."
       setError(message)
@@ -137,6 +196,38 @@ function AdminProducts() {
     } finally {
       setDeletingId(null)
     }
+  }
+
+  const getInventoryBadge = (product) => {
+    if (!product.trackInventory) {
+      return (
+        <span className="text-xs px-3 py-1 rounded-full bg-white/10 text-gray-400 font-bold">
+          Stock Not Tracked
+        </span>
+      )
+    }
+
+    if (product.stockQuantity === 0) {
+      return (
+        <span className="text-xs px-3 py-1 rounded-full bg-red-500/20 text-red-400 font-bold">
+          Out of Stock
+        </span>
+      )
+    }
+
+    if (product.stockQuantity <= product.lowStockThreshold) {
+      return (
+        <span className="text-xs px-3 py-1 rounded-full bg-yellow-500/20 text-yellow-400 font-bold">
+          Low Stock
+        </span>
+      )
+    }
+
+    return (
+      <span className="text-xs px-3 py-1 rounded-full bg-green-500/20 text-green-400 font-bold">
+        Stock OK
+      </span>
+    )
   }
 
   return (
@@ -154,7 +245,7 @@ function AdminProducts() {
               </h1>
 
               <p className="text-gray-400 mt-3">
-                Search, filter, edit, delete, and control product availability.
+                Search, filter, edit, archive, and monitor product inventory.
               </p>
             </div>
 
@@ -166,9 +257,44 @@ function AdminProducts() {
             </Link>
           </div>
 
+          <div className="grid md:grid-cols-3 gap-5 mb-8">
+            <button
+              type="button"
+              onClick={() => setInventoryFilter("TRACKED")}
+              className="text-left bg-zinc-950 border border-white/10 hover:border-orange-500 rounded-2xl p-5 transition"
+            >
+              <p className="text-gray-400 text-sm mb-2">Tracked Products</p>
+              <h2 className="text-3xl font-extrabold text-orange-500">
+                {inventoryStats.tracked}
+              </h2>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setInventoryFilter("LOW_STOCK")}
+              className="text-left bg-zinc-950 border border-white/10 hover:border-yellow-500 rounded-2xl p-5 transition"
+            >
+              <p className="text-gray-400 text-sm mb-2">Low Stock</p>
+              <h2 className="text-3xl font-extrabold text-yellow-400">
+                {inventoryStats.lowStock}
+              </h2>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setInventoryFilter("OUT_OF_STOCK")}
+              className="text-left bg-zinc-950 border border-white/10 hover:border-red-500 rounded-2xl p-5 transition"
+            >
+              <p className="text-gray-400 text-sm mb-2">Out of Stock</p>
+              <h2 className="text-3xl font-extrabold text-red-400">
+                {inventoryStats.outOfStock}
+              </h2>
+            </button>
+          </div>
+
           <section className="bg-zinc-950 border border-white/10 rounded-[2rem] p-6 mb-8">
-            <div className="grid md:grid-cols-4 gap-4">
-              <div className="md:col-span-2">
+            <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
+              <div>
                 <label className="block text-sm text-gray-400 mb-2">
                   Search Products
                 </label>
@@ -197,7 +323,11 @@ function AdminProducts() {
                   </option>
 
                   {categories.map((category) => (
-                    <option key={category} value={category} className="bg-black">
+                    <option
+                      key={category}
+                      value={category}
+                      className="bg-black"
+                    >
                       {category}
                     </option>
                   ))}
@@ -227,6 +357,36 @@ function AdminProducts() {
                   </option>
                 </select>
               </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">
+                  Inventory
+                </label>
+
+                <select
+                  value={inventoryFilter}
+                  onChange={(event) =>
+                    setInventoryFilter(event.target.value)
+                  }
+                  className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-orange-500"
+                >
+                  <option value="ALL" className="bg-black">
+                    All Inventory
+                  </option>
+                  <option value="TRACKED" className="bg-black">
+                    Tracked
+                  </option>
+                  <option value="LOW_STOCK" className="bg-black">
+                    Low Stock
+                  </option>
+                  <option value="OUT_OF_STOCK" className="bg-black">
+                    Out of Stock
+                  </option>
+                  <option value="NOT_TRACKED" className="bg-black">
+                    Not Tracked
+                  </option>
+                </select>
+              </div>
             </div>
 
             <div className="mt-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -236,7 +396,9 @@ function AdminProducts() {
                   {filteredProducts.length}
                 </span>{" "}
                 of{" "}
-                <span className="text-white font-bold">{products.length}</span>{" "}
+                <span className="text-white font-bold">
+                  {products.length}
+                </span>{" "}
                 products
               </p>
 
@@ -312,13 +474,34 @@ function AdminProducts() {
                       {product.name}
                     </h2>
 
-                    <p className="text-gray-400 text-sm mt-3">
-                      {product.description}
+                    <p className="text-gray-400 text-sm mt-3 min-h-[40px]">
+                      {product.description || "No description provided."}
                     </p>
 
                     <p className="text-orange-500 text-2xl font-extrabold mt-6">
                       Rs. {product.price}
                     </p>
+
+                    <div className="mt-5 bg-black border border-white/10 rounded-2xl p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        {getInventoryBadge(product)}
+
+                        {product.trackInventory && (
+                          <span className="text-sm text-gray-300">
+                            Stock:{" "}
+                            <span className="font-bold text-white">
+                              {product.stockQuantity}
+                            </span>
+                          </span>
+                        )}
+                      </div>
+
+                      {product.trackInventory && (
+                        <p className="text-xs text-gray-500 mt-3">
+                          Low stock alert at {product.lowStockThreshold} item(s).
+                        </p>
+                      )}
+                    </div>
 
                     <div className="grid grid-cols-2 gap-3 mt-6">
                       <Link
@@ -347,7 +530,7 @@ function AdminProducts() {
                         disabled={deletingId === product.id}
                         className="col-span-2 border border-red-500/40 text-red-400 hover:bg-red-500 hover:text-white px-4 py-3 rounded-full font-bold transition disabled:opacity-60 disabled:cursor-not-allowed"
                       >
-                        {deletingId === product.id ? "Deleting..." : "Delete"}
+                        {deletingId === product.id ? "Processing..." : "Delete / Archive"}
                       </button>
                     </div>
                   </div>

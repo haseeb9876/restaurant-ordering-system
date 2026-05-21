@@ -6,6 +6,18 @@ import { useCart } from "../../cart/context/CartContext"
 const fallbackImage =
   "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1200&q=80"
 
+function isOutOfStock(item) {
+  return item.trackInventory && item.stockQuantity <= 0
+}
+
+function isLowStock(item) {
+  return (
+    item.trackInventory &&
+    item.stockQuantity > 0 &&
+    item.stockQuantity <= item.lowStockThreshold
+  )
+}
+
 function MenuCardSkeleton() {
   return (
     <div className="bg-black border border-white/10 rounded-[2rem] overflow-hidden animate-pulse">
@@ -45,11 +57,9 @@ function MenuSection({ selectedCategory, setSelectedCategory }) {
           getCategories(),
         ])
 
-        const availableProducts = products.filter(
-          (product) => product.isAvailable
-        )
+        const visibleProducts = products.filter((product) => product.isAvailable)
 
-        setMenuItems(availableProducts)
+        setMenuItems(visibleProducts)
 
         setCategories([
           "All",
@@ -57,7 +67,7 @@ function MenuSection({ selectedCategory, setSelectedCategory }) {
         ])
 
         const removedItems =
-          syncCartWithAvailableProducts(availableProducts)
+          syncCartWithAvailableProducts(visibleProducts)
 
         if (removedItems.length > 0) {
           toast.error(
@@ -99,6 +109,23 @@ function MenuSection({ selectedCategory, setSelectedCategory }) {
       return matchesSearch && matchesCategory
     })
   }, [menuItems, search, selectedCategory])
+
+  const handleAddToCart = (item) => {
+    if (isOutOfStock(item)) {
+      toast.error(`${item.name} is out of stock.`)
+      return
+    }
+
+    addToCart({
+      id: item.id,
+      name: item.name,
+      category: item.category?.name || "Food",
+      price: item.price,
+      image: item.image || fallbackImage,
+      trackInventory: item.trackInventory,
+      stockQuantity: item.stockQuantity,
+    })
+  }
 
   return (
     <section id="menu" className="bg-zinc-950 text-white py-20 px-4 md:px-6">
@@ -166,64 +193,78 @@ function MenuSection({ selectedCategory, setSelectedCategory }) {
 
         {!loading && !error && filteredItems.length > 0 && (
           <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-8">
-            {filteredItems.map((item) => (
-              <div
-                key={item.id}
-                className="bg-black border border-white/10 rounded-[2rem] overflow-hidden hover:-translate-y-2 hover:border-orange-500/40 transition duration-300"
-              >
-                <img
-                  src={item.image || fallbackImage}
-                  alt={item.name}
-                  loading="lazy"
-                  onError={(event) => {
-                    event.currentTarget.src = fallbackImage
-                  }}
-                  className="h-64 w-full object-cover"
-                />
+            {filteredItems.map((item) => {
+              const outOfStock = isOutOfStock(item)
+              const lowStock = isLowStock(item)
 
-                <div className="p-6">
-                  <div className="flex items-center justify-between gap-3 mb-3">
-                    <span className="text-sm bg-orange-500/20 text-orange-400 px-3 py-1 rounded-full">
-                      {item.category?.name || "Food"}
-                    </span>
+              return (
+                <div
+                  key={item.id}
+                  className="bg-black border border-white/10 rounded-[2rem] overflow-hidden hover:-translate-y-2 hover:border-orange-500/40 transition duration-300"
+                >
+                  <div className="relative">
+                    <img
+                      src={item.image || fallbackImage}
+                      alt={item.name}
+                      loading="lazy"
+                      onError={(event) => {
+                        event.currentTarget.src = fallbackImage
+                      }}
+                      className={`h-64 w-full object-cover ${
+                        outOfStock ? "opacity-50 grayscale" : ""
+                      }`}
+                    />
 
-                    <span className="text-yellow-400 font-semibold">
-                      ⭐ 4.8
-                    </span>
+                    {outOfStock && (
+                      <span className="absolute top-4 left-4 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-bold">
+                        Out of Stock
+                      </span>
+                    )}
+
+                    {lowStock && (
+                      <span className="absolute top-4 left-4 bg-yellow-500 text-black px-4 py-2 rounded-full text-sm font-bold">
+                        Only {item.stockQuantity} left
+                      </span>
+                    )}
                   </div>
 
-                  <h3 className="text-2xl font-bold mb-3">
-                    {item.name}
-                  </h3>
+                  <div className="p-6">
+                    <div className="flex items-center justify-between gap-3 mb-3">
+                      <span className="text-sm bg-orange-500/20 text-orange-400 px-3 py-1 rounded-full">
+                        {item.category?.name || "Food"}
+                      </span>
 
-                  <p className="text-gray-400 text-sm mb-5 min-h-10">
-                    {item.description || "Freshly prepared restaurant meal."}
-                  </p>
+                      <span className="text-yellow-400 font-semibold">
+                        ⭐ 4.8
+                      </span>
+                    </div>
 
-                  <div className="flex items-center justify-between gap-4">
-                    <p className="text-orange-500 text-2xl font-extrabold">
-                      Rs. {item.price}
+                    <h3 className="text-2xl font-bold mb-3">
+                      {item.name}
+                    </h3>
+
+                    <p className="text-gray-400 text-sm mb-5 min-h-10">
+                      {item.description || "Freshly prepared restaurant meal."}
                     </p>
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        addToCart({
-                          id: item.id,
-                          name: item.name,
-                          category: item.category?.name || "Food",
-                          price: item.price,
-                          image: item.image || fallbackImage,
-                        })
-                      }
-                      className="bg-orange-500 hover:bg-orange-600 px-5 py-3 rounded-full font-bold transition"
-                    >
-                      Add +
-                    </button>
+                    <div className="flex items-center justify-between gap-4">
+                      <p className="text-orange-500 text-2xl font-extrabold">
+                        Rs. {item.price}
+                      </p>
+
+                      <button
+                        type="button"
+                        disabled={outOfStock}
+                        onClick={() => handleAddToCart(item)}
+                        className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed px-5 py-3 rounded-full font-bold transition"
+                      >
+                        {outOfStock ? "Unavailable" : "Add +"}
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
 

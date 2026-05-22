@@ -160,64 +160,6 @@ export async function verifyEmailOtp(req, res) {
   }
 }
 
-
-export async function resendVerificationOtp(req, res) {
-  try {
-    const email = req.body.email?.trim().toLowerCase()
-
-    if (!email) {
-      return res.status(400).json({
-        status: "error",
-        message: "Email is required.",
-      })
-    }
-
-    const user = await prisma.user.findUnique({ where: { email } })
-
-    if (!user) {
-      return res.status(404).json({
-        status: "error",
-        message: "User not found.",
-      })
-    }
-
-    if (user.isEmailVerified) {
-      return res.status(400).json({
-        status: "error",
-        message: "Email is already verified.",
-      })
-    }
-
-    const verificationOtp = generateOtp()
-
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        emailVerificationOtp: verificationOtp,
-        emailVerificationExpiry: getOtpExpiry(),
-      },
-    })
-
-    await sendOtpEmail({
-      to: user.email,
-      fullName: user.fullName,
-      otp: verificationOtp,
-      purpose: "EMAIL_VERIFICATION",
-    })
-
-    res.json({
-      status: "success",
-      message: "New verification OTP sent successfully.",
-    })
-  } catch (error) {
-    res.status(500).json({
-      status: "error",
-      message: "Failed to resend verification OTP.",
-      error: error.message,
-    })
-  }
-}
-
 export async function forgotPassword(req, res) {
   try {
     const email = req.body.email?.trim().toLowerCase()
@@ -265,52 +207,6 @@ export async function forgotPassword(req, res) {
     res.status(500).json({
       status: "error",
       message: "Failed to process forgot password request.",
-      error: error.message,
-    })
-  }
-}
-
-
-export async function resendResetOtp(req, res) {
-  try {
-    const email = req.body.email?.trim().toLowerCase()
-
-    if (!email) {
-      return res.status(400).json({
-        status: "error",
-        message: "Email is required.",
-      })
-    }
-
-    const user = await prisma.user.findUnique({ where: { email } })
-
-    if (user) {
-      const passwordResetOtp = generateOtp()
-
-      await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          passwordResetOtp,
-          passwordResetExpiry: getOtpExpiry(),
-        },
-      })
-
-      await sendOtpEmail({
-        to: user.email,
-        fullName: user.fullName,
-        otp: passwordResetOtp,
-        purpose: "PASSWORD_RESET",
-      })
-    }
-
-    res.json({
-      status: "success",
-      message: "If an account exists, a new reset OTP has been sent.",
-    })
-  } catch (error) {
-    res.status(500).json({
-      status: "error",
-      message: "Failed to resend reset OTP.",
       error: error.message,
     })
   }

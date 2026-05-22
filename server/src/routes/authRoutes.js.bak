@@ -2,8 +2,6 @@ import express from "express"
 
 import {
   forgotPassword,
-  resendResetOtp,
-  resendVerificationOtp,
   getCurrentUser,
   loginUser,
   registerUser,
@@ -19,10 +17,8 @@ router.post("/register", registerUser)
 router.post("/login", loginUser)
 
 router.post("/verify-email-otp", verifyEmailOtp)
-router.post("/resend-verification-otp", resendVerificationOtp)
 
 router.post("/forgot-password", forgotPassword)
-router.post("/resend-reset-otp", resendResetOtp)
 router.post("/reset-password", resetPassword)
 
 router.get("/me", protect, getCurrentUser)

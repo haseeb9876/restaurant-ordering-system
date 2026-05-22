@@ -62,32 +62,8 @@ export const verifyEmailOtp = async (verificationData) => {
   return result
 }
 
-export const resendVerificationOtp = async (emailData) => {
-  const result = await apiRequest("/auth/resend-verification-otp", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(emailData),
-  })
-
-  return result
-}
-
 export const forgotPassword = async (emailData) => {
   const result = await apiRequest("/auth/forgot-password", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(emailData),
-  })
-
-  return result
-}
-
-export const resendResetOtp = async (emailData) => {
-  const result = await apiRequest("/auth/resend-reset-otp", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

@@ -76,18 +76,7 @@ export function AuthProvider({ children }) {
   }, [])
 
   const register = async (userData) => {
-    const authData = await registerUser(userData)
-    const validUser = validateUser(authData.user)
-
-    if (!validUser) {
-      throw new Error("Invalid user data received from server.")
-    }
-
-    localStorage.setItem("token", authData.token)
-    localStorage.setItem("user", JSON.stringify(validUser))
-    setUser(validUser)
-
-    return validUser
+    return registerUser(userData)
   }
 
   const login = async (userData) => {

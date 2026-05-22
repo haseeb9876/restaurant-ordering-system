@@ -50,6 +50,42 @@ export const registerUser = async (userData) => {
   return result.data
 }
 
+export const verifyEmailOtp = async (verificationData) => {
+  const result = await apiRequest("/auth/verify-email-otp", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(verificationData),
+  })
+
+  return result
+}
+
+export const forgotPassword = async (emailData) => {
+  const result = await apiRequest("/auth/forgot-password", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(emailData),
+  })
+
+  return result
+}
+
+export const resetPassword = async (resetData) => {
+  const result = await apiRequest("/auth/reset-password", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(resetData),
+  })
+
+  return result
+}
+
 export const loginUser = async (userData) => {
   const result = await apiRequest("/auth/login", {
     method: "POST",

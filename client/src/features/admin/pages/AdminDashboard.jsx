@@ -34,8 +34,8 @@ function AdminDashboard() {
   const fetchOrders = async () => {
     try {
       setError("")
-      const data = await getOrders()
-      setOrders(data)
+      const response = await getOrders()
+      setOrders(response.data || [])
     } catch (error) {
       setError(error.message || "Failed to load dashboard.")
     } finally {

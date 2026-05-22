@@ -11,6 +11,9 @@ import KitchenPanel from "./features/kitchen/pages/KitchenPanel"
 
 import Login from "./features/auth/pages/Login"
 import Register from "./features/auth/pages/Register"
+import VerifyOtp from "./features/auth/pages/VerifyOtp"
+import ForgotPassword from "./features/auth/pages/ForgotPassword"
+import ResetPassword from "./features/auth/pages/ResetPassword"
 
 import AdminDashboard from "./features/admin/pages/AdminDashboard"
 import AdminOrders from "./features/admin/pages/AdminOrders"
@@ -42,6 +45,33 @@ function App() {
         element={
           <PublicOnlyRoute>
             <Register />
+          </PublicOnlyRoute>
+        }
+      />
+
+      <Route
+        path="/verify-otp"
+        element={
+          <PublicOnlyRoute>
+            <VerifyOtp />
+          </PublicOnlyRoute>
+        }
+      />
+
+      <Route
+        path="/forgot-password"
+        element={
+          <PublicOnlyRoute>
+            <ForgotPassword />
+          </PublicOnlyRoute>
+        }
+      />
+
+      <Route
+        path="/reset-password"
+        element={
+          <PublicOnlyRoute>
+            <ResetPassword />
           </PublicOnlyRoute>
         }
       />

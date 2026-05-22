@@ -47,10 +47,19 @@ function Register() {
       setIsSubmitting(true)
 
       await register(validation.data)
-      toast.success("Account created successfully.")
-      navigate(redirectPath)
+
+      toast.success(
+        "Account created. Please verify your email OTP."
+      )
+
+      navigate(
+        `/verify-otp?email=${encodeURIComponent(
+          validation.data.email
+        )}`
+      )
     } catch (error) {
       const message = error.message || "Registration failed. Please try again."
+
       setError(message)
       toast.error(message)
     } finally {

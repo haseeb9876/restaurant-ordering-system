@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import toast from "react-hot-toast"
+
 import Navbar from "../../customer/components/Navbar"
 import CartSidebar from "../../cart/components/CartSidebar"
 import { useAuth } from "../context/AuthContext"
@@ -66,6 +67,7 @@ function Login() {
       navigate("/")
     } catch (error) {
       const message = error.message || "Login failed. Please try again."
+
       setError(message)
       toast.error(message)
     } finally {
@@ -121,6 +123,15 @@ function Login() {
             >
               {isSubmitting ? "Logging in..." : "Login"}
             </button>
+
+            <div className="text-right">
+              <Link
+                to="/forgot-password"
+                className="text-sm text-orange-500 hover:text-orange-400"
+              >
+                Forgot Password?
+              </Link>
+            </div>
           </form>
 
           <p className="text-center text-gray-400 mt-6">

@@ -17,6 +17,38 @@ function isValidOrderItem(item) {
   )
 }
 
+function getDateRange(range) {
+  const now = new Date()
+  const start = new Date(now)
+  const end = new Date(now)
+
+  if (range === "TODAY") {
+    start.setHours(0, 0, 0, 0)
+    end.setHours(23, 59, 59, 999)
+
+    return { gte: start, lte: end }
+  }
+
+  if (range === "YESTERDAY") {
+    start.setDate(start.getDate() - 1)
+    end.setDate(end.getDate() - 1)
+
+    start.setHours(0, 0, 0, 0)
+    end.setHours(23, 59, 59, 999)
+
+    return { gte: start, lte: end }
+  }
+
+  if (range === "LAST_7_DAYS") {
+    start.setDate(start.getDate() - 7)
+    start.setHours(0, 0, 0, 0)
+
+    return { gte: start, lte: end }
+  }
+
+  return null
+}
+
 export const createOrder = asyncHandler(async (req, res) => {
   const customerName = req.body.customerName?.trim()
   const customerPhone = req.body.customerPhone?.trim()
@@ -253,23 +285,113 @@ export const createOrder = asyncHandler(async (req, res) => {
 })
 
 export const getOrders = asyncHandler(async (req, res) => {
-  const orders = await prisma.order.findMany({
-    include: {
-      items: {
-        include: {
-          product: true,
-          variant: true,
+  const {
+    range = "TODAY",
+    status = "ALL",
+    paymentStatus = "ALL",
+    paymentMethod = "ALL",
+    search = "",
+    page = "1",
+    limit = "20",
+  } = req.query
+
+  const currentPage = Math.max(Number(page) || 1, 1)
+  const pageSize = Math.min(Math.max(Number(limit) || 20, 1), 100)
+  const skip = (currentPage - 1) * pageSize
+
+  const where = {}
+
+  const dateRange = getDateRange(range)
+
+  if (dateRange) {
+    where.createdAt = dateRange
+  }
+
+  if (status !== "ALL") {
+    where.status = status
+  }
+
+  if (paymentStatus !== "ALL") {
+    where.paymentStatus = paymentStatus
+  }
+
+  if (paymentMethod !== "ALL") {
+    where.paymentMethod = paymentMethod
+  }
+
+  const normalizedSearch = search.trim()
+
+  if (normalizedSearch) {
+    where.OR = [
+      {
+        orderNumber: {
+          contains: normalizedSearch,
+          mode: "insensitive",
         },
       },
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  })
+      {
+        customerName: {
+          contains: normalizedSearch,
+          mode: "insensitive",
+        },
+      },
+      {
+        customerPhone: {
+          contains: normalizedSearch,
+          mode: "insensitive",
+        },
+      },
+      {
+        customerEmail: {
+          contains: normalizedSearch,
+          mode: "insensitive",
+        },
+      },
+      {
+        address: {
+          contains: normalizedSearch,
+          mode: "insensitive",
+        },
+      },
+      {
+        transactionId: {
+          contains: normalizedSearch,
+          mode: "insensitive",
+        },
+      },
+    ]
+  }
+
+  const [orders, totalOrders] = await prisma.$transaction([
+    prisma.order.findMany({
+      where,
+      include: {
+        items: {
+          include: {
+            product: true,
+            variant: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      skip,
+      take: pageSize,
+    }),
+
+    prisma.order.count({
+      where,
+    }),
+  ])
 
   res.json({
     status: "success",
     results: orders.length,
+    totalOrders,
+    totalPages: Math.max(Math.ceil(totalOrders / pageSize), 1),
+    currentPage,
+    pageSize,
     data: orders,
   })
 })

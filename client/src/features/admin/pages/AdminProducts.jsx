@@ -2,18 +2,29 @@ import { useEffect, useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import toast from "react-hot-toast"
 import {
+  createCategory,
+  deleteCategory,
   deleteProduct,
+  getCategories,
   getProducts,
+  updateCategory,
   updateProduct,
 } from "../../../services/api"
 import AdminLayout from "../layouts/AdminLayout"
 
 function AdminProducts() {
   const [products, setProducts] = useState([])
+  const [categoriesList, setCategoriesList] = useState([])
   const [loading, setLoading] = useState(true)
+  const [categoryLoading, setCategoryLoading] = useState(false)
   const [error, setError] = useState("")
   const [deletingId, setDeletingId] = useState(null)
   const [updatingId, setUpdatingId] = useState(null)
+
+  const [newCategoryName, setNewCategoryName] = useState("")
+  const [editingCategoryId, setEditingCategoryId] = useState(null)
+  const [editingCategoryName, setEditingCategoryName] = useState("")
+  const [categoryActionId, setCategoryActionId] = useState(null)
 
   const [searchTerm, setSearchTerm] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("ALL")
@@ -34,19 +45,35 @@ function AdminProducts() {
     }
   }
 
+  const fetchCategories = async () => {
+    try {
+      const data = await getCategories()
+      setCategoriesList(data)
+    } catch (error) {
+      toast.error(error.message || "Failed to load categories.")
+    }
+  }
+
+  const refreshPageData = async () => {
+    setLoading(true)
+    await Promise.all([fetchProducts(), fetchCategories()])
+  }
+
   useEffect(() => {
-    fetchProducts()
+    refreshPageData()
   }, [])
 
   const categories = useMemo(() => {
-    return [
-      ...new Set(
-        products
-          .map((product) => product.category?.name)
-          .filter(Boolean)
-      ),
-    ]
-  }, [products])
+    const apiCategoryNames = categoriesList
+      .map((category) => category.name)
+      .filter(Boolean)
+
+    const productCategoryNames = products
+      .map((product) => product.category?.name)
+      .filter(Boolean)
+
+    return [...new Set([...apiCategoryNames, ...productCategoryNames])]
+  }, [categoriesList, products])
 
   const inventoryStats = useMemo(() => {
     const tracked = products.filter((product) => product.trackInventory)
@@ -66,6 +93,19 @@ function AdminProducts() {
       lowStock: lowStock.length,
       outOfStock: outOfStock.length,
     }
+  }, [products])
+
+  const categoryProductCounts = useMemo(() => {
+    return products.reduce((counts, product) => {
+      const categoryId = product.category?.id
+
+      if (!categoryId) return counts
+
+      return {
+        ...counts,
+        [categoryId]: (counts[categoryId] || 0) + 1,
+      }
+    }, {})
   }, [products])
 
   const filteredProducts = useMemo(() => {
@@ -132,6 +172,86 @@ function AdminProducts() {
     setInventoryFilter("ALL")
   }
 
+  const handleCreateCategory = async (event) => {
+    event.preventDefault()
+
+    const trimmedName = newCategoryName.trim()
+
+    if (!trimmedName) {
+      toast.error("Category name is required.")
+      return
+    }
+
+    try {
+      setCategoryLoading(true)
+      await createCategory(trimmedName)
+      setNewCategoryName("")
+      await fetchCategories()
+      toast.success("Category added successfully.")
+    } catch (error) {
+      toast.error(error.message || "Failed to add category.")
+    } finally {
+      setCategoryLoading(false)
+    }
+  }
+
+  const startEditCategory = (category) => {
+    setEditingCategoryId(category.id)
+    setEditingCategoryName(category.name)
+  }
+
+  const cancelEditCategory = () => {
+    setEditingCategoryId(null)
+    setEditingCategoryName("")
+  }
+
+  const handleUpdateCategory = async (categoryId) => {
+    const trimmedName = editingCategoryName.trim()
+
+    if (!trimmedName) {
+      toast.error("Category name is required.")
+      return
+    }
+
+    try {
+      setCategoryActionId(categoryId)
+      await updateCategory(categoryId, trimmedName)
+      cancelEditCategory()
+      await refreshPageData()
+      toast.success("Category updated successfully.")
+    } catch (error) {
+      toast.error(error.message || "Failed to update category.")
+    } finally {
+      setCategoryActionId(null)
+    }
+  }
+
+  const handleDeleteCategory = async (category) => {
+    const productCount = categoryProductCounts[category.id] || 0
+
+    if (productCount > 0) {
+      toast.error("This category has products. Move or delete products first.")
+      return
+    }
+
+    const confirmDelete = window.confirm(
+      `Delete category "${category.name}"? This is only allowed when the category is empty.`
+    )
+
+    if (!confirmDelete) return
+
+    try {
+      setCategoryActionId(category.id)
+      await deleteCategory(category.id)
+      await fetchCategories()
+      toast.success("Category deleted successfully.")
+    } catch (error) {
+      toast.error(error.message || "Failed to delete category.")
+    } finally {
+      setCategoryActionId(null)
+    }
+  }
+
   const handleToggleAvailability = async (product) => {
     try {
       setUpdatingId(product.id)
@@ -189,6 +309,8 @@ function AdminProducts() {
 
         toast.success(result.message || "Product deleted successfully.")
       }
+
+      await fetchCategories()
     } catch (error) {
       const message = error.message || "Failed to delete product."
       setError(message)
@@ -245,7 +367,8 @@ function AdminProducts() {
               </h1>
 
               <p className="text-gray-400 mt-3">
-                Search, filter, edit, archive, and monitor product inventory.
+                Search, filter, edit, archive, monitor inventory, and manage
+                menu categories.
               </p>
             </div>
 
@@ -256,6 +379,152 @@ function AdminProducts() {
               Add Product
             </Link>
           </div>
+
+          <section className="bg-zinc-950 border border-white/10 rounded-[2rem] p-6 mb-8">
+            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5 mb-6">
+              <div>
+                <p className="text-orange-500 font-semibold mb-2">
+                  Category Management
+                </p>
+
+                <h2 className="text-2xl font-extrabold">
+                  Add, Edit, or Delete Empty Categories
+                </h2>
+
+                <p className="text-gray-400 text-sm mt-2">
+                  Categories with products are protected and cannot be deleted.
+                </p>
+              </div>
+
+              <form
+                onSubmit={handleCreateCategory}
+                className="flex flex-col sm:flex-row gap-3"
+              >
+                <input
+                  type="text"
+                  value={newCategoryName}
+                  onChange={(event) =>
+                    setNewCategoryName(event.target.value)
+                  }
+                  placeholder="New category name"
+                  className="bg-black border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-orange-500 min-w-[240px]"
+                />
+
+                <button
+                  type="submit"
+                  disabled={categoryLoading}
+                  className="bg-orange-500 hover:bg-orange-600 px-6 py-3 rounded-xl font-bold transition disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {categoryLoading ? "Adding..." : "Add Category"}
+                </button>
+              </form>
+            </div>
+
+            {categoriesList.length === 0 ? (
+              <p className="text-gray-400">No categories found.</p>
+            ) : (
+              <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {categoriesList.map((category) => {
+                  const productCount =
+                    categoryProductCounts[category.id] || 0
+
+                  const isEditing = editingCategoryId === category.id
+
+                  return (
+                    <div
+                      key={category.id}
+                      className="bg-black border border-white/10 rounded-2xl p-4"
+                    >
+                      {isEditing ? (
+                        <div className="space-y-3">
+                          <input
+                            type="text"
+                            value={editingCategoryName}
+                            onChange={(event) =>
+                              setEditingCategoryName(event.target.value)
+                            }
+                            className="w-full bg-zinc-950 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-orange-500"
+                          />
+
+                          <div className="flex gap-3">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleUpdateCategory(category.id)
+                              }
+                              disabled={categoryActionId === category.id}
+                              className="flex-1 bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded-xl font-bold transition disabled:opacity-60 disabled:cursor-not-allowed"
+                            >
+                              {categoryActionId === category.id
+                                ? "Saving..."
+                                : "Save"}
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={cancelEditCategory}
+                              className="flex-1 border border-white/10 hover:border-orange-500 px-4 py-2 rounded-xl font-bold transition"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <h3 className="font-bold text-lg">
+                                {category.name}
+                              </h3>
+
+                              <p className="text-sm text-gray-400 mt-1">
+                                {productCount} product
+                                {productCount === 1 ? "" : "s"}
+                              </p>
+                            </div>
+
+                            <span
+                              className={`text-xs px-3 py-1 rounded-full font-bold ${
+                                productCount > 0
+                                  ? "bg-green-500/20 text-green-400"
+                                  : "bg-yellow-500/20 text-yellow-400"
+                              }`}
+                            >
+                              {productCount > 0 ? "Protected" : "Empty"}
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3 mt-5">
+                            <button
+                              type="button"
+                              onClick={() => startEditCategory(category)}
+                              className="border border-white/10 hover:border-orange-500 px-4 py-2 rounded-xl font-bold transition"
+                            >
+                              Edit
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteCategory(category)}
+                              disabled={
+                                productCount > 0 ||
+                                categoryActionId === category.id
+                              }
+                              className="border border-red-500/40 text-red-400 hover:bg-red-500 hover:text-white px-4 py-2 rounded-xl font-bold transition disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                              {categoryActionId === category.id
+                                ? "Deleting..."
+                                : "Delete"}
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </section>
 
           <div className="grid md:grid-cols-3 gap-5 mb-8">
             <button
@@ -530,7 +799,9 @@ function AdminProducts() {
                         disabled={deletingId === product.id}
                         className="col-span-2 border border-red-500/40 text-red-400 hover:bg-red-500 hover:text-white px-4 py-3 rounded-full font-bold transition disabled:opacity-60 disabled:cursor-not-allowed"
                       >
-                        {deletingId === product.id ? "Processing..." : "Delete / Archive"}
+                        {deletingId === product.id
+                          ? "Processing..."
+                          : "Delete / Archive"}
                       </button>
                     </div>
                   </div>

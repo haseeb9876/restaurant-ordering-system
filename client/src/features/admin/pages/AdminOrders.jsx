@@ -27,6 +27,15 @@ const paymentMethods = [
   "BANK_TRANSFER",
 ]
 
+const dateRanges = [
+  { value: "TODAY", label: "Today" },
+  { value: "YESTERDAY", label: "Yesterday" },
+  { value: "LAST_7_DAYS", label: "Last 7 Days" },
+  { value: "ALL", label: "All Orders" },
+]
+
+const pageSizes = [10, 20, 50, 100]
+
 function formatCurrency(amount) {
   return `Rs. ${Number(amount || 0).toLocaleString("en-PK")}`
 }
@@ -59,21 +68,50 @@ function getPaymentStatusClass(status) {
 
 function AdminOrders() {
   const [orders, setOrders] = useState([])
+  const [meta, setMeta] = useState({
+    totalOrders: 0,
+    totalPages: 1,
+    currentPage: 1,
+    pageSize: 20,
+  })
+
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [updatingOrderId, setUpdatingOrderId] = useState(null)
   const [updatingPaymentOrderId, setUpdatingPaymentOrderId] = useState(null)
 
   const [searchTerm, setSearchTerm] = useState("")
+  const [dateRangeFilter, setDateRangeFilter] = useState("TODAY")
   const [orderStatusFilter, setOrderStatusFilter] = useState("ALL")
   const [paymentStatusFilter, setPaymentStatusFilter] = useState("ALL")
   const [paymentMethodFilter, setPaymentMethodFilter] = useState("ALL")
+  const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState(20)
 
-  const fetchOrders = async () => {
+  const fetchOrders = async ({ silent = false } = {}) => {
     try {
+      if (!silent) setLoading(true)
+
       setError("")
-      const data = await getOrders()
-      setOrders(data)
+
+      const result = await getOrders({
+        range: dateRangeFilter,
+        status: orderStatusFilter,
+        paymentStatus: paymentStatusFilter,
+        paymentMethod: paymentMethodFilter,
+        search: searchTerm,
+        page,
+        limit,
+      })
+
+      setOrders(result.data || [])
+
+      setMeta({
+        totalOrders: result.totalOrders || 0,
+        totalPages: result.totalPages || 1,
+        currentPage: result.currentPage || 1,
+        pageSize: result.pageSize || limit,
+      })
     } catch (error) {
       const message = error.message || "Failed to load orders."
       setError(message)
@@ -85,16 +123,50 @@ function AdminOrders() {
 
   useEffect(() => {
     fetchOrders()
+  }, [
+    dateRangeFilter,
+    orderStatusFilter,
+    paymentStatusFilter,
+    paymentMethodFilter,
+    page,
+    limit,
+  ])
+
+  useEffect(() => {
+    const delay = setTimeout(() => {
+      setPage(1)
+      fetchOrders()
+    }, 500)
+
+    return () => clearTimeout(delay)
+  }, [searchTerm])
+
+  useEffect(() => {
+    const shouldAutoRefresh =
+      dateRangeFilter === "TODAY" ||
+      ["PENDING", "CONFIRMED", "PREPARING", "READY", "OUT_FOR_DELIVERY"].includes(
+        orderStatusFilter
+      )
+
+    if (!shouldAutoRefresh) return undefined
 
     const interval = setInterval(() => {
-      fetchOrders()
-    }, 7000)
+      fetchOrders({ silent: true })
+    }, 5000)
 
     return () => clearInterval(interval)
-  }, [])
+  }, [
+    dateRangeFilter,
+    orderStatusFilter,
+    paymentStatusFilter,
+    paymentMethodFilter,
+    searchTerm,
+    page,
+    limit,
+  ])
 
   const stats = useMemo(() => {
-    const totalOrders = orders.length
+    const totalOrders = meta.totalOrders
 
     const pendingOrders = orders.filter(
       (order) => order.status === "PENDING"
@@ -121,64 +193,23 @@ function AdminOrders() {
       completedOrders,
       pendingPayments,
     }
-  }, [orders])
-
-  const filteredOrders = useMemo(() => {
-    const normalizedSearch = searchTerm.trim().toLowerCase()
-
-    return orders.filter((order) => {
-      const matchesSearch =
-        !normalizedSearch ||
-        [
-          order.orderNumber,
-          order.customerName,
-          order.customerPhone,
-          order.customerEmail,
-          order.address,
-          order.transactionId,
-        ]
-          .filter(Boolean)
-          .some((value) =>
-            String(value).toLowerCase().includes(normalizedSearch)
-          )
-
-      const matchesOrderStatus =
-        orderStatusFilter === "ALL" || order.status === orderStatusFilter
-
-      const matchesPaymentStatus =
-        paymentStatusFilter === "ALL" ||
-        order.paymentStatus === paymentStatusFilter
-
-      const matchesPaymentMethod =
-        paymentMethodFilter === "ALL" ||
-        order.paymentMethod === paymentMethodFilter
-
-      return (
-        matchesSearch &&
-        matchesOrderStatus &&
-        matchesPaymentStatus &&
-        matchesPaymentMethod
-      )
-    })
-  }, [
-    orders,
-    searchTerm,
-    orderStatusFilter,
-    paymentStatusFilter,
-    paymentMethodFilter,
-  ])
+  }, [orders, meta.totalOrders])
 
   const hasActiveFilters =
     searchTerm ||
+    dateRangeFilter !== "TODAY" ||
     orderStatusFilter !== "ALL" ||
     paymentStatusFilter !== "ALL" ||
     paymentMethodFilter !== "ALL"
 
   const clearFilters = () => {
     setSearchTerm("")
+    setDateRangeFilter("TODAY")
     setOrderStatusFilter("ALL")
     setPaymentStatusFilter("ALL")
     setPaymentMethodFilter("ALL")
+    setPage(1)
+    setLimit(20)
   }
 
   const handleStatusChange = async (orderId, status) => {
@@ -233,6 +264,11 @@ function AdminOrders() {
     }
   }
 
+  const goToPage = (nextPage) => {
+    const safePage = Math.min(Math.max(nextPage, 1), meta.totalPages || 1)
+    setPage(safePage)
+  }
+
   return (
     <AdminLayout>
       <main className="px-6 py-10">
@@ -248,13 +284,14 @@ function AdminOrders() {
               </h1>
 
               <p className="text-gray-400 mt-3 max-w-3xl">
-                Search, filter, track, and update orders with payment verification.
+                Default view shows today’s orders only. Use filters and pagination
+                to keep the admin panel fast even after thousands of orders.
               </p>
             </div>
 
             <button
               type="button"
-              onClick={fetchOrders}
+              onClick={() => fetchOrders()}
               className="border border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white px-6 py-3 rounded-full font-bold transition w-fit"
             >
               Refresh Orders
@@ -263,12 +300,12 @@ function AdminOrders() {
 
           <div className="grid md:grid-cols-2 xl:grid-cols-5 gap-5 mb-8">
             <div className="bg-zinc-950 border border-white/10 rounded-2xl p-5">
-              <p className="text-gray-400 text-sm mb-2">Total</p>
+              <p className="text-gray-400 text-sm mb-2">Matching Orders</p>
               <h2 className="text-3xl font-extrabold">{stats.totalOrders}</h2>
             </div>
 
             <div className="bg-zinc-950 border border-white/10 rounded-2xl p-5">
-              <p className="text-gray-400 text-sm mb-2">Pending</p>
+              <p className="text-gray-400 text-sm mb-2">Pending On Page</p>
               <h2 className="text-3xl font-extrabold text-yellow-400">
                 {stats.pendingOrders}
               </h2>
@@ -282,7 +319,7 @@ function AdminOrders() {
             </div>
 
             <div className="bg-zinc-950 border border-white/10 rounded-2xl p-5">
-              <p className="text-gray-400 text-sm mb-2">Completed</p>
+              <p className="text-gray-400 text-sm mb-2">Completed On Page</p>
               <h2 className="text-3xl font-extrabold text-green-400">
                 {stats.completedOrders}
               </h2>
@@ -297,8 +334,8 @@ function AdminOrders() {
           </div>
 
           <section className="bg-zinc-950 border border-white/10 rounded-[2rem] p-6 mb-8">
-            <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
-              <div>
+            <div className="grid md:grid-cols-2 xl:grid-cols-6 gap-4">
+              <div className="xl:col-span-2">
                 <label className="block text-sm text-gray-400 mb-2">
                   Search Orders
                 </label>
@@ -314,14 +351,40 @@ function AdminOrders() {
 
               <div>
                 <label className="block text-sm text-gray-400 mb-2">
+                  Date Range
+                </label>
+
+                <select
+                  value={dateRangeFilter}
+                  onChange={(event) => {
+                    setDateRangeFilter(event.target.value)
+                    setPage(1)
+                  }}
+                  className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-orange-500"
+                >
+                  {dateRanges.map((range) => (
+                    <option
+                      key={range.value}
+                      value={range.value}
+                      className="bg-black"
+                    >
+                      {range.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">
                   Order Status
                 </label>
 
                 <select
                   value={orderStatusFilter}
-                  onChange={(event) =>
+                  onChange={(event) => {
                     setOrderStatusFilter(event.target.value)
-                  }
+                    setPage(1)
+                  }}
                   className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-orange-500"
                 >
                   <option value="ALL" className="bg-black">
@@ -343,9 +406,10 @@ function AdminOrders() {
 
                 <select
                   value={paymentStatusFilter}
-                  onChange={(event) =>
+                  onChange={(event) => {
                     setPaymentStatusFilter(event.target.value)
-                  }
+                    setPage(1)
+                  }}
                   className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-orange-500"
                 >
                   <option value="ALL" className="bg-black">
@@ -367,9 +431,10 @@ function AdminOrders() {
 
                 <select
                   value={paymentMethodFilter}
-                  onChange={(event) =>
+                  onChange={(event) => {
                     setPaymentMethodFilter(event.target.value)
-                  }
+                    setPage(1)
+                  }}
                   className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-orange-500"
                 >
                   <option value="ALL" className="bg-black">
@@ -385,26 +450,45 @@ function AdminOrders() {
               </div>
             </div>
 
-            <div className="mt-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="mt-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <p className="text-gray-400 text-sm">
                 Showing{" "}
                 <span className="text-orange-500 font-bold">
-                  {filteredOrders.length}
+                  {orders.length}
                 </span>{" "}
                 of{" "}
-                <span className="text-white font-bold">{orders.length}</span>{" "}
-                orders
+                <span className="text-white font-bold">
+                  {meta.totalOrders}
+                </span>{" "}
+                matching orders
               </p>
 
-              {hasActiveFilters && (
-                <button
-                  type="button"
-                  onClick={clearFilters}
-                  className="border border-white/10 hover:border-orange-500 px-5 py-2 rounded-full font-bold transition"
+              <div className="flex flex-wrap items-center gap-3">
+                <select
+                  value={limit}
+                  onChange={(event) => {
+                    setLimit(Number(event.target.value))
+                    setPage(1)
+                  }}
+                  className="bg-black border border-white/10 rounded-full px-4 py-2 outline-none focus:border-orange-500"
                 >
-                  Clear Filters
-                </button>
-              )}
+                  {pageSizes.map((size) => (
+                    <option key={size} value={size} className="bg-black">
+                      {size} per page
+                    </option>
+                  ))}
+                </select>
+
+                {hasActiveFilters && (
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="border border-white/10 hover:border-orange-500 px-5 py-2 rounded-full font-bold transition"
+                  >
+                    Clear Filters
+                  </button>
+                )}
+              </div>
             </div>
           </section>
 
@@ -412,18 +496,18 @@ function AdminOrders() {
 
           {error && <p className="text-red-400 mb-6">{error}</p>}
 
-          {!loading && !error && filteredOrders.length === 0 && (
+          {!loading && !error && orders.length === 0 && (
             <div className="bg-zinc-950 border border-white/10 rounded-[2rem] p-8 text-center">
               <h2 className="text-2xl font-bold mb-3">No orders found</h2>
               <p className="text-gray-400">
-                Try clearing filters or wait for new customer orders.
+                Try another date range or wait for new customer orders.
               </p>
             </div>
           )}
 
-          {!loading && !error && filteredOrders.length > 0 && (
+          {!loading && !error && orders.length > 0 && (
             <div className="space-y-6">
-              {filteredOrders.map((order) => (
+              {orders.map((order) => (
                 <article
                   key={order.id}
                   className="bg-zinc-950 border border-white/10 rounded-[2rem] p-6"
@@ -568,6 +652,12 @@ function AdminOrders() {
                           <div>
                             <p className="font-bold">
                               {item.product?.name || "Deleted Product"}
+                              {item.variantName && (
+                                <span className="text-orange-400">
+                                  {" "}
+                                  ({item.variantName})
+                                </span>
+                              )}
                             </p>
 
                             <p className="text-gray-400 text-sm">
@@ -611,6 +701,39 @@ function AdminOrders() {
                   </div>
                 </article>
               ))}
+
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-zinc-950 border border-white/10 rounded-[2rem] p-5">
+                <p className="text-gray-400">
+                  Page{" "}
+                  <span className="text-white font-bold">
+                    {meta.currentPage}
+                  </span>{" "}
+                  of{" "}
+                  <span className="text-white font-bold">
+                    {meta.totalPages}
+                  </span>
+                </p>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    disabled={meta.currentPage <= 1}
+                    onClick={() => goToPage(meta.currentPage - 1)}
+                    className="border border-white/10 hover:border-orange-500 disabled:opacity-40 disabled:cursor-not-allowed px-5 py-2 rounded-full font-bold transition"
+                  >
+                    Previous
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={meta.currentPage >= meta.totalPages}
+                    onClick={() => goToPage(meta.currentPage + 1)}
+                    className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-700 disabled:cursor-not-allowed px-5 py-2 rounded-full font-bold transition"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>

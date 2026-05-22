@@ -143,6 +143,43 @@ export const getCategories = async () => {
   return result.data
 }
 
+export const createCategory = async (name) => {
+  const result = await apiRequest("/categories", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify({ name }),
+  })
+
+  return result.data
+}
+
+export const updateCategory = async (categoryId, name) => {
+  const result = await apiRequest(`/categories/${categoryId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify({ name }),
+  })
+
+  return result.data
+}
+
+export const deleteCategory = async (categoryId) => {
+  const result = await apiRequest(`/categories/${categoryId}`, {
+    method: "DELETE",
+    headers: {
+      ...getAuthHeaders(),
+    },
+  })
+
+  return result
+}
+
 export const createOrder = async (orderData) => {
   const result = await apiRequest("/orders", {
     method: "POST",
@@ -156,14 +193,32 @@ export const createOrder = async (orderData) => {
   return result.data
 }
 
-export const getOrders = async () => {
-  const result = await apiRequest("/orders", {
+export const getOrders = async ({
+  range = "TODAY",
+  status = "ALL",
+  paymentStatus = "ALL",
+  paymentMethod = "ALL",
+  search = "",
+  page = 1,
+  limit = 20,
+} = {}) => {
+  const query = new URLSearchParams({
+    range,
+    status,
+    paymentStatus,
+    paymentMethod,
+    search,
+    page,
+    limit,
+  })
+
+  const result = await apiRequest(`/orders?${query.toString()}`, {
     headers: {
       ...getAuthHeaders(),
     },
   })
 
-  return result.data
+  return result
 }
 
 export const getMyOrders = async () => {

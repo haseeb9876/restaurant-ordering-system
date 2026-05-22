@@ -37,6 +37,12 @@ enum PaymentStatus {
   FAILED
 }
 
+enum ProductType {
+  SIMPLE
+  VARIANT
+  DEAL
+}
+
 model User {
   id        Int      @id @default(autoincrement())
   fullName  String
@@ -61,24 +67,42 @@ model Category {
 }
 
 model Product {
-  id                Int      @id @default(autoincrement())
+  id                Int         @id @default(autoincrement())
   name              String
   description       String?
   price             Int
   image             String
 
-  isAvailable       Boolean  @default(true)
-  trackInventory    Boolean  @default(false)
-  stockQuantity     Int      @default(0)
-  lowStockThreshold Int      @default(5)
+  productType       ProductType @default(SIMPLE)
+
+  isAvailable       Boolean     @default(true)
+  trackInventory    Boolean     @default(false)
+  stockQuantity     Int         @default(0)
+  lowStockThreshold Int         @default(5)
 
   categoryId        Int
-  category          Category @relation(fields: [categoryId], references: [id])
+  category          Category    @relation(fields: [categoryId], references: [id])
 
+  variants          ProductVariant[]
   orderItems        OrderItem[]
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+}
+
+model ProductVariant {
+  id          Int      @id @default(autoincrement())
+  name        String
+  price       Int
+  isAvailable Boolean @default(true)
+
+  productId   Int
+  product     Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  orderItems  OrderItem[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Order {
@@ -116,16 +140,20 @@ model Order {
 }
 
 model OrderItem {
-  id        Int     @id @default(autoincrement())
+  id            Int             @id @default(autoincrement())
 
-  quantity  Int
-  price     Int
+  quantity      Int
+  price         Int
+  variantName   String?
 
-  orderId   Int
-  order     Order   @relation(fields: [orderId], references: [id])
+  orderId       Int
+  order         Order           @relation(fields: [orderId], references: [id])
 
-  productId Int
-  product   Product @relation(fields: [productId], references: [id])
+  productId     Int
+  product       Product         @relation(fields: [productId], references: [id])
+
+  variantId     Int?
+  variant       ProductVariant? @relation(fields: [variantId], references: [id])
 }
 
 model RestaurantSettings {

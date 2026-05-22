@@ -10,7 +10,10 @@ function isValidOrderItem(item) {
     item &&
     Number.isInteger(Number(item.id)) &&
     Number.isInteger(Number(item.quantity)) &&
-    Number(item.quantity) > 0
+    Number(item.quantity) > 0 &&
+    (item.variantId === undefined ||
+      item.variantId === null ||
+      Number.isInteger(Number(item.variantId)))
   )
 }
 
@@ -72,6 +75,9 @@ export const createOrder = asyncHandler(async (req, res) => {
         in: productIds,
       },
     },
+    include: {
+      variants: true,
+    },
   })
 
   if (products.length !== productIds.length) {
@@ -86,6 +92,24 @@ export const createOrder = asyncHandler(async (req, res) => {
   if (unavailableProduct) {
     res.status(400)
     throw new Error(`${unavailableProduct.name} is currently unavailable.`)
+  }
+
+  const invalidVariantItem = items.find((item) => {
+    if (!item.variantId) return false
+
+    const product = products.find(
+      (currentProduct) => currentProduct.id === Number(item.id)
+    )
+
+    return !product?.variants.some(
+      (variant) =>
+        variant.id === Number(item.variantId) && variant.isAvailable
+    )
+  })
+
+  if (invalidVariantItem) {
+    res.status(400)
+    throw new Error("Selected product size/option is not available.")
   }
 
   const insufficientStockItem = items.find((item) => {
@@ -106,7 +130,6 @@ export const createOrder = asyncHandler(async (req, res) => {
     )
 
     res.status(400)
-
     throw new Error(
       `${product.name} has only ${product.stockQuantity} item(s) in stock.`
     )
@@ -117,10 +140,18 @@ export const createOrder = asyncHandler(async (req, res) => {
       (currentProduct) => currentProduct.id === Number(item.id)
     )
 
+    const selectedVariant = item.variantId
+      ? product.variants.find(
+          (variant) => variant.id === Number(item.variantId)
+        )
+      : null
+
     return {
       productId: product.id,
+      variantId: selectedVariant?.id || null,
+      variantName: selectedVariant?.name || null,
       quantity: Number(item.quantity),
-      price: product.price,
+      price: selectedVariant?.price || product.price,
     }
   })
 
@@ -143,14 +174,10 @@ export const createOrder = asyncHandler(async (req, res) => {
     const freeDeliveryMinimumOrder =
       settings?.freeDeliveryMinimumOrder || 600
 
-    if (
-      freeDeliveryEnabled &&
-      subtotal >= freeDeliveryMinimumOrder
-    ) {
-      deliveryFee = 0
-    } else {
-      deliveryFee = baseDeliveryFee
-    }
+    deliveryFee =
+      freeDeliveryEnabled && subtotal >= freeDeliveryMinimumOrder
+        ? 0
+        : baseDeliveryFee
   }
 
   const total = subtotal + deliveryFee
@@ -164,40 +191,32 @@ export const createOrder = asyncHandler(async (req, res) => {
       data: {
         orderNumber: `ORD-${Date.now()}`,
         status: "PENDING",
-
         paymentMethod,
         paymentStatus: "PENDING",
-
         transactionId,
         paymentProof,
-
         customerName,
         customerPhone,
         customerEmail,
-
         address,
         notes,
-
         subtotal,
         deliveryFee,
         total,
-
         estimatedTime,
-
         userId:
           req.user?.role === "CUSTOMER"
             ? req.user.id
             : null,
-
         items: {
           create: calculatedItems,
         },
       },
-
       include: {
         items: {
           include: {
             product: true,
+            variant: true,
           },
         },
       },
@@ -208,9 +227,7 @@ export const createOrder = asyncHandler(async (req, res) => {
         (currentProduct) => currentProduct.id === item.productId
       )
 
-      if (!product.trackInventory) {
-        continue
-      }
+      if (!product.trackInventory) continue
 
       const newStockQuantity = product.stockQuantity - item.quantity
 
@@ -241,10 +258,10 @@ export const getOrders = asyncHandler(async (req, res) => {
       items: {
         include: {
           product: true,
+          variant: true,
         },
       },
     },
-
     orderBy: {
       createdAt: "desc",
     },
@@ -269,15 +286,14 @@ export const getMyOrders = asyncHandler(async (req, res) => {
         },
       ],
     },
-
     include: {
       items: {
         include: {
           product: true,
+          variant: true,
         },
       },
     },
-
     orderBy: {
       createdAt: "desc",
     },
@@ -314,15 +330,14 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
     where: {
       id: Number(id),
     },
-
     data: {
       status,
     },
-
     include: {
       items: {
         include: {
           product: true,
+          variant: true,
         },
       },
     },
@@ -350,15 +365,14 @@ export const updatePaymentStatus = asyncHandler(async (req, res) => {
     where: {
       id: Number(id),
     },
-
     data: {
       paymentStatus,
     },
-
     include: {
       items: {
         include: {
           product: true,
+          variant: true,
         },
       },
     },

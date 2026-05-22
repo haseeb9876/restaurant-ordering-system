@@ -48,7 +48,7 @@ function CartSidebar() {
           ) : (
             cartItems.map((item) => (
               <div
-                key={item.id}
+                key={item.cartKey}
                 className="flex gap-4 bg-white/5 border border-white/10 rounded-2xl p-4"
               >
                 <img
@@ -59,10 +59,18 @@ function CartSidebar() {
 
                 <div className="flex-1">
                   <div className="flex items-start justify-between gap-3">
-                    <h3 className="font-bold">{item.name}</h3>
+                    <div>
+                      <h3 className="font-bold">{item.name}</h3>
+
+                      {item.variantName && (
+                        <p className="text-xs text-orange-400 mt-1">
+                          Option: {item.variantName}
+                        </p>
+                      )}
+                    </div>
 
                     <button
-                      onClick={() => removeFromCart(item.id)}
+                      onClick={() => removeFromCart(item.cartKey)}
                       className="text-red-400 hover:text-red-300 text-sm"
                     >
                       Remove
@@ -76,7 +84,7 @@ function CartSidebar() {
                   <div className="flex items-center justify-between mt-3">
                     <div className="flex items-center gap-3">
                       <button
-                        onClick={() => decreaseQuantity(item.id)}
+                        onClick={() => decreaseQuantity(item.cartKey)}
                         className="w-8 h-8 rounded-full bg-white/10 hover:bg-orange-500 font-bold"
                       >
                         -
@@ -85,7 +93,7 @@ function CartSidebar() {
                       <span className="font-bold">{item.quantity}</span>
 
                       <button
-                        onClick={() => increaseQuantity(item.id)}
+                        onClick={() => increaseQuantity(item.cartKey)}
                         className="w-8 h-8 rounded-full bg-white/10 hover:bg-orange-500 font-bold"
                       >
                         +
@@ -113,7 +121,11 @@ function CartSidebar() {
           <Link
             to="/checkout"
             onClick={closeCart}
-            className="block text-center w-full bg-orange-500 hover:bg-orange-600 py-4 rounded-full font-bold transition"
+            className={`block text-center w-full py-4 rounded-full font-bold transition ${
+              cartItems.length === 0
+                ? "bg-gray-700 text-gray-400 pointer-events-none"
+                : "bg-orange-500 hover:bg-orange-600"
+            }`}
           >
             Proceed to Checkout
           </Link>

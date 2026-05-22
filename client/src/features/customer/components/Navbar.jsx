@@ -58,32 +58,42 @@ function Navbar() {
   }
 
   return (
-    <header className="fixed top-0 left-0 w-full z-50 bg-black/80 backdrop-blur-md border-b border-white/10">
-      <nav className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <header className="fixed top-0 left-0 w-full z-50 bg-black/85 backdrop-blur-md border-b border-white/10 shadow-lg">
+      <nav className="max-w-7xl mx-auto px-4 md:px-6 py-3 flex items-center justify-between">
 
         <button
           type="button"
           onClick={goHomeTop}
-          className="flex items-center gap-3"
+          className="flex items-center gap-4 shrink-0"
         >
-          {branding.logoUrl && (
+          {branding.logoUrl ? (
             <img
               src={branding.logoUrl}
               alt={branding.restaurantName}
-              className="w-10 h-10 rounded-full object-cover border border-white/10"
+              className="w-14 h-14 md:w-16 md:h-16 rounded-full object-cover border-2 border-orange-500 shadow-lg shadow-orange-500/20"
             />
+          ) : (
+            <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-orange-500 flex items-center justify-center text-white text-2xl font-extrabold shadow-lg shadow-orange-500/20">
+              R
+            </div>
           )}
 
-          <span className="text-2xl font-bold text-orange-500">
-            {branding.restaurantName}
-          </span>
+          <div className="text-left">
+            <p className="text-xs uppercase tracking-[0.3em] text-orange-400 font-bold">
+              Premium Restaurant
+            </p>
+
+            <h1 className="text-xl md:text-3xl font-extrabold text-white leading-tight">
+              {branding.restaurantName}
+            </h1>
+          </div>
         </button>
 
-        <ul className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-300">
+        <ul className="hidden lg:flex items-center gap-8 text-sm font-semibold text-gray-300">
           <li>
             <button
               onClick={goHomeTop}
-              className="hover:text-orange-500"
+              className="hover:text-orange-500 transition"
             >
               Home
             </button>
@@ -92,7 +102,7 @@ function Navbar() {
           <li>
             <a
               href="/#menu"
-              className="hover:text-orange-500"
+              className="hover:text-orange-500 transition"
             >
               Menu
             </a>
@@ -101,7 +111,7 @@ function Navbar() {
           <li>
             <a
               href="/#about"
-              className="hover:text-orange-500"
+              className="hover:text-orange-500 transition"
             >
               About
             </a>
@@ -110,14 +120,14 @@ function Navbar() {
           <li>
             <a
               href="/#contact"
-              className="hover:text-orange-500"
+              className="hover:text-orange-500 transition"
             >
               Contact
             </a>
           </li>
         </ul>
 
-        <div className="hidden md:flex items-center gap-4">
+        <div className="hidden lg:flex items-center gap-4">
 
           {(user?.role === "ADMIN" ||
             user?.role === "STAFF") && (
@@ -192,14 +202,14 @@ function Navbar() {
           onClick={() =>
             setIsMenuOpen(!isMenuOpen)
           }
-          className="md:hidden text-3xl"
+          className="lg:hidden text-4xl text-white"
         >
           {isMenuOpen ? "×" : "☰"}
         </button>
       </nav>
 
       {isMenuOpen && (
-        <div className="md:hidden bg-black border-t border-white/10 px-6 py-6 space-y-5 text-gray-300">
+        <div className="lg:hidden bg-black border-t border-white/10 px-6 py-6 space-y-5 text-gray-300">
 
           <button
             onClick={goHomeTop}

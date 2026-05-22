@@ -2,6 +2,10 @@ import { createContext, useContext, useEffect, useState } from "react"
 
 const CartContext = createContext()
 
+const getCartKey = (item) => {
+  return item.variantId ? `${item.id}-${item.variantId}` : `${item.id}`
+}
+
 export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState(() => {
     const savedCart = localStorage.getItem("cartItems")
@@ -33,40 +37,49 @@ export function CartProvider({ children }) {
   }, [orderHistory])
 
   const addToCart = (item) => {
+    const incomingKey = getCartKey(item)
+
     setCartItems((prevItems) => {
       const existingItem = prevItems.find(
-        (cartItem) => cartItem.id === item.id
+        (cartItem) => cartItem.cartKey === incomingKey
       )
 
       if (existingItem) {
         return prevItems.map((cartItem) =>
-          cartItem.id === item.id
+          cartItem.cartKey === incomingKey
             ? { ...cartItem, quantity: cartItem.quantity + 1 }
             : cartItem
         )
       }
 
-      return [...prevItems, { ...item, quantity: 1 }]
+      return [
+        ...prevItems,
+        {
+          ...item,
+          cartKey: incomingKey,
+          quantity: 1,
+        },
+      ]
     })
 
     setIsCartOpen(true)
   }
 
-  const increaseQuantity = (id) => {
+  const increaseQuantity = (cartKey) => {
     setCartItems((prevItems) =>
       prevItems.map((item) =>
-        item.id === id
+        item.cartKey === cartKey
           ? { ...item, quantity: item.quantity + 1 }
           : item
       )
     )
   }
 
-  const decreaseQuantity = (id) => {
+  const decreaseQuantity = (cartKey) => {
     setCartItems((prevItems) =>
       prevItems
         .map((item) =>
-          item.id === id
+          item.cartKey === cartKey
             ? { ...item, quantity: item.quantity - 1 }
             : item
         )
@@ -74,9 +87,9 @@ export function CartProvider({ children }) {
     )
   }
 
-  const removeFromCart = (id) => {
+  const removeFromCart = (cartKey) => {
     setCartItems((prevItems) =>
-      prevItems.filter((item) => item.id !== id)
+      prevItems.filter((item) => item.cartKey !== cartKey)
     )
   }
 

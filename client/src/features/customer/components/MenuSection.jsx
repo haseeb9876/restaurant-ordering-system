@@ -18,20 +18,124 @@ function isLowStock(item) {
   )
 }
 
+function getAvailableVariants(item) {
+  return item.variants?.filter((variant) => variant.isAvailable) || []
+}
+
+function getDisplayPrice(item, selectedVariantId) {
+  const variants = getAvailableVariants(item)
+
+  if (variants.length === 0) return item.price
+
+  const selectedVariant =
+    variants.find((variant) => variant.id === selectedVariantId) ||
+    variants[0]
+
+  return selectedVariant.price
+}
+
+function getDealLines(description) {
+  if (!description) return []
+
+  return description
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+}
+
 function MenuCardSkeleton() {
   return (
     <div className="bg-black border border-white/10 rounded-[2rem] overflow-hidden animate-pulse">
       <div className="h-64 bg-white/10" />
-
       <div className="p-6">
         <div className="h-5 w-24 bg-white/10 rounded-full mb-5" />
         <div className="h-7 w-3/4 bg-white/10 rounded mb-4" />
         <div className="h-4 w-full bg-white/10 rounded mb-3" />
         <div className="h-4 w-2/3 bg-white/10 rounded mb-6" />
-
         <div className="flex items-center justify-between">
           <div className="h-8 w-24 bg-white/10 rounded" />
           <div className="h-10 w-24 bg-white/10 rounded-full" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function DealDetailsModal({ deal, onClose, onAddToCart }) {
+  if (!deal) return null
+
+  const dealLines = getDealLines(deal.description)
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center px-4 py-6">
+      <div className="bg-zinc-950 border border-orange-500/30 rounded-[2rem] max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+        <img
+          src={deal.image || fallbackImage}
+          alt={deal.name}
+          className="h-56 md:h-72 w-full object-cover"
+          onError={(event) => {
+            event.currentTarget.src = fallbackImage
+          }}
+        />
+
+        <div className="p-6 md:p-8">
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <div>
+              <p className="text-orange-400 font-bold mb-2">
+                Deal Details
+              </p>
+
+              <h3 className="text-3xl font-extrabold">
+                {deal.name}
+              </h3>
+            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="bg-white/10 hover:bg-white/20 text-white h-10 w-10 rounded-full font-bold shrink-0"
+            >
+              ×
+            </button>
+          </div>
+
+          <div className="bg-black border border-white/10 rounded-2xl p-5 mb-6">
+            <p className="text-gray-300 font-semibold mb-3">
+              This deal includes:
+            </p>
+
+            {dealLines.length > 0 ? (
+              <ul className="space-y-3">
+                {dealLines.map((line) => (
+                  <li key={line} className="flex gap-3 text-gray-200">
+                    <span className="text-orange-500 font-bold">✓</span>
+                    <span>{line}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-gray-400">
+                Fresh restaurant deal prepared with selected items.
+              </p>
+            )}
+          </div>
+
+          <div className="sticky bottom-0 bg-zinc-950 pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <p className="text-orange-500 text-3xl font-extrabold">
+              Rs. {deal.price}
+            </p>
+
+            <button
+              type="button"
+              onClick={() => {
+                onAddToCart(deal)
+                onClose()
+              }}
+              className="bg-orange-500 hover:bg-orange-600 px-7 py-4 rounded-full font-bold transition"
+            >
+              Add Deal to Cart
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -42,6 +146,8 @@ function MenuSection({ selectedCategory, setSelectedCategory }) {
   const [menuItems, setMenuItems] = useState([])
   const [categories, setCategories] = useState(["All"])
   const [search, setSearch] = useState("")
+  const [selectedVariants, setSelectedVariants] = useState({})
+  const [selectedDeal, setSelectedDeal] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
@@ -60,14 +166,9 @@ function MenuSection({ selectedCategory, setSelectedCategory }) {
         const visibleProducts = products.filter((product) => product.isAvailable)
 
         setMenuItems(visibleProducts)
+        setCategories(["All", ...categoryData.map((category) => category.name)])
 
-        setCategories([
-          "All",
-          ...categoryData.map((category) => category.name),
-        ])
-
-        const removedItems =
-          syncCartWithAvailableProducts(visibleProducts)
+        const removedItems = syncCartWithAvailableProducts(visibleProducts)
 
         if (removedItems.length > 0) {
           toast.error(
@@ -116,24 +217,43 @@ function MenuSection({ selectedCategory, setSelectedCategory }) {
       return
     }
 
+    const variants = getAvailableVariants(item)
+    const selectedVariantId = selectedVariants[item.id]
+    const selectedVariant =
+      variants.find((variant) => variant.id === selectedVariantId) ||
+      variants[0]
+
+    if (item.productType === "VARIANT" && !selectedVariant) {
+      toast.error("Please select a size/option first.")
+      return
+    }
+
     addToCart({
       id: item.id,
+      variantId: selectedVariant?.id || null,
+      variantName: selectedVariant?.name || "",
       name: item.name,
       category: item.category?.name || "Food",
-      price: item.price,
+      price: selectedVariant?.price || item.price,
       image: item.image || fallbackImage,
       trackInventory: item.trackInventory,
       stockQuantity: item.stockQuantity,
     })
+
+    toast.success(`${item.name} added to cart.`)
   }
 
   return (
     <section id="menu" className="bg-zinc-950 text-white py-20 px-4 md:px-6">
+      <DealDetailsModal
+        deal={selectedDeal}
+        onClose={() => setSelectedDeal(null)}
+        onAddToCart={handleAddToCart}
+      />
+
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-10">
-          <p className="text-orange-500 font-semibold mb-3">
-            Full Menu
-          </p>
+          <p className="text-orange-500 font-semibold mb-3">Full Menu</p>
 
           <h2 className="text-4xl md:text-5xl font-extrabold">
             Find Your Favorite Meal
@@ -181,10 +301,7 @@ function MenuSection({ selectedCategory, setSelectedCategory }) {
 
         {error && (
           <div className="bg-red-500/10 border border-red-500/30 rounded-[2rem] p-8 text-center">
-            <p className="text-red-300 font-bold">
-              {error}
-            </p>
-
+            <p className="text-red-300 font-bold">{error}</p>
             <p className="text-red-200/80 text-sm mt-2">
               Please refresh the page or try again later.
             </p>
@@ -196,11 +313,19 @@ function MenuSection({ selectedCategory, setSelectedCategory }) {
             {filteredItems.map((item) => {
               const outOfStock = isOutOfStock(item)
               const lowStock = isLowStock(item)
+              const variants = getAvailableVariants(item)
+              const selectedVariantId = selectedVariants[item.id]
+              const displayPrice = getDisplayPrice(item, selectedVariantId)
+              const isDeal = item.productType === "DEAL"
 
               return (
                 <div
                   key={item.id}
-                  className="bg-black border border-white/10 rounded-[2rem] overflow-hidden hover:-translate-y-2 hover:border-orange-500/40 transition duration-300"
+                  className={`bg-black border rounded-[2rem] overflow-hidden hover:-translate-y-2 transition duration-300 ${
+                    isDeal
+                      ? "border-orange-500/40 shadow-orange-500/10 shadow-xl"
+                      : "border-white/10 hover:border-orange-500/40"
+                  }`}
                 >
                   <div className="relative">
                     <img
@@ -214,6 +339,12 @@ function MenuSection({ selectedCategory, setSelectedCategory }) {
                         outOfStock ? "opacity-50 grayscale" : ""
                       }`}
                     />
+
+                    {isDeal && (
+                      <span className="absolute top-4 right-4 bg-orange-500 text-white px-4 py-2 rounded-full text-sm font-bold">
+                        Special Deal
+                      </span>
+                    )}
 
                     {outOfStock && (
                       <span className="absolute top-4 left-4 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-bold">
@@ -239,27 +370,78 @@ function MenuSection({ selectedCategory, setSelectedCategory }) {
                       </span>
                     </div>
 
-                    <h3 className="text-2xl font-bold mb-3">
-                      {item.name}
-                    </h3>
+                    <h3 className="text-2xl font-bold mb-3">{item.name}</h3>
 
-                    <p className="text-gray-400 text-sm mb-5 min-h-10">
-                      {item.description || "Freshly prepared restaurant meal."}
-                    </p>
+                    {isDeal ? (
+                      <div className="text-gray-400 text-sm mb-5 min-h-10">
+                        <p>
+                          Tap view details to see all items included in this deal.
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-gray-400 text-sm mb-5 min-h-10">
+                        {item.description || "Freshly prepared restaurant meal."}
+                      </p>
+                    )}
+
+                    {variants.length > 0 && (
+                      <div className="mb-5">
+                        <p className="text-xs text-gray-500 mb-2">
+                          Choose Size / Option
+                        </p>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          {variants.map((variant) => (
+                            <button
+                              key={variant.id}
+                              type="button"
+                              onClick={() =>
+                                setSelectedVariants((current) => ({
+                                  ...current,
+                                  [item.id]: variant.id,
+                                }))
+                              }
+                              className={`rounded-xl border px-3 py-2 text-sm font-bold transition ${
+                                (selectedVariantId || variants[0].id) ===
+                                variant.id
+                                  ? "border-orange-500 bg-orange-500 text-white"
+                                  : "border-white/10 bg-zinc-950 text-gray-300 hover:border-orange-500"
+                              }`}
+                            >
+                              {variant.name}
+                              <span className="block text-xs opacity-80">
+                                Rs. {variant.price}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     <div className="flex items-center justify-between gap-4">
                       <p className="text-orange-500 text-2xl font-extrabold">
-                        Rs. {item.price}
+                        Rs. {displayPrice}
                       </p>
 
-                      <button
-                        type="button"
-                        disabled={outOfStock}
-                        onClick={() => handleAddToCart(item)}
-                        className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed px-5 py-3 rounded-full font-bold transition"
-                      >
-                        {outOfStock ? "Unavailable" : "Add +"}
-                      </button>
+                      {isDeal ? (
+                        <button
+                          type="button"
+                          disabled={outOfStock}
+                          onClick={() => setSelectedDeal(item)}
+                          className="bg-white text-black hover:bg-orange-500 hover:text-white disabled:bg-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed px-5 py-3 rounded-full font-bold transition"
+                        >
+                          View Details
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={outOfStock}
+                          onClick={() => handleAddToCart(item)}
+                          className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed px-5 py-3 rounded-full font-bold transition"
+                        >
+                          {outOfStock ? "Unavailable" : "Add +"}
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -270,9 +452,7 @@ function MenuSection({ selectedCategory, setSelectedCategory }) {
 
         {!loading && !error && filteredItems.length === 0 && (
           <div className="bg-black border border-white/10 rounded-[2rem] p-10 text-center">
-            <p className="text-2xl font-bold mb-3">
-              No food item found
-            </p>
+            <p className="text-2xl font-bold mb-3">No food item found</p>
 
             <p className="text-gray-400 mb-6">
               Try changing the search text or selecting another category.

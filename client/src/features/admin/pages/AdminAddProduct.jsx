@@ -8,9 +8,10 @@ import {
   uploadProductImage,
 } from "../../../services/api"
 
+const defaultVariant = { name: "", price: "", isAvailable: true }
+
 function AdminAddProduct() {
   const navigate = useNavigate()
-
   const [categories, setCategories] = useState([])
 
   const [formData, setFormData] = useState({
@@ -19,10 +20,17 @@ function AdminAddProduct() {
     price: "",
     image: "",
     categoryId: "",
+    productType: "SIMPLE",
     isAvailable: true,
     trackInventory: false,
     stockQuantity: 0,
     lowStockThreshold: 5,
+    variants: [
+      { name: "Small", price: "", isAvailable: true },
+      { name: "Medium", price: "", isAvailable: true },
+      { name: "Large", price: "", isAvailable: true },
+      { name: "X Large", price: "", isAvailable: true },
+    ],
   })
 
   const [error, setError] = useState("")
@@ -51,6 +59,36 @@ function AdminAddProduct() {
       ...formData,
       [name]: type === "checkbox" ? checked : value,
     })
+  }
+
+  const handleVariantChange = (index, field, value) => {
+    setFormData((currentData) => {
+      const updatedVariants = [...currentData.variants]
+
+      updatedVariants[index] = {
+        ...updatedVariants[index],
+        [field]: field === "isAvailable" ? Boolean(value) : value,
+      }
+
+      return {
+        ...currentData,
+        variants: updatedVariants,
+      }
+    })
+  }
+
+  const addVariant = () => {
+    setFormData((currentData) => ({
+      ...currentData,
+      variants: [...currentData.variants, { ...defaultVariant }],
+    }))
+  }
+
+  const removeVariant = (index) => {
+    setFormData((currentData) => ({
+      ...currentData,
+      variants: currentData.variants.filter((_, itemIndex) => itemIndex !== index),
+    }))
   }
 
   const handleImageUpload = async (e) => {
@@ -103,21 +141,16 @@ function AdminAddProduct() {
     const trimmedName = formData.name.trim()
     const trimmedDescription = formData.description.trim()
     const trimmedImage = formData.image.trim()
+    const price = Number(formData.price)
     const stockQuantity = Number(formData.stockQuantity)
     const lowStockThreshold = Number(formData.lowStockThreshold)
 
     if (!trimmedName) {
-      return {
-        isValid: false,
-        message: "Product name is required.",
-      }
+      return { isValid: false, message: "Product name is required." }
     }
 
-    if (!formData.price || Number(formData.price) <= 0) {
-      return {
-        isValid: false,
-        message: "Price must be greater than 0.",
-      }
+    if (!formData.price || price <= 0) {
+      return { isValid: false, message: "Base price must be greater than 0." }
     }
 
     if (!trimmedImage) {
@@ -129,29 +162,45 @@ function AdminAddProduct() {
     }
 
     if (!formData.categoryId) {
-      return {
-        isValid: false,
-        message: "Please select a category.",
-      }
+      return { isValid: false, message: "Please select a category." }
     }
 
-    if (
-      Number.isNaN(stockQuantity) ||
-      stockQuantity < 0
-    ) {
-      return {
-        isValid: false,
-        message: "Stock quantity cannot be negative.",
-      }
+    if (Number.isNaN(stockQuantity) || stockQuantity < 0) {
+      return { isValid: false, message: "Stock quantity cannot be negative." }
     }
 
-    if (
-      Number.isNaN(lowStockThreshold) ||
-      lowStockThreshold < 0
-    ) {
-      return {
-        isValid: false,
-        message: "Low stock threshold cannot be negative.",
+    if (Number.isNaN(lowStockThreshold) || lowStockThreshold < 0) {
+      return { isValid: false, message: "Low stock threshold cannot be negative." }
+    }
+
+    const cleanVariants = formData.variants
+      .map((variant) => ({
+        name: variant.name.trim(),
+        price: Number(variant.price),
+        isAvailable: variant.isAvailable,
+      }))
+      .filter((variant) => variant.name || variant.price)
+
+    if (formData.productType === "VARIANT") {
+      if (cleanVariants.length === 0) {
+        return {
+          isValid: false,
+          message: "Variant products need at least one size/option.",
+        }
+      }
+
+      const invalidVariant = cleanVariants.find(
+        (variant) =>
+          !variant.name ||
+          Number.isNaN(variant.price) ||
+          variant.price <= 0
+      )
+
+      if (invalidVariant) {
+        return {
+          isValid: false,
+          message: "Every variant must have a name and price greater than 0.",
+        }
       }
     }
 
@@ -160,13 +209,18 @@ function AdminAddProduct() {
       data: {
         name: trimmedName,
         description: trimmedDescription,
-        price: Number(formData.price),
+        price,
         image: trimmedImage,
         categoryId: Number(formData.categoryId),
+        productType: formData.productType,
         isAvailable: formData.isAvailable,
         trackInventory: formData.trackInventory,
         stockQuantity,
         lowStockThreshold,
+        variants:
+          formData.productType === "VARIANT"
+            ? cleanVariants
+            : [],
       },
     }
   }
@@ -191,9 +245,7 @@ function AdminAddProduct() {
 
     try {
       setLoading(true)
-
       await createProduct(validation.data)
-
       toast.success("Product created successfully.")
       navigate("/admin/products")
     } catch (error) {
@@ -208,7 +260,7 @@ function AdminAddProduct() {
   return (
     <AdminLayout>
       <main className="px-6 py-10">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           <div className="mb-10">
             <p className="text-orange-500 font-semibold mb-3">
               Admin Dashboard
@@ -217,6 +269,10 @@ function AdminAddProduct() {
             <h1 className="text-4xl md:text-5xl font-extrabold">
               Add Product
             </h1>
+
+            <p className="text-gray-400 mt-3">
+              Add simple items, deals, or pizza-style products with sizes.
+            </p>
           </div>
 
           <div className="bg-zinc-950 border border-white/10 rounded-[2rem] p-6 md:p-8">
@@ -227,6 +283,23 @@ function AdminAddProduct() {
             )}
 
             <div className="grid gap-5">
+              <select
+                name="productType"
+                value={formData.productType}
+                onChange={handleChange}
+                className="bg-black border border-white/10 rounded-xl px-4 py-4 outline-none focus:border-orange-500"
+              >
+                <option value="SIMPLE" className="bg-black">
+                  Simple Product
+                </option>
+                <option value="VARIANT" className="bg-black">
+                  Product With Sizes / Variants
+                </option>
+                <option value="DEAL" className="bg-black">
+                  Deal / Combo
+                </option>
+              </select>
+
               <input
                 type="text"
                 name="name"
@@ -248,11 +321,90 @@ function AdminAddProduct() {
               <input
                 type="number"
                 name="price"
-                placeholder="Price *"
+                placeholder={
+                  formData.productType === "VARIANT"
+                    ? "Base / starting price *"
+                    : "Price *"
+                }
                 value={formData.price}
                 onChange={handleChange}
                 className="bg-black border border-white/10 rounded-xl px-4 py-4 outline-none focus:border-orange-500"
               />
+
+              {formData.productType === "VARIANT" && (
+                <div className="bg-black border border-white/10 rounded-xl p-4">
+                  <div className="flex items-center justify-between gap-4 mb-4">
+                    <div>
+                      <h2 className="text-lg font-bold">
+                        Sizes / Variants
+                      </h2>
+                      <p className="text-gray-500 text-sm">
+                        Example: Small, Medium, Large, X Large.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={addVariant}
+                      className="bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded-full font-bold transition"
+                    >
+                      Add Variant
+                    </button>
+                  </div>
+
+                  <div className="space-y-3">
+                    {formData.variants.map((variant, index) => (
+                      <div
+                        key={index}
+                        className="grid md:grid-cols-[1fr_1fr_auto_auto] gap-3 bg-zinc-950 border border-white/10 rounded-xl p-3"
+                      >
+                        <input
+                          type="text"
+                          placeholder="Variant name"
+                          value={variant.name}
+                          onChange={(event) =>
+                            handleVariantChange(index, "name", event.target.value)
+                          }
+                          className="bg-black border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-orange-500"
+                        />
+
+                        <input
+                          type="number"
+                          placeholder="Variant price"
+                          value={variant.price}
+                          onChange={(event) =>
+                            handleVariantChange(index, "price", event.target.value)
+                          }
+                          className="bg-black border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-orange-500"
+                        />
+
+                        <label className="flex items-center gap-2 text-gray-300">
+                          <input
+                            type="checkbox"
+                            checked={variant.isAvailable}
+                            onChange={(event) =>
+                              handleVariantChange(
+                                index,
+                                "isAvailable",
+                                event.target.checked
+                              )
+                            }
+                          />
+                          Active
+                        </label>
+
+                        <button
+                          type="button"
+                          onClick={() => removeVariant(index)}
+                          className="text-red-400 hover:text-red-300 font-bold"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="bg-black border border-white/10 rounded-xl p-4">
                 <label className="block text-gray-300 font-semibold mb-3">

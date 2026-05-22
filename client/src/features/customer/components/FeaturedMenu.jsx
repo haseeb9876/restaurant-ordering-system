@@ -18,17 +18,19 @@ function isLowStock(item) {
   )
 }
 
+function getAvailableVariants(item) {
+  return item.variants?.filter((variant) => variant.isAvailable) || []
+}
+
 function FeaturedSkeleton() {
   return (
     <div className="bg-white/5 border border-white/10 rounded-[2rem] overflow-hidden animate-pulse">
       <div className="h-64 bg-white/10" />
-
       <div className="p-6">
         <div className="h-5 w-24 bg-white/10 rounded-full mb-5" />
         <div className="h-7 w-3/4 bg-white/10 rounded mb-4" />
         <div className="h-4 w-full bg-white/10 rounded mb-3" />
         <div className="h-4 w-2/3 bg-white/10 rounded mb-6" />
-
         <div className="flex items-center justify-between">
           <div className="h-8 w-24 bg-white/10 rounded" />
           <div className="h-10 w-24 bg-white/10 rounded-full" />
@@ -40,6 +42,7 @@ function FeaturedSkeleton() {
 
 function FeaturedMenu() {
   const [featuredItems, setFeaturedItems] = useState([])
+  const [selectedVariants, setSelectedVariants] = useState({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
@@ -73,11 +76,24 @@ function FeaturedMenu() {
       return
     }
 
+    const variants = getAvailableVariants(item)
+    const selectedVariantId = selectedVariants[item.id]
+    const selectedVariant =
+      variants.find((variant) => variant.id === selectedVariantId) ||
+      variants[0]
+
+    if (item.productType === "VARIANT" && !selectedVariant) {
+      toast.error("Please select a size/option first.")
+      return
+    }
+
     addToCart({
       id: item.id,
+      variantId: selectedVariant?.id || null,
+      variantName: selectedVariant?.name || "",
       name: item.name,
       category: item.category?.name || "Food",
-      price: item.price,
+      price: selectedVariant?.price || item.price,
       image: item.image || fallbackImage,
       trackInventory: item.trackInventory,
       stockQuantity: item.stockQuantity,
@@ -120,9 +136,7 @@ function FeaturedMenu() {
 
         {error && (
           <div className="bg-red-500/10 border border-red-500/30 rounded-[2rem] p-8 text-center">
-            <p className="text-red-300 font-bold">
-              {error}
-            </p>
+            <p className="text-red-300 font-bold">{error}</p>
           </div>
         )}
 
@@ -131,6 +145,12 @@ function FeaturedMenu() {
             {featuredItems.map((item) => {
               const outOfStock = isOutOfStock(item)
               const lowStock = isLowStock(item)
+              const variants = getAvailableVariants(item)
+              const selectedVariantId = selectedVariants[item.id]
+              const selectedVariant =
+                variants.find((variant) => variant.id === selectedVariantId) ||
+                variants[0]
+              const displayPrice = selectedVariant?.price || item.price
 
               return (
                 <div
@@ -174,17 +194,48 @@ function FeaturedMenu() {
                       </span>
                     </div>
 
-                    <h3 className="text-2xl font-bold mb-3">
-                      {item.name}
-                    </h3>
+                    <h3 className="text-2xl font-bold mb-3">{item.name}</h3>
 
                     <p className="text-gray-400 text-sm mb-5 min-h-10">
                       {item.description || "Freshly prepared restaurant meal."}
                     </p>
 
+                    {variants.length > 0 && (
+                      <div className="mb-5">
+                        <p className="text-xs text-gray-500 mb-2">
+                          Choose Size / Option
+                        </p>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          {variants.map((variant) => (
+                            <button
+                              key={variant.id}
+                              type="button"
+                              onClick={() =>
+                                setSelectedVariants((current) => ({
+                                  ...current,
+                                  [item.id]: variant.id,
+                                }))
+                              }
+                              className={`rounded-xl border px-3 py-2 text-sm font-bold transition ${
+                                (selectedVariantId || variants[0].id) === variant.id
+                                  ? "border-orange-500 bg-orange-500 text-white"
+                                  : "border-white/10 bg-zinc-950 text-gray-300 hover:border-orange-500"
+                              }`}
+                            >
+                              {variant.name}
+                              <span className="block text-xs opacity-80">
+                                Rs. {variant.price}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     <div className="flex items-center justify-between gap-4">
                       <p className="text-orange-500 text-2xl font-extrabold">
-                        Rs. {item.price}
+                        Rs. {displayPrice}
                       </p>
 
                       <button

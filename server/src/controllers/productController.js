@@ -1,8 +1,8 @@
 import prisma from "../config/prisma.js"
 
-const parseBoolean = (value) => {
-  return value === true || value === "true"
-}
+const parseBoolean = (value) => value === true || value === "true"
+
+const allowedProductTypes = ["SIMPLE", "VARIANT", "DEAL"]
 
 const validateInventoryFields = ({
   stockQuantity,
@@ -11,10 +11,7 @@ const validateInventoryFields = ({
   const parsedStockQuantity = Number(stockQuantity || 0)
   const parsedLowStockThreshold = Number(lowStockThreshold || 5)
 
-  if (
-    Number.isNaN(parsedStockQuantity) ||
-    parsedStockQuantity < 0
-  ) {
+  if (Number.isNaN(parsedStockQuantity) || parsedStockQuantity < 0) {
     return {
       isValid: false,
       message: "Stock quantity cannot be negative",
@@ -38,11 +35,33 @@ const validateInventoryFields = ({
   }
 }
 
+const sanitizeVariants = (variants = []) => {
+  if (!Array.isArray(variants)) return []
+
+  return variants
+    .map((variant) => ({
+      name: variant.name?.trim(),
+      price: Number(variant.price),
+      isAvailable: variant.isAvailable ?? true,
+    }))
+    .filter(
+      (variant) =>
+        variant.name &&
+        !Number.isNaN(variant.price) &&
+        variant.price > 0
+    )
+}
+
 export const getProducts = async (req, res) => {
   try {
     const products = await prisma.product.findMany({
       include: {
         category: true,
+        variants: {
+          orderBy: {
+            id: "asc",
+          },
+        },
       },
       orderBy: {
         createdAt: "desc",
@@ -73,6 +92,11 @@ export const getProduct = async (req, res) => {
       },
       include: {
         category: true,
+        variants: {
+          orderBy: {
+            id: "asc",
+          },
+        },
       },
     })
 
@@ -108,6 +132,8 @@ export const createProduct = async (req, res) => {
       trackInventory,
       stockQuantity,
       lowStockThreshold,
+      productType,
+      variants,
     } = req.body
 
     if (!name || !price || !image || !categoryId) {
@@ -126,6 +152,15 @@ export const createProduct = async (req, res) => {
       })
     }
 
+    const selectedProductType = productType || "SIMPLE"
+
+    if (!allowedProductTypes.includes(selectedProductType)) {
+      return res.status(400).json({
+        status: "error",
+        message: "Invalid product type",
+      })
+    }
+
     const inventoryValidation = validateInventoryFields({
       stockQuantity,
       lowStockThreshold,
@@ -139,6 +174,7 @@ export const createProduct = async (req, res) => {
     }
 
     const shouldTrackInventory = parseBoolean(trackInventory)
+    const cleanVariants = sanitizeVariants(variants)
 
     const product = await prisma.product.create({
       data: {
@@ -147,6 +183,7 @@ export const createProduct = async (req, res) => {
         price: parsedPrice,
         image: image.trim(),
         categoryId: Number(categoryId),
+        productType: selectedProductType,
         isAvailable:
           shouldTrackInventory &&
           inventoryValidation.stockQuantity === 0
@@ -155,10 +192,16 @@ export const createProduct = async (req, res) => {
         trackInventory: shouldTrackInventory,
         stockQuantity: inventoryValidation.stockQuantity,
         lowStockThreshold: inventoryValidation.lowStockThreshold,
+        variants:
+          cleanVariants.length > 0
+            ? {
+                create: cleanVariants,
+              }
+            : undefined,
       },
-
       include: {
         category: true,
+        variants: true,
       },
     })
 
@@ -238,6 +281,17 @@ export const updateProduct = async (req, res) => {
       updateData.categoryId = Number(req.body.categoryId)
     }
 
+    if (req.body.productType !== undefined) {
+      if (!allowedProductTypes.includes(req.body.productType)) {
+        return res.status(400).json({
+          status: "error",
+          message: "Invalid product type",
+        })
+      }
+
+      updateData.productType = req.body.productType
+    }
+
     if (req.body.isAvailable !== undefined) {
       updateData.isAvailable = Boolean(req.body.isAvailable)
     }
@@ -249,10 +303,7 @@ export const updateProduct = async (req, res) => {
     if (req.body.stockQuantity !== undefined) {
       const parsedStockQuantity = Number(req.body.stockQuantity)
 
-      if (
-        Number.isNaN(parsedStockQuantity) ||
-        parsedStockQuantity < 0
-      ) {
+      if (Number.isNaN(parsedStockQuantity) || parsedStockQuantity < 0) {
         return res.status(400).json({
           status: "error",
           message: "Stock quantity cannot be negative",
@@ -263,9 +314,7 @@ export const updateProduct = async (req, res) => {
     }
 
     if (req.body.lowStockThreshold !== undefined) {
-      const parsedLowStockThreshold = Number(
-        req.body.lowStockThreshold
-      )
+      const parsedLowStockThreshold = Number(req.body.lowStockThreshold)
 
       if (
         Number.isNaN(parsedLowStockThreshold) ||
@@ -290,16 +339,39 @@ export const updateProduct = async (req, res) => {
       updateData.isAvailable = false
     }
 
-    const product = await prisma.product.update({
-      where: {
-        id: Number(id),
-      },
+    const cleanVariants = sanitizeVariants(req.body.variants)
 
-      data: updateData,
+    const product = await prisma.$transaction(async (tx) => {
+      if (req.body.variants !== undefined) {
+        await tx.productVariant.deleteMany({
+          where: {
+            productId: Number(id),
+          },
+        })
+      }
 
-      include: {
-        category: true,
-      },
+      return tx.product.update({
+        where: {
+          id: Number(id),
+        },
+        data: {
+          ...updateData,
+          variants:
+            req.body.variants !== undefined && cleanVariants.length > 0
+              ? {
+                  create: cleanVariants,
+                }
+              : undefined,
+        },
+        include: {
+          category: true,
+          variants: {
+            orderBy: {
+              id: "asc",
+            },
+          },
+        },
+      })
     })
 
     res.json({
@@ -346,6 +418,7 @@ export const deleteProduct = async (req, res) => {
         },
         include: {
           category: true,
+          variants: true,
         },
       })
 

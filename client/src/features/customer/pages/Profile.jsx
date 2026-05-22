@@ -15,6 +15,14 @@ const trackingSteps = [
   "DELIVERED",
 ]
 
+const activeStatuses = [
+  "PENDING",
+  "CONFIRMED",
+  "PREPARING",
+  "READY",
+  "OUT_FOR_DELIVERY",
+]
+
 function getStatusClass(status) {
   if (status === "PENDING") return "bg-yellow-500/20 text-yellow-400"
   if (status === "CONFIRMED") return "bg-cyan-500/20 text-cyan-400"
@@ -65,6 +73,12 @@ function getTrackingStatus(status) {
   return status
 }
 
+function hasActiveOrders(orders) {
+  return orders.some((order) =>
+    activeStatuses.includes(order.status)
+  )
+}
+
 function PaymentDetails({ order }) {
   return (
     <div className="bg-black border border-white/10 rounded-2xl p-5">
@@ -73,6 +87,7 @@ function PaymentDetails({ order }) {
       <div className="grid md:grid-cols-3 gap-4">
         <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
           <p className="text-gray-400 text-sm">Payment Method</p>
+
           <p className="font-bold mt-2">
             {formatPaymentMethod(order.paymentMethod)}
           </p>
@@ -80,6 +95,7 @@ function PaymentDetails({ order }) {
 
         <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
           <p className="text-gray-400 text-sm">Payment Status</p>
+
           <p
             className={`inline-block px-3 py-1 rounded-full text-sm font-bold mt-2 ${getPaymentStatusClass(
               order.paymentStatus
@@ -91,6 +107,7 @@ function PaymentDetails({ order }) {
 
         <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
           <p className="text-gray-400 text-sm">Transaction ID</p>
+
           <p className="font-bold mt-2 break-words">
             {order.transactionId || "Not provided"}
           </p>
@@ -178,17 +195,37 @@ function Profile() {
   const latestOrder = orders[0]
 
   useEffect(() => {
-    const fetchMyOrders = async () => {
+    let intervalId
+
+    const fetchMyOrders = async (showLoading = false) => {
       if (!user) {
         setLoadingOrders(false)
         return
       }
 
       try {
+        if (showLoading) {
+          setLoadingOrders(true)
+        }
+
         setError("")
 
         const data = await getMyOrders()
+
         setOrders(data)
+
+        const shouldAutoRefresh = hasActiveOrders(data)
+
+        if (!intervalId && shouldAutoRefresh) {
+          intervalId = setInterval(() => {
+            fetchMyOrders(false)
+          }, 5000)
+        }
+
+        if (intervalId && !shouldAutoRefresh) {
+          clearInterval(intervalId)
+          intervalId = null
+        }
       } catch (error) {
         const message = error.message || "Failed to load your orders."
         setError(message)
@@ -197,13 +234,13 @@ function Profile() {
       }
     }
 
-    fetchMyOrders()
+    fetchMyOrders(true)
 
-    const interval = setInterval(() => {
-      fetchMyOrders()
-    }, 5000)
-
-    return () => clearInterval(interval)
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId)
+      }
+    }
   }, [user])
 
   const handleLogout = () => {

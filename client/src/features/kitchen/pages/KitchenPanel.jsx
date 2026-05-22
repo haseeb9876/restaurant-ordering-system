@@ -8,6 +8,13 @@ import {
 } from "../../../services/api"
 import { useAuth } from "../../auth/context/AuthContext"
 
+const activeKitchenStatuses = [
+  "PENDING",
+  "CONFIRMED",
+  "PREPARING",
+  "READY",
+]
+
 function getStatusClass(status) {
   if (status === "PENDING") {
     return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
@@ -57,21 +64,38 @@ function KitchenPanel() {
   const restaurantName = settings?.restaurantName || "Restaurant"
   const logoUrl = settings?.logoUrl || ""
 
-  const fetchOrders = async () => {
+  const fetchOrders = async ({ silent = false } = {}) => {
     try {
-      const data = await getOrders()
+      if (!silent) {
+        setLoading(true)
+      }
 
-      const kitchenOrders = data.filter(
-        (order) =>
-          order.status === "PENDING" ||
-          order.status === "CONFIRMED" ||
-          order.status === "PREPARING" ||
-          order.status === "READY"
+      setError("")
+
+      const result = await getOrders({
+        range: "TODAY",
+        status: "ALL",
+        paymentStatus: "ALL",
+        paymentMethod: "ALL",
+        search: "",
+        page: 1,
+        limit: 100,
+      })
+
+      const allOrders = result.data || []
+
+      const kitchenOrders = allOrders.filter((order) =>
+        activeKitchenStatuses.includes(order.status)
       )
 
       setOrders(kitchenOrders)
     } catch (error) {
-      setError(error.message)
+      const message = error.message || "Failed to load kitchen orders."
+      setError(message)
+
+      if (!silent) {
+        toast.error(message)
+      }
     } finally {
       setLoading(false)
     }
@@ -81,7 +105,7 @@ function KitchenPanel() {
     fetchOrders()
 
     const interval = setInterval(() => {
-      fetchOrders()
+      fetchOrders({ silent: true })
     }, 5000)
 
     return () => clearInterval(interval)
@@ -89,13 +113,13 @@ function KitchenPanel() {
 
   const analytics = useMemo(() => {
     return {
-      pending: orders.filter((o) => o.status === "PENDING").length,
+      pending: orders.filter((order) => order.status === "PENDING").length,
 
-      confirmed: orders.filter((o) => o.status === "CONFIRMED").length,
+      confirmed: orders.filter((order) => order.status === "CONFIRMED").length,
 
-      preparing: orders.filter((o) => o.status === "PREPARING").length,
+      preparing: orders.filter((order) => order.status === "PREPARING").length,
 
-      ready: orders.filter((o) => o.status === "READY").length,
+      ready: orders.filter((order) => order.status === "READY").length,
 
       totalItems: orders.reduce((total, order) => {
         return (
@@ -125,7 +149,7 @@ function KitchenPanel() {
         `Order marked as ${formatOrderStatus(status).toLowerCase()}.`
       )
 
-      fetchOrders()
+      await fetchOrders({ silent: true })
     } catch (error) {
       const message = error.message || "Failed to update order status."
 
@@ -206,7 +230,8 @@ function KitchenPanel() {
 
             <p className="text-gray-400 mt-4 text-lg max-w-3xl">
               Confirm new orders, prepare food, and mark orders ready for
-              delivery in real time.
+              delivery in real time. The queue refreshes automatically every 5
+              seconds.
             </p>
           </div>
 
@@ -313,6 +338,12 @@ function KitchenPanel() {
                         <div>
                           <h3 className="font-bold text-xl">
                             {item.productName || item.product?.name}
+                            {item.variantName && (
+                              <span className="text-orange-400">
+                                {" "}
+                                ({item.variantName})
+                              </span>
+                            )}
                           </h3>
 
                           <p className="text-gray-400 mt-1">

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import Navbar from "../components/Navbar"
 import CartSidebar from "../../cart/components/CartSidebar"
+import MobileBottomNav from "../components/MobileBottomNav"
 import { useCart } from "../../cart/context/CartContext"
 import { useAuth } from "../../auth/context/AuthContext"
 import {
@@ -516,6 +517,7 @@ function Checkout() {
           </div>
         </div>
       </main>
+          <MobileBottomNav />
     </div>
   )
 }

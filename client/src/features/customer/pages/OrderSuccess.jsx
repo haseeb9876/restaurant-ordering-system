@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom"
 import Navbar from "../components/Navbar"
 import CartSidebar from "../../cart/components/CartSidebar"
+import MobileBottomNav from "../components/MobileBottomNav"
 import { useCart } from "../../cart/context/CartContext"
 
 function getPaymentStatusClass(status) {
@@ -25,6 +26,62 @@ function OrderSuccess() {
 
   const handlePrintInvoice = () => {
     window.print()
+  }
+
+  const downloadInvoiceAsPdf = async () => {
+    const invoice = document.getElementById("invoice-section")
+
+    if (!invoice) return
+
+    const [{ default: html2canvas }, { default: jsPDF }] =
+      await Promise.all([
+        import("html2canvas"),
+        import("jspdf"),
+      ])
+
+    const canvas = await html2canvas(invoice, {
+      scale: 2,
+      backgroundColor: "#ffffff",
+    })
+
+    const imgData = canvas.toDataURL("image/png")
+
+    const pdf = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4",
+    })
+
+    const pageWidth = pdf.internal.pageSize.getWidth()
+
+    const imgWidth = pageWidth - 20
+
+    const imgHeight =
+      (canvas.height * imgWidth) / canvas.width
+
+    pdf.addImage(
+      imgData,
+      "PNG",
+      10,
+      10,
+      imgWidth,
+      imgHeight
+    )
+
+    pdf.save(
+      `invoice-${latestOrder.orderId || "receipt"}.pdf`
+    )
+  }
+
+  const shareOnWhatsApp = () => {
+    const message = encodeURIComponent(
+      `My order has been placed successfully. Order ID: ${latestOrder.orderId} | Total: Rs. ${latestOrder.total}`
+    )
+
+    window.open(
+      `https://wa.me/?text=${message}`,
+      "_blank"
+    )
   }
 
   return (
@@ -53,12 +110,29 @@ function OrderSuccess() {
 
           {latestOrder ? (
             <>
-              <section className="bg-zinc-950 border border-white/10 rounded-[2rem] p-8 md:p-10 print:bg-white print:border-black">
+              <section
+                id="invoice-section"
+                className="bg-zinc-950 border border-white/10 rounded-[2rem] p-8 md:p-10 print:bg-white print:border-black"
+              >
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 border-b border-white/10 print:border-black pb-8 mb-8">
                   <div>
-                    <p className="text-orange-500 font-bold text-lg">
-                      FOODIEHUB
-                    </p>
+                    <div className="flex items-center gap-4">
+                      <img
+                        src="/pwa/logo.jpeg"
+                        alt="Restaurant Logo"
+                        className="w-16 h-16 rounded-full object-cover border-2 border-orange-500"
+                      />
+
+                      <div>
+                        <p className="text-orange-500 font-bold text-lg">
+                          ROYAL PIZZA PALACE
+                        </p>
+
+                        <p className="text-gray-400 text-sm">
+                          Premium Restaurant Experience
+                        </p>
+                      </div>
+                    </div>
 
                     <h2 className="text-4xl font-extrabold mt-2">
                       Order Receipt
@@ -291,22 +365,46 @@ function OrderSuccess() {
                   </div>
                 </div>
 
-                <div className="mt-10 bg-black border border-white/10 rounded-2xl p-5 print:bg-gray-100 print:border-black">
-                  <p className="text-gray-400 print:text-gray-700 text-sm leading-relaxed">
-                    This receipt confirms your order submission. Payment
-                    verification and order preparation are handled securely by
-                    the restaurant administration system.
+                <div className="mt-10 bg-black border border-white/10 rounded-2xl p-6 print:bg-gray-100 print:border-black text-center">
+                  <p className="text-orange-500 font-bold text-lg mb-3">
+                    Thank You For Ordering ❤️
                   </p>
+
+                  <p className="text-gray-400 print:text-gray-700 text-sm leading-relaxed">
+                    This receipt confirms your order submission.
+                    Payment verification and order preparation
+                    are handled securely by the restaurant system.
+                  </p>
+
+                  <div className="mt-5 text-xs text-gray-500">
+                    Powered by Royal Pizza Palace Ordering System
+                  </div>
                 </div>
               </section>
 
-              <div className="print:hidden flex flex-col md:flex-row gap-4 mt-8">
+              <div className="print:hidden flex flex-col md:flex-row flex-wrap gap-4 mt-8">
                 <button
                   type="button"
                   onClick={handlePrintInvoice}
                   className="bg-orange-500 hover:bg-orange-600 px-8 py-4 rounded-full font-bold transition"
                 >
                   Print Invoice
+                </button>
+
+                <button
+                  type="button"
+                  onClick={downloadInvoiceAsPdf}
+                  className="border border-cyan-500 text-cyan-400 hover:bg-cyan-500 hover:text-black px-8 py-4 rounded-full font-bold transition"
+                >
+                  Download PDF
+                </button>
+
+                <button
+                  type="button"
+                  onClick={shareOnWhatsApp}
+                  className="border border-green-500 text-green-400 hover:bg-green-500 hover:text-black px-8 py-4 rounded-full font-bold transition"
+                >
+                  Share WhatsApp
                 </button>
 
                 <Link
@@ -344,6 +442,7 @@ function OrderSuccess() {
           )}
         </div>
       </main>
+          <MobileBottomNav />
     </div>
   )
 }

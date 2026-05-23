@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import toast from "react-hot-toast"
 import Navbar from "../components/Navbar"
 import CartSidebar from "../../cart/components/CartSidebar"
+import MobileBottomNav from "../components/MobileBottomNav"
 import { useAuth } from "../../auth/context/AuthContext"
 import { getMyOrders } from "../../../services/api"
 
@@ -79,6 +80,34 @@ function hasActiveOrders(orders) {
   )
 }
 
+function playNotificationSound(type = "update") {
+  try {
+    const audioContext = new AudioContext()
+    const oscillator = audioContext.createOscillator()
+    const gainNode = audioContext.createGain()
+
+    oscillator.connect(gainNode)
+    gainNode.connect(audioContext.destination)
+
+    oscillator.type = "sine"
+
+    if (type === "delivered") {
+      oscillator.frequency.value = 1040
+    } else {
+      oscillator.frequency.value = 740
+    }
+
+    gainNode.gain.setValueAtTime(0.001, audioContext.currentTime)
+    gainNode.gain.exponentialRampToValueAtTime(0.2, audioContext.currentTime + 0.02)
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5)
+
+    oscillator.start(audioContext.currentTime)
+    oscillator.stop(audioContext.currentTime + 0.5)
+  } catch {
+    // Browser may block sound before interaction.
+  }
+}
+
 function PaymentDetails({ order }) {
   return (
     <div className="bg-black border border-white/10 rounded-2xl p-5">
@@ -120,6 +149,7 @@ function PaymentDetails({ order }) {
           already sent, please keep your transaction ID safe.
         </p>
       )}
+          <MobileBottomNav />
     </div>
   )
 }
@@ -151,7 +181,7 @@ function OrderTimeline({ status }) {
               key={step}
               className={`rounded-2xl p-4 border transition ${
                 isActive
-                  ? "bg-orange-500/10 border-orange-500/40"
+                  ? "bg-orange-500/10 border-orange-500/40 shadow-lg shadow-orange-500/10"
                   : "bg-white/5 border-white/10"
               }`}
             >
@@ -180,6 +210,7 @@ function OrderTimeline({ status }) {
           )
         })}
       </div>
+          <MobileBottomNav />
     </div>
   )
 }
@@ -192,9 +223,40 @@ function Profile() {
   const [loadingOrders, setLoadingOrders] = useState(true)
   const [error, setError] = useState("")
 
+  const previousStatusesRef = useRef({})
+  const audioUnlockedRef = useRef(false)
+
   const latestOrder = orders[0]
 
   useEffect(() => {
+    const storedAudioState =
+      localStorage.getItem("customerSoundEnabled")
+
+    if (storedAudioState === "true") {
+      audioUnlockedRef.current = true
+    }
+
+    const unlockAudio = () => {
+      if (!audioUnlockedRef.current) {
+        playNotificationSound()
+
+        audioUnlockedRef.current = true
+
+        localStorage.setItem(
+          "customerSoundEnabled",
+          "true"
+        )
+
+        toast.success("Live order sounds enabled.")
+      }
+
+      window.removeEventListener("click", unlockAudio)
+      window.removeEventListener("touchstart", unlockAudio)
+    }
+
+    window.addEventListener("click", unlockAudio)
+    window.addEventListener("touchstart", unlockAudio)
+
     let intervalId
 
     const fetchMyOrders = async (showLoading = false) => {
@@ -211,6 +273,36 @@ function Profile() {
         setError("")
 
         const data = await getMyOrders()
+
+        for (const order of data) {
+          const previousStatus =
+            previousStatusesRef.current[order.id]
+
+          if (
+            previousStatus &&
+            previousStatus !== order.status
+          ) {
+            if (order.status === "DELIVERED") {
+              if (audioUnlockedRef.current) {
+                playNotificationSound("delivered")
+              }
+
+              toast.success(
+                `Order #${order.orderNumber || order.id} delivered successfully!`
+              )
+            } else {
+              if (audioUnlockedRef.current) {
+                playNotificationSound("update")
+              }
+
+              toast.success(
+                `Your order is now ${getStepLabel(order.status)}`
+              )
+            }
+          }
+
+          previousStatusesRef.current[order.id] = order.status
+        }
 
         setOrders(data)
 
@@ -240,6 +332,9 @@ function Profile() {
       if (intervalId) {
         clearInterval(intervalId)
       }
+
+      window.removeEventListener("click", unlockAudio)
+      window.removeEventListener("touchstart", unlockAudio)
     }
   }, [user])
 
@@ -493,6 +588,7 @@ function Profile() {
           </div>
         </div>
       </main>
+          <MobileBottomNav />
     </div>
   )
 }

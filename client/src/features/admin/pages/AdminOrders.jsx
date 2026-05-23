@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import toast from "react-hot-toast"
 import {
   getOrders,
@@ -66,6 +66,41 @@ function getPaymentStatusClass(status) {
   return "bg-white/10 text-gray-300"
 }
 
+function getOrderAge(createdAt) {
+  const minutes = Math.max(
+    0,
+    Math.floor((Date.now() - new Date(createdAt).getTime()) / 60000)
+  )
+
+  if (minutes < 1) return "Just now"
+  if (minutes === 1) return "1 min ago"
+
+  return `${minutes} mins ago`
+}
+
+function playAdminOrderSound() {
+  try {
+    const audioContext = new AudioContext()
+    const oscillator = audioContext.createOscillator()
+    const gainNode = audioContext.createGain()
+
+    oscillator.connect(gainNode)
+    gainNode.connect(audioContext.destination)
+
+    oscillator.frequency.value = 740
+    oscillator.type = "sine"
+
+    gainNode.gain.setValueAtTime(0.001, audioContext.currentTime)
+    gainNode.gain.exponentialRampToValueAtTime(0.25, audioContext.currentTime + 0.02)
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5)
+
+    oscillator.start(audioContext.currentTime)
+    oscillator.stop(audioContext.currentTime + 0.5)
+  } catch {
+    // Browser may block sound until first user interaction.
+  }
+}
+
 function AdminOrders() {
   const [orders, setOrders] = useState([])
   const [meta, setMeta] = useState({
@@ -79,6 +114,10 @@ function AdminOrders() {
   const [error, setError] = useState("")
   const [updatingOrderId, setUpdatingOrderId] = useState(null)
   const [updatingPaymentOrderId, setUpdatingPaymentOrderId] = useState(null)
+  const [newOrderIds, setNewOrderIds] = useState([])
+  const [soundEnabled, setSoundEnabled] = useState(false)
+  const knownOrderIdsRef = useRef(new Set())
+  const firstLoadRef = useRef(true)
 
   const [searchTerm, setSearchTerm] = useState("")
   const [dateRangeFilter, setDateRangeFilter] = useState("TODAY")
@@ -104,7 +143,30 @@ function AdminOrders() {
         limit,
       })
 
-      setOrders(result.data || [])
+      const fetchedOrders = result.data || []
+
+      const incomingOrderIds = fetchedOrders.map((order) => order.id)
+      const newIds = incomingOrderIds.filter(
+        (id) => !knownOrderIdsRef.current.has(id)
+      )
+
+      if (!firstLoadRef.current && newIds.length > 0) {
+        setNewOrderIds(newIds)
+        if (soundEnabled) {
+          playAdminOrderSound()
+        }
+
+        toast.success(`${newIds.length} new order received!`)
+
+        setTimeout(() => {
+          setNewOrderIds([])
+        }, 10000)
+      }
+
+      knownOrderIdsRef.current = new Set(incomingOrderIds)
+      firstLoadRef.current = false
+
+      setOrders(fetchedOrders)
 
       setMeta({
         totalOrders: result.totalOrders || 0,
@@ -284,18 +346,32 @@ function AdminOrders() {
               </h1>
 
               <p className="text-gray-400 mt-3 max-w-3xl">
-                Default view shows today’s orders only. Use filters and pagination
-                to keep the admin panel fast even after thousands of orders.
+                Default view shows today’s orders only. The panel auto-refreshes
+                and alerts admin when new orders arrive.
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={() => fetchOrders()}
-              className="border border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white px-6 py-3 rounded-full font-bold transition w-fit"
-            >
-              Refresh Orders
-            </button>
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  playAdminOrderSound()
+                  setSoundEnabled(true)
+                  toast.success("Admin order sound enabled.")
+                }}
+                className="border border-green-500 text-green-400 hover:bg-green-500 hover:text-black px-6 py-3 rounded-full font-bold transition w-fit"
+              >
+                {soundEnabled ? "Sound Enabled" : "Enable Sound"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => fetchOrders()}
+                className="border border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white px-6 py-3 rounded-full font-bold transition w-fit"
+              >
+                Refresh Orders
+              </button>
+            </div>
           </div>
 
           <div className="grid md:grid-cols-2 xl:grid-cols-5 gap-5 mb-8">
@@ -507,10 +583,22 @@ function AdminOrders() {
 
           {!loading && !error && orders.length > 0 && (
             <div className="space-y-6">
-              {orders.map((order) => (
+              {orders.map((order) => {
+                const isNewOrder = newOrderIds.includes(order.id)
+                const isUrgent =
+                  order.status === "PENDING" &&
+                  Date.now() - new Date(order.createdAt).getTime() > 10 * 60 * 1000
+
+                return (
                 <article
                   key={order.id}
-                  className="bg-zinc-950 border border-white/10 rounded-[2rem] p-6"
+                  className={`bg-zinc-950 rounded-[2rem] p-6 transition ${
+                    isNewOrder
+                      ? "border-2 border-orange-500 shadow-2xl shadow-orange-500/20"
+                      : isUrgent
+                        ? "border-2 border-red-500/70 shadow-2xl shadow-red-500/10"
+                        : "border border-white/10"
+                  }`}
                 >
                   <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-6">
                     <div>
@@ -534,6 +622,26 @@ function AdminOrders() {
                         >
                           {formatLabel(order.paymentStatus)}
                         </span>
+
+                        <span className={`px-4 py-2 rounded-full text-xs font-bold ${
+                          isUrgent
+                            ? "bg-red-500/20 text-red-300"
+                            : "bg-white/10 text-gray-300"
+                        }`}>
+                          {getOrderAge(order.createdAt)}
+                        </span>
+
+                        {isNewOrder && (
+                          <span className="bg-orange-500 text-white px-4 py-2 rounded-full text-xs font-bold animate-pulse">
+                            NEW ORDER
+                          </span>
+                        )}
+
+                        {isUrgent && (
+                          <span className="bg-red-500 text-white px-4 py-2 rounded-full text-xs font-bold animate-pulse">
+                            URGENT
+                          </span>
+                        )}
                       </div>
 
                       <div className="grid md:grid-cols-2 gap-3 text-gray-300">
@@ -700,7 +808,8 @@ function AdminOrders() {
                     </div>
                   </div>
                 </article>
-              ))}
+                )
+              })}
 
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-zinc-950 border border-white/10 rounded-[2rem] p-5">
                 <p className="text-gray-400">

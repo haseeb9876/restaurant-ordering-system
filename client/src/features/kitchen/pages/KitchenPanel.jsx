@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Link } from "react-router-dom"
 import toast from "react-hot-toast"
 import {
@@ -39,6 +39,41 @@ function formatOrderStatus(status) {
   return status.replaceAll("_", " ")
 }
 
+function getOrderAge(createdAt) {
+  const minutes = Math.max(
+    0,
+    Math.floor((Date.now() - new Date(createdAt).getTime()) / 60000)
+  )
+
+  if (minutes < 1) return "Just now"
+  if (minutes === 1) return "1 min ago"
+
+  return `${minutes} mins ago`
+}
+
+function playNewOrderSound() {
+  try {
+    const audioContext = new AudioContext()
+    const oscillator = audioContext.createOscillator()
+    const gainNode = audioContext.createGain()
+
+    oscillator.connect(gainNode)
+    gainNode.connect(audioContext.destination)
+
+    oscillator.frequency.value = 880
+    oscillator.type = "sine"
+
+    gainNode.gain.setValueAtTime(0.001, audioContext.currentTime)
+    gainNode.gain.exponentialRampToValueAtTime(0.25, audioContext.currentTime + 0.02)
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5)
+
+    oscillator.start(audioContext.currentTime)
+    oscillator.stop(audioContext.currentTime + 0.5)
+  } catch {
+    // Browser may block sound until first user interaction.
+  }
+}
+
 function KitchenPanel() {
   const { user, logout } = useAuth()
 
@@ -47,6 +82,9 @@ function KitchenPanel() {
   const [error, setError] = useState("")
   const [updatingOrderId, setUpdatingOrderId] = useState(null)
   const [settings, setSettings] = useState(null)
+  const [newOrderIds, setNewOrderIds] = useState([])
+  const knownOrderIdsRef = useRef(new Set())
+  const firstLoadRef = useRef(true)
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -87,6 +125,24 @@ function KitchenPanel() {
       const kitchenOrders = allOrders.filter((order) =>
         activeKitchenStatuses.includes(order.status)
       )
+
+      const incomingOrderIds = kitchenOrders.map((order) => order.id)
+      const newIds = incomingOrderIds.filter(
+        (id) => !knownOrderIdsRef.current.has(id)
+      )
+
+      if (!firstLoadRef.current && newIds.length > 0) {
+        setNewOrderIds(newIds)
+        playNewOrderSound()
+        toast.success(`${newIds.length} new kitchen order received!`)
+
+        setTimeout(() => {
+          setNewOrderIds([])
+        }, 10000)
+      }
+
+      knownOrderIdsRef.current = new Set(incomingOrderIds)
+      firstLoadRef.current = false
 
       setOrders(kitchenOrders)
     } catch (error) {
@@ -231,7 +287,7 @@ function KitchenPanel() {
             <p className="text-gray-400 mt-4 text-lg max-w-3xl">
               Confirm new orders, prepare food, and mark orders ready for
               delivery in real time. The queue refreshes automatically every 5
-              seconds.
+              seconds and alerts staff when new orders arrive.
             </p>
           </div>
 
@@ -288,10 +344,22 @@ function KitchenPanel() {
 
           {!loading && orders.length > 0 && (
             <div className="grid xl:grid-cols-2 gap-8">
-              {orders.map((order) => (
+              {orders.map((order) => {
+                const isNewOrder = newOrderIds.includes(order.id)
+                const isUrgent =
+                  order.status === "PENDING" &&
+                  Date.now() - new Date(order.createdAt).getTime() > 10 * 60 * 1000
+
+                return (
                 <div
                   key={order.id}
-                  className="bg-zinc-950 border border-white/10 rounded-[2.5rem] p-7 md:p-8"
+                  className={`bg-zinc-950 rounded-[2.5rem] p-7 md:p-8 transition ${
+                    isNewOrder
+                      ? "border-2 border-orange-500 shadow-2xl shadow-orange-500/20"
+                      : isUrgent
+                        ? "border-2 border-red-500/70 shadow-2xl shadow-red-500/10"
+                        : "border border-white/10"
+                  }`}
                 >
                   <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-5 mb-7">
                     <div>
@@ -315,6 +383,26 @@ function KitchenPanel() {
                         <span className="bg-black border border-white/10 px-4 py-2 rounded-full text-sm font-bold">
                           {order.estimatedTime || 30} min
                         </span>
+
+                        <span className={`border px-4 py-2 rounded-full text-sm font-bold ${
+                          isUrgent
+                            ? "bg-red-500/20 border-red-500/40 text-red-300"
+                            : "bg-black border-white/10 text-gray-300"
+                        }`}>
+                          {getOrderAge(order.createdAt)}
+                        </span>
+
+                        {isNewOrder && (
+                          <span className="bg-orange-500 text-white px-4 py-2 rounded-full text-sm font-bold animate-pulse">
+                            NEW ORDER
+                          </span>
+                        )}
+
+                        {isUrgent && (
+                          <span className="bg-red-500 text-white px-4 py-2 rounded-full text-sm font-bold animate-pulse">
+                            URGENT
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -400,7 +488,8 @@ function KitchenPanel() {
                     )}
                   </div>
                 </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>

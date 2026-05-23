@@ -1,0 +1,203 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  CUSTOMER
+  ADMIN
+  STAFF
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY
+  OUT_FOR_DELIVERY
+  DELIVERED
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH_ON_DELIVERY
+  JAZZCASH
+  EASYPAISA
+  BANK_TRANSFER
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+enum ProductType {
+  SIMPLE
+  VARIANT
+  DEAL
+}
+
+model User {
+  id       Int      @id @default(autoincrement())
+  fullName String
+  email    String   @unique
+  password String
+  role     UserRole @default(CUSTOMER)
+
+  isEmailVerified Boolean @default(false)
+
+  emailVerificationOtp    String?
+  emailVerificationExpiry DateTime?
+
+  passwordResetOtp    String?
+  passwordResetExpiry DateTime?
+
+  orders Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Category {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  products Product[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Product {
+  id          Int     @id @default(autoincrement())
+  name        String
+  description String?
+  price       Int
+  image       String
+
+  productType ProductType @default(SIMPLE)
+
+  isAvailable       Boolean @default(true)
+  trackInventory    Boolean @default(false)
+  stockQuantity     Int     @default(0)
+  lowStockThreshold Int     @default(5)
+
+  categoryId Int
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  variants   ProductVariant[]
+  orderItems OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ProductVariant {
+  id          Int     @id @default(autoincrement())
+  name        String
+  price       Int
+  isAvailable Boolean @default(true)
+
+  productId Int
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  orderItems OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Order {
+  id          Int    @id @default(autoincrement())
+  orderNumber String @unique
+
+  status OrderStatus @default(PENDING)
+
+  paymentMethod PaymentMethod @default(CASH_ON_DELIVERY)
+  paymentStatus PaymentStatus @default(PENDING)
+
+  transactionId String?
+  paymentProof  String?
+
+  customerName  String
+  customerPhone String
+  customerEmail String
+
+  address String
+  notes   String?
+
+  subtotal    Int
+  deliveryFee Int
+  total       Int
+
+  estimatedTime Int?
+
+  userId Int?
+  user   User? @relation(fields: [userId], references: [id])
+
+  items OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OrderItem {
+  id Int @id @default(autoincrement())
+
+  quantity    Int
+  price       Int
+  variantName String?
+
+  orderId Int
+  order   Order @relation(fields: [orderId], references: [id])
+
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+
+  variantId Int?
+  variant   ProductVariant? @relation(fields: [variantId], references: [id])
+}
+
+model RestaurantSettings {
+  id Int @id @default(1)
+
+  restaurantName String  @default("Restaurant")
+  phone          String?
+  email          String?
+  address        String?
+
+  openingHours     String?
+  aboutTitle       String?
+  aboutDescription String?
+  facebookUrl      String?
+  instagramUrl     String?
+  whatsappNumber   String?
+  logoUrl          String?
+  tiktokUrl        String?
+  heroImageUrl     String?
+
+  jazzcashTitle     String?
+  jazzcashNumber    String?
+  easypaisaTitle    String?
+  easypaisaNumber   String?
+  bankName          String?
+  bankAccountTitle  String?
+  bankAccountNumber String?
+  bankIban          String?
+
+  deliveryFee              Int     @default(150)
+  freeDeliveryEnabled      Boolean @default(false)
+  freeDeliveryMinimumOrder Int     @default(600)
+
+  isOnlinePaymentOn  Boolean @default(true)
+  isCashOnDeliveryOn Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

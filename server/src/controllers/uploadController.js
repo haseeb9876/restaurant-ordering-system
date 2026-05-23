@@ -13,6 +13,12 @@ export const uploadImage = asyncHandler(async (req, res) => {
       {
         folder: "restaurant-products",
         resource_type: "image",
+        quality: "auto:best",
+        fetch_format: "auto",
+        width: 1600,
+        height: 1200,
+        crop: "limit",
+        flags: "progressive",
       },
       (error, result) => {
         if (error) {
@@ -32,6 +38,10 @@ export const uploadImage = asyncHandler(async (req, res) => {
     message: "Image uploaded successfully.",
     data: {
       imageUrl: uploadResult.secure_url,
+      width: uploadResult.width,
+      height: uploadResult.height,
+      format: uploadResult.format,
+      bytes: uploadResult.bytes,
     },
   })
 })

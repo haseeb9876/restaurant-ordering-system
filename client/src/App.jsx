@@ -1,5 +1,7 @@
 import { Routes, Route } from "react-router-dom"
 
+import InstallAppPrompt from "./features/pwa/components/InstallAppPrompt"
+
 import ProtectedRoute from "./features/auth/components/ProtectedRoute"
 import PublicOnlyRoute from "./features/auth/components/PublicOnlyRoute"
 
@@ -27,7 +29,9 @@ import NotFound from "./features/customer/pages/NotFound"
 
 function App() {
   return (
-    <Routes>
+    <>
+      <InstallAppPrompt />
+      <Routes>
       <Route path="/" element={<Home />} />
       <Route path="*" element={<NotFound />} />
 
@@ -180,7 +184,8 @@ function App() {
           </ProtectedRoute>
         }
       />
-    </Routes>
+      </Routes>
+    </>
   )
 }
 

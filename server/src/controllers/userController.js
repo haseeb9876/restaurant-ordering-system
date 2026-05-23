@@ -91,6 +91,9 @@ export const createStaffUser = asyncHandler(async (req, res) => {
       email,
       password: hashedPassword,
       role,
+      isEmailVerified: true,
+      emailVerificationOtp: null,
+      emailVerificationExpiry: null,
     },
 
     select: {

@@ -1,7 +1,9 @@
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { useCart } from "../context/CartContext"
 
 function CartSidebar() {
+  const navigate = useNavigate()
+
   const {
     cartItems,
     isCartOpen,
@@ -21,12 +23,12 @@ function CartSidebar() {
       {isCartOpen && (
         <div
           onClick={closeCart}
-          className="fixed inset-0 bg-black/60 z-[60]"
+          className="fixed inset-0 bg-black/70 z-[1100]"
         ></div>
       )}
 
       <aside
-        className={`fixed top-0 right-0 h-full w-full sm:w-[420px] bg-zinc-950 text-white z-[70] shadow-2xl border-l border-white/10 transform transition-transform duration-300 ${
+        className={`fixed top-0 right-0 h-full w-full sm:w-[420px] bg-zinc-950 text-white z-[1200] shadow-2xl border-l border-white/10 transform transition-transform duration-300 ${
           isCartOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
@@ -118,17 +120,23 @@ function CartSidebar() {
             </span>
           </div>
 
-          <Link
-            to="/checkout"
-            onClick={closeCart}
+          <button
+            type="button"
+            disabled={cartItems.length === 0}
+            onClick={() => {
+              closeCart()
+              setTimeout(() => {
+                navigate("/checkout")
+              }, 50)
+            }}
             className={`block text-center w-full py-4 rounded-full font-bold transition ${
               cartItems.length === 0
-                ? "bg-gray-700 text-gray-400 pointer-events-none"
+                ? "bg-gray-700 text-gray-400 cursor-not-allowed"
                 : "bg-orange-500 hover:bg-orange-600"
             }`}
           >
             Proceed to Checkout
-          </Link>
+          </button>
         </div>
       </aside>
     </>

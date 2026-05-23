@@ -81,3 +81,47 @@ select {
     transform: translateY(0);
   }
 }
+
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  nav,
+  aside,
+  .print\:hidden,
+  [class*="MobileBottomNav"],
+  button,
+  a[href="/profile"],
+  a[href="/menu"] {
+    display: none !important;
+  }
+
+  #invoice-section {
+    display: block !important;
+    background: white !important;
+    color: black !important;
+    border: 1px solid #111 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 24px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  #invoice-section * {
+    color: black !important;
+    box-shadow: none !important;
+  }
+
+  #invoice-section .text-orange-500 {
+    color: #c2410c !important;
+  }
+}

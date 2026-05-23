@@ -42,6 +42,10 @@ function OrderSuccess() {
     const canvas = await html2canvas(invoice, {
       scale: 2,
       backgroundColor: "#ffffff",
+      useCORS: true,
+      allowTaint: true,
+      logging: false,
+      windowWidth: 1200,
     })
 
     const imgData = canvas.toDataURL("image/png")
@@ -59,14 +63,34 @@ function OrderSuccess() {
     const imgHeight =
       (canvas.height * imgWidth) / canvas.width
 
+    const pageHeight = pdf.internal.pageSize.getHeight()
+    let heightLeft = imgHeight
+    let position = 10
+
     pdf.addImage(
       imgData,
       "PNG",
       10,
-      10,
+      position,
       imgWidth,
       imgHeight
     )
+
+    heightLeft -= pageHeight - 20
+
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight + 10
+      pdf.addPage()
+      pdf.addImage(
+        imgData,
+        "PNG",
+        10,
+        position,
+        imgWidth,
+        imgHeight
+      )
+      heightLeft -= pageHeight - 20
+    }
 
     pdf.save(
       `invoice-${latestOrder.orderId || "receipt"}.pdf`
@@ -86,8 +110,8 @@ function OrderSuccess() {
 
   return (
     <div className="min-h-screen bg-black text-white print:bg-white print:text-black">
-      <Navbar />
-      <CartSidebar />
+      <div className="print:hidden"><Navbar /></div>
+      <div className="print:hidden"><CartSidebar /></div>
 
       <main className="pt-32 px-6 pb-20 print:pt-8">
         <div className="max-w-5xl mx-auto">
@@ -415,7 +439,7 @@ function OrderSuccess() {
                 </Link>
 
                 <Link
-                  to="/menu"
+                  to="/"
                   className="border border-white/10 hover:border-orange-500 px-8 py-4 rounded-full font-bold transition text-center"
                 >
                   Continue Ordering
@@ -433,7 +457,7 @@ function OrderSuccess() {
               </p>
 
               <Link
-                to="/menu"
+                to="/"
                 className="inline-block bg-orange-500 hover:bg-orange-600 px-8 py-4 rounded-full font-bold transition"
               >
                 Back to Menu
@@ -442,7 +466,7 @@ function OrderSuccess() {
           )}
         </div>
       </main>
-          <MobileBottomNav />
+      <div className="print:hidden"><MobileBottomNav /></div>
     </div>
   )
 }

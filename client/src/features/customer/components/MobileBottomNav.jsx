@@ -1,11 +1,12 @@
-import { Link, useLocation } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useCart } from "../../cart/context/CartContext"
 import { useAuth } from "../../auth/context/AuthContext"
 
 function MobileBottomNav() {
   const location = useLocation()
+  const navigate = useNavigate()
 
-  const { cartItems, openCart } = useCart()
+  const { cartItems, openCart, closeCart } = useCart()
   const { user } = useAuth()
 
   const totalCartItems = cartItems.reduce(
@@ -26,8 +27,12 @@ function MobileBottomNav() {
       <div className="bg-zinc-950/95 backdrop-blur-xl border border-white/10 rounded-[2rem] shadow-2xl shadow-black/50">
         <div className="grid grid-cols-4 items-center">
 
-          <Link
-            to="/"
+          <button
+            type="button"
+            onClick={() => {
+              closeCart()
+              navigate("/")
+            }}
             className={`flex flex-col items-center justify-center py-4 transition ${
               isActive("/")
                 ? "text-orange-500"
@@ -39,11 +44,18 @@ function MobileBottomNav() {
             <span className="text-xs font-bold mt-1">
               Home
             </span>
-          </Link>
+          </button>
 
           <button
+            type="button"
             onClick={() => {
-              window.location.href = "/#menu"
+              closeCart()
+              navigate("/")
+              setTimeout(() => {
+                document
+                  .getElementById("menu")
+                  ?.scrollIntoView({ behavior: "smooth" })
+              }, 100)
             }}
             className="flex flex-col items-center justify-center py-4 text-gray-400"
           >
@@ -71,8 +83,12 @@ function MobileBottomNav() {
             </span>
           </button>
 
-          <Link
-            to={user ? "/profile" : "/login"}
+          <button
+            type="button"
+            onClick={() => {
+              closeCart()
+              navigate(user ? "/profile" : "/login")
+            }}
             className={`flex flex-col items-center justify-center py-4 transition ${
               isActive("/profile") ||
               isActive("/login")
@@ -87,7 +103,7 @@ function MobileBottomNav() {
             <span className="text-xs font-bold mt-1">
               {user ? "Profile" : "Login"}
             </span>
-          </Link>
+          </button>
         </div>
       </div>
     </div>

@@ -452,7 +452,11 @@ function MenuSection({ selectedCategory, setSelectedCategory }) {
 
         {!loading && !error && filteredItems.length === 0 && (
           <div className="bg-black border border-white/10 rounded-[2rem] p-10 text-center">
-            <p className="text-2xl font-bold mb-3">No food item found</p>
+            <div className="text-6xl mb-5">🍔</div>
+
+            <p className="text-3xl font-black mb-3">
+              No Food Items Found
+            </p>
 
             <p className="text-gray-400 mb-6">
               Try changing the search text or selecting another category.

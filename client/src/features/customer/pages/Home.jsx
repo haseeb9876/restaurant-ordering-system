@@ -10,6 +10,7 @@ import Contact from "../components/Contact"
 import Footer from "../components/Footer"
 import CartSidebar from "../../cart/components/CartSidebar"
 import MobileBottomNav from "../components/MobileBottomNav"
+import FloatingCheckoutBar from "../components/FloatingCheckoutBar"
 
 function Home() {
   const [selectedCategory, setSelectedCategory] = useState("All")
@@ -43,6 +44,7 @@ function Home() {
       <About />
       <Contact />
       <Footer />
+      <FloatingCheckoutBar />
       <MobileBottomNav />
     </div>
   )

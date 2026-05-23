@@ -1,3 +1,4 @@
+import PageLoader from "../../../components/loaders/PageLoader"
 import { useEffect, useMemo, useRef, useState } from "react"
 import toast from "react-hot-toast"
 import {
@@ -333,7 +334,7 @@ function AdminOrders() {
 
   return (
     <AdminLayout>
-      <main className="px-6 py-10">
+      <main className="px-4 sm:px-6 py-6 sm:py-10">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10">
             <div>
@@ -374,7 +375,7 @@ function AdminOrders() {
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 xl:grid-cols-5 gap-5 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-5 mb-8">
             <div className="bg-zinc-950 border border-white/10 rounded-2xl p-5">
               <p className="text-gray-400 text-sm mb-2">Matching Orders</p>
               <h2 className="text-3xl font-extrabold">{stats.totalOrders}</h2>
@@ -410,7 +411,7 @@ function AdminOrders() {
           </div>
 
           <section className="bg-zinc-950 border border-white/10 rounded-[2rem] p-6 mb-8">
-            <div className="grid md:grid-cols-2 xl:grid-cols-6 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-4">
               <div className="xl:col-span-2">
                 <label className="block text-sm text-gray-400 mb-2">
                   Search Orders
@@ -539,7 +540,7 @@ function AdminOrders() {
                 matching orders
               </p>
 
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3">
                 <select
                   value={limit}
                   onChange={(event) => {
@@ -568,13 +569,22 @@ function AdminOrders() {
             </div>
           </section>
 
-          {loading && <p className="text-gray-400">Loading orders...</p>}
+          {loading && (
+            <PageLoader
+              title="Loading Orders"
+              subtitle="Fetching live restaurant orders"
+            />
+          )}
 
           {error && <p className="text-red-400 mb-6">{error}</p>}
 
           {!loading && !error && orders.length === 0 && (
             <div className="bg-zinc-950 border border-white/10 rounded-[2rem] p-8 text-center">
-              <h2 className="text-2xl font-bold mb-3">No orders found</h2>
+              <div className="text-6xl mb-5">🧾</div>
+
+              <h2 className="text-3xl font-black mb-3">
+                No Orders Yet
+              </h2>
               <p className="text-gray-400">
                 Try another date range or wait for new customer orders.
               </p>
@@ -692,7 +702,7 @@ function AdminOrders() {
                       </div>
                     </div>
 
-                    <div className="min-w-[260px] space-y-4">
+                    <div className="w-full xl:w-[280px] space-y-4">
                       <div>
                         <label className="block text-sm text-gray-400 mb-2">
                           Update Order Status

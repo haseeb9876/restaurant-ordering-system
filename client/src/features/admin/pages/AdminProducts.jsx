@@ -421,7 +421,15 @@ function AdminProducts() {
             </div>
 
             {categoriesList.length === 0 ? (
-              <p className="text-gray-400">No categories found.</p>
+              <div className="text-center py-12">
+                <div className="text-5xl mb-4">📂</div>
+                <p className="text-2xl font-black text-white mb-2">
+                  No Categories Found
+                </p>
+                <p className="text-gray-400">
+                  Create your first restaurant category.
+                </p>
+              </div>
             ) : (
               <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {categoriesList.map((category) => {
@@ -689,14 +697,22 @@ function AdminProducts() {
 
           {!loading && !error && products.length === 0 && (
             <div className="bg-zinc-950 border border-white/10 rounded-[2rem] p-8 text-center">
-              <p className="text-gray-400">No products found.</p>
+              <div className="text-center py-16">
+                <div className="text-6xl mb-5">🍕</div>
+                <p className="text-3xl font-black text-white mb-3">
+                  No Products Available
+                </p>
+                <p className="text-gray-400">
+                  Start adding products to your restaurant menu.
+                </p>
+              </div>
             </div>
           )}
 
           {!loading && products.length > 0 && filteredProducts.length === 0 && (
             <div className="bg-zinc-950 border border-white/10 rounded-[2rem] p-8 text-center">
               <p className="text-gray-400">
-                No products match your current filters.
+                No products match your selected filters.
               </p>
 
               <button

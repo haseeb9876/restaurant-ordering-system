@@ -1,3 +1,4 @@
+import PageLoader from "../../../components/loaders/PageLoader"
 import { useEffect, useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import { getOrders } from "../../../services/api"
@@ -195,7 +196,12 @@ function AdminDashboard() {
             </div>
           </div>
 
-          {loading && <p className="text-gray-400">Loading dashboard...</p>}
+          {loading && (
+            <PageLoader
+              title="Loading Dashboard"
+              subtitle="Preparing restaurant analytics"
+            />
+          )}
 
           {error && <p className="text-red-400">{error}</p>}
 
@@ -340,7 +346,17 @@ function AdminDashboard() {
                 </div>
 
                 {orders.length === 0 ? (
-                  <p className="text-gray-400">No orders yet.</p>
+                  <div className="text-center py-10">
+                    <div className="text-5xl mb-4">📦</div>
+
+                    <p className="text-2xl font-black text-white mb-2">
+                      No Orders Yet
+                    </p>
+
+                    <p className="text-gray-400">
+                      Customer orders will appear here.
+                    </p>
+                  </div>
                 ) : (
                   <div className="space-y-4">
                     {orders.slice(0, 6).map((order) => (

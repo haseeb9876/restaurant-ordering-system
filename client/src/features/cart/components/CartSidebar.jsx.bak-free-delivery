@@ -1,24 +1,8 @@
-import { useEffect, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { getPublicSettings } from "../../../services/api"
 import { useCart } from "../context/CartContext"
 
 function CartSidebar() {
   const navigate = useNavigate()
-  const [settings, setSettings] = useState(null)
-
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const data = await getPublicSettings()
-        setSettings(data)
-      } catch {
-        setSettings(null)
-      }
-    }
-
-    fetchSettings()
-  }, [])
 
   const {
     cartItems,
@@ -33,18 +17,6 @@ function CartSidebar() {
     (total, item) => total + item.price * item.quantity,
     0
   )
-
-  const freeDeliveryEnabled = settings?.freeDeliveryEnabled || false
-  const freeDeliveryMinimumOrder = settings?.freeDeliveryMinimumOrder || 600
-  const remainingForFreeDelivery =
-    freeDeliveryEnabled && subtotal < freeDeliveryMinimumOrder
-      ? freeDeliveryMinimumOrder - subtotal
-      : 0
-
-  const freeDeliveryProgress =
-    freeDeliveryEnabled && freeDeliveryMinimumOrder > 0
-      ? Math.min(100, Math.round((subtotal / freeDeliveryMinimumOrder) * 100))
-      : 0
 
   return (
     <>
@@ -147,29 +119,6 @@ function CartSidebar() {
               Rs. {subtotal}
             </span>
           </div>
-
-          {freeDeliveryEnabled && cartItems.length > 0 && (
-            <div className="mb-5 bg-zinc-950 border border-white/10 rounded-2xl p-4">
-              <div className="flex items-center justify-between gap-3 mb-3">
-                <p className="text-sm font-bold text-gray-300">
-                  {remainingForFreeDelivery > 0
-                    ? `Add Rs. ${remainingForFreeDelivery} more`
-                    : "🎉 You got free delivery!"}
-                </p>
-
-                <span className="text-xs font-bold text-orange-400">
-                  Free Delivery
-                </span>
-              </div>
-
-              <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-orange-500 rounded-full transition-all"
-                  style={{ width: `${freeDeliveryProgress}%` }}
-                />
-              </div>
-            </div>
-          )}
 
           <button
             type="button"

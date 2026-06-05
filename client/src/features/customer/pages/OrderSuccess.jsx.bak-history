@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom"
+import { Link } from "react-router-dom"
 import Navbar from "../components/Navbar"
 import CartSidebar from "../../cart/components/CartSidebar"
 import MobileBottomNav from "../components/MobileBottomNav"
@@ -23,11 +23,6 @@ function formatPaymentMethod(method) {
 
 function OrderSuccess() {
   const { latestOrder } = useCart()
-  const navigate = useNavigate()
-
-  const goHomeClean = () => {
-    navigate("/", { replace: true })
-  }
 
   const handlePrintInvoice = () => {
     window.print()
@@ -443,13 +438,12 @@ function OrderSuccess() {
                   Track My Orders
                 </Link>
 
-                <button
-                  type="button"
-                  onClick={goHomeClean}
+                <Link
+                  to="/"
                   className="border border-white/10 hover:border-orange-500 px-8 py-4 rounded-full font-bold transition text-center"
                 >
                   Continue Ordering
-                </button>
+                </Link>
               </div>
             </>
           ) : (
@@ -462,13 +456,12 @@ function OrderSuccess() {
                 We could not find your recent order receipt.
               </p>
 
-              <button
-                type="button"
-                onClick={goHomeClean}
+              <Link
+                to="/"
                 className="inline-block bg-orange-500 hover:bg-orange-600 px-8 py-4 rounded-full font-bold transition"
               >
                 Back to Menu
-              </button>
+              </Link>
             </div>
           )}
         </div>

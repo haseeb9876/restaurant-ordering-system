@@ -1,6 +1,7 @@
 import { useState } from "react"
 import Navbar from "../components/Navbar"
 import Hero from "../components/Hero"
+import TrustBadges from "../components/TrustBadges"
 import MenuSection from "../components/MenuSection"
 import MenuSearchBar from "../components/MenuSearchBar"
 import CategoryChips from "../components/CategoryChips"
@@ -22,6 +23,7 @@ function Home() {
       <CartSidebar />
 
       <Hero />
+      <TrustBadges />
 
       <MenuSearchBar
         searchTerm={searchTerm}

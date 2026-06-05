@@ -125,32 +125,3 @@ select {
     color: #c2410c !important;
   }
 }
-
-
-@media print {
-  @page {
-    size: A4 portrait;
-    margin: 6mm;
-  }
-
-  html,
-  body {
-    background: white !important;
-  }
-
-  body * {
-    visibility: hidden;
-  }
-
-  #print-receipt,
-  #print-receipt * {
-    visibility: visible;
-  }
-
-  #print-receipt {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-  }
-}

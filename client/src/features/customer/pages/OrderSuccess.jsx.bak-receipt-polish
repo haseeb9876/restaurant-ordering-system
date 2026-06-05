@@ -78,18 +78,14 @@ function OrderSuccess() {
                 <div className="text-center border-b border-black pb-3 mb-3">
                   <h1 className="text-2xl font-black">ROYAL PIZZA PALACE</h1>
                   <p className="text-sm">Premium Restaurant Experience</p>
-                  <p className="text-xs mt-1">Phone: 0333-9047139</p>
-                  <p className="text-xs">Address: Dubai Tower Room # 22</p>
-                  <div className="border-t border-black mt-3 pt-2">
-                    <p className="text-lg font-bold">ORDER RECEIPT</p>
-                  </div>
+                  <p className="text-lg font-bold mt-2">ORDER RECEIPT</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 text-sm mb-3">
                   <div>
                     <p><b>Order:</b> {latestOrder.orderId}</p>
                     <p><b>Date:</b> {latestOrder.createdAt}</p>
-                    <p><b>Estimated Time:</b> {latestOrder.estimatedTime || 30} Minutes</p>
+                    <p><b>Time:</b> {latestOrder.estimatedTime || 30} Minutes</p>
                   </div>
 
                   <div>
@@ -134,8 +130,8 @@ function OrderSuccess() {
                     <span>Rs. {latestOrder.deliveryFee}</span>
                   </div>
 
-                  <div className="flex justify-between border-y-2 border-black py-2 text-xl font-black mt-2">
-                    <span>TOTAL</span>
+                  <div className="flex justify-between border-t border-black pt-2 text-lg font-black">
+                    <span>Total</span>
                     <span>Rs. {latestOrder.total}</span>
                   </div>
                 </div>
@@ -144,9 +140,6 @@ function OrderSuccess() {
                   <p><b>Payment:</b> {formatPaymentMethod(latestOrder.paymentMethod)}</p>
                   <p><b>Status:</b> {latestOrder.paymentStatus || "PENDING"}</p>
                   <p className="mt-3 font-bold">Thank you for ordering ❤️</p>
-                  <p className="text-xs mt-2">
-                    This is not a tax invoice. Computer generated receipt.
-                  </p>
                 </div>
               </section>
 

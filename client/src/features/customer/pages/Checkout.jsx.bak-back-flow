@@ -264,7 +264,7 @@ function Checkout() {
 
       saveLatestOrder(latestOrderData)
       clearCart()
-      navigate("/order-success", { replace: true })
+      navigate("/order-success")
     } catch (error) {
       setError(error.message)
     } finally {

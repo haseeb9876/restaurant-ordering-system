@@ -29,22 +29,6 @@ function CartSidebar() {
     removeFromCart,
   } = useCart()
 
-  useEffect(() => {
-    if (!isCartOpen) return undefined
-
-    window.history.pushState({ cartOpen: true }, "")
-
-    const handleBackButton = () => {
-      closeCart()
-    }
-
-    window.addEventListener("popstate", handleBackButton)
-
-    return () => {
-      window.removeEventListener("popstate", handleBackButton)
-    }
-  }, [isCartOpen, closeCart])
-
   const subtotal = cartItems.reduce(
     (total, item) => total + item.price * item.quantity,
     0

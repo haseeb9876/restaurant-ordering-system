@@ -10,6 +10,7 @@ import Footer from "../components/Footer"
 import CartSidebar from "../../cart/components/CartSidebar"
 import MobileBottomNav from "../components/MobileBottomNav"
 import FloatingCheckoutBar from "../components/FloatingCheckoutBar"
+import FloatingWhatsAppButton from "../components/FloatingWhatsAppButton"
 
 function Home() {
   const [selectedCategory, setSelectedCategory] = useState("All")
@@ -44,6 +45,7 @@ function Home() {
       <Contact />
       <Footer />
       <FloatingCheckoutBar />
+      <FloatingWhatsAppButton />
       <MobileBottomNav />
     </div>
   )

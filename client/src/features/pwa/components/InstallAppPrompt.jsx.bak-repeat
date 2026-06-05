@@ -16,10 +16,10 @@ function InstallAppPrompt() {
       return
     }
 
-    const dismissedThisSession =
-      sessionStorage.getItem("installPromptDismissedThisSession")
+    const dismissedAt = localStorage.getItem("installPromptDismissedAt")
+    const oneDay = 24 * 60 * 60 * 1000
 
-    if (dismissedThisSession) {
+    if (dismissedAt && Date.now() - Number(dismissedAt) < oneDay) {
       return
     }
 
@@ -49,7 +49,7 @@ function InstallAppPrompt() {
   }
 
   const handleDismiss = () => {
-    sessionStorage.setItem("installPromptDismissedThisSession", "true")
+    localStorage.setItem("installPromptDismissedAt", String(Date.now()))
     setShowPrompt(false)
   }
 
@@ -70,7 +70,7 @@ function InstallAppPrompt() {
               Install Royal Pizza App
             </h3>
             <p className="mt-1 text-sm text-gray-300">
-              Add our restaurant app to your mobile home screen. We will remind you again next time until installed.
+              Add our restaurant app to your mobile home screen for faster ordering.
             </p>
           </div>
         </div>

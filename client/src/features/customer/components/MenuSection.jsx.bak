@@ -46,8 +46,8 @@ function getDealLines(description) {
 function MenuCardSkeleton() {
   return (
     <div className="bg-black border border-white/10 rounded-[2rem] overflow-hidden animate-pulse">
-      <div className="h-32 sm:h-40 md:h-56 bg-white/10" />
-      <div className="p-4 md:p-6">
+      <div className="h-64 bg-white/10" />
+      <div className="p-6">
         <div className="h-5 w-24 bg-white/10 rounded-full mb-5" />
         <div className="h-7 w-3/4 bg-white/10 rounded mb-4" />
         <div className="h-4 w-full bg-white/10 rounded mb-3" />
@@ -142,7 +142,7 @@ function DealDetailsModal({ deal, onClose, onAddToCart }) {
   )
 }
 
-function MenuSection({ selectedCategory, setSelectedCategory, searchTerm = "" }) {
+function MenuSection({ selectedCategory, setSelectedCategory }) {
   const [menuItems, setMenuItems] = useState([])
   const [categories, setCategories] = useState(["All"])
   const [search, setSearch] = useState("")
@@ -192,7 +192,7 @@ function MenuSection({ selectedCategory, setSelectedCategory, searchTerm = "" })
   }, [syncCartWithAvailableProducts])
 
   const filteredItems = useMemo(() => {
-    const normalizedSearch = (searchTerm || search).trim().toLowerCase()
+    const normalizedSearch = search.trim().toLowerCase()
 
     return menuItems.filter((item) => {
       const matchesSearch =
@@ -204,7 +204,6 @@ function MenuSection({ selectedCategory, setSelectedCategory, searchTerm = "" })
           )
 
       const matchesCategory =
-        normalizedSearch ||
         selectedCategory === "All" ||
         item.category?.name === selectedCategory
 
@@ -245,7 +244,7 @@ function MenuSection({ selectedCategory, setSelectedCategory, searchTerm = "" })
   }
 
   return (
-    <section id="menu" className="bg-zinc-950 text-white py-10 md:py-14 px-4 md:px-6">
+    <section id="menu" className="bg-zinc-950 text-white py-20 px-4 md:px-6">
       <DealDetailsModal
         deal={selectedDeal}
         onClose={() => setSelectedDeal(null)}
@@ -253,11 +252,11 @@ function MenuSection({ selectedCategory, setSelectedCategory, searchTerm = "" })
       />
 
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-5">
+        <div className="text-center mb-10">
           <p className="text-orange-500 font-semibold mb-3">Full Menu</p>
 
-          <h2 className="text-3xl md:text-5xl font-extrabold">
-            Quick Menu
+          <h2 className="text-4xl md:text-5xl font-extrabold">
+            Find Your Favorite Meal
           </h2>
 
           <p className="text-gray-400 mt-4 max-w-2xl mx-auto">
@@ -360,7 +359,7 @@ function MenuSection({ selectedCategory, setSelectedCategory, searchTerm = "" })
                     )}
                   </div>
 
-                  <div className="p-4 md:p-6">
+                  <div className="p-6">
                     <div className="flex items-center justify-between gap-3 mb-3">
                       <span className="text-sm bg-orange-500/20 text-orange-400 px-3 py-1 rounded-full">
                         {item.category?.name || "Food"}
@@ -371,7 +370,7 @@ function MenuSection({ selectedCategory, setSelectedCategory, searchTerm = "" })
                       </span>
                     </div>
 
-                    <h3 className="text-xl md:text-2xl font-bold mb-2">{item.name}</h3>
+                    <h3 className="text-2xl font-bold mb-3">{item.name}</h3>
 
                     {isDeal ? (
                       <div className="text-gray-400 text-sm mb-5 min-h-10">
@@ -420,7 +419,7 @@ function MenuSection({ selectedCategory, setSelectedCategory, searchTerm = "" })
                     )}
 
                     <div className="flex items-center justify-between gap-4">
-                      <p className="text-orange-500 text-xl md:text-2xl font-extrabold">
+                      <p className="text-orange-500 text-2xl font-extrabold">
                         Rs. {displayPrice}
                       </p>
 
@@ -438,7 +437,7 @@ function MenuSection({ selectedCategory, setSelectedCategory, searchTerm = "" })
                           type="button"
                           disabled={outOfStock}
                           onClick={() => handleAddToCart(item)}
-                          className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed px-4 md:px-5 py-2.5 md:py-3 rounded-full font-bold transition"
+                          className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed px-5 py-3 rounded-full font-bold transition"
                         >
                           {outOfStock ? "Unavailable" : "Add +"}
                         </button>

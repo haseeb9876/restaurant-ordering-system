@@ -3,7 +3,6 @@ import Navbar from "../components/Navbar"
 import Hero from "../components/Hero"
 import MenuSection from "../components/MenuSection"
 import MenuSearchBar from "../components/MenuSearchBar"
-import CategoryChips from "../components/CategoryChips"
 import About from "../components/About"
 import Contact from "../components/Contact"
 import Footer from "../components/Footer"
@@ -25,12 +24,6 @@ function Home() {
       <MenuSearchBar
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
-        setSelectedCategory={setSelectedCategory}
-      />
-
-      <CategoryChips
-        selectedCategory={selectedCategory}
-        setSelectedCategory={setSelectedCategory}
       />
 
       <div id="menu">

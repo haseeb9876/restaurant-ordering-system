@@ -228,7 +228,7 @@ function KitchenPanel() {
       )}
 
       <div>
-        <h1 className="text-2xl md:text-4xl font-extrabold text-orange-500 leading-tight">
+        <h1 className="text-3xl md:text-4xl font-extrabold text-orange-500 leading-tight">
           {restaurantName}
         </h1>
 
@@ -276,58 +276,54 @@ function KitchenPanel() {
 
       <main className="px-4 md:px-6 py-8 md:py-10">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-6">
-            <p className="text-orange-500 font-semibold mb-2 text-base">
-              Kitchen Workflow
+          <div className="mb-10">
+            <p className="text-orange-500 font-semibold mb-3 text-lg">
+              Restaurant Kitchen
             </p>
 
-            <h1 className="text-3xl md:text-3xl md:text-5xl font-extrabold leading-tight">
-              Live Orders
+            <h1 className="text-4xl md:text-6xl font-extrabold leading-tight">
+              Live Orders Queue
             </h1>
 
-            <div className="mt-4 bg-zinc-950 border border-white/10 rounded-2xl p-4 flex flex-wrap gap-3 text-sm font-bold">
-              <span className="text-yellow-400">1. Pending</span>
-              <span className="text-gray-500">→</span>
-              <span className="text-cyan-400">2. Confirm</span>
-              <span className="text-gray-500">→</span>
-              <span className="text-blue-400">3. Preparing</span>
-              <span className="text-gray-500">→</span>
-              <span className="text-green-400">4. Ready</span>
-            </div>
+            <p className="text-gray-400 mt-4 text-lg max-w-3xl">
+              Confirm new orders, prepare food, and mark orders ready for
+              delivery in real time. The queue refreshes automatically every 5
+              seconds and alerts staff when new orders arrive.
+            </p>
           </div>
 
-          <div className="grid grid-cols-2 xl:grid-cols-5 gap-3 md:gap-5 mb-6">
-            <div className="bg-zinc-950 border border-white/10 rounded-2xl p-4 md:p-6">
+          <div className="grid md:grid-cols-2 xl:grid-cols-5 gap-5 mb-10">
+            <div className="bg-zinc-950 border border-white/10 rounded-[2rem] p-6">
               <p className="text-gray-400 mb-3">Pending Orders</p>
-              <h2 className="text-3xl md:text-5xl font-extrabold text-yellow-400">
+              <h2 className="text-5xl font-extrabold text-yellow-400">
                 {analytics.pending}
               </h2>
             </div>
 
-            <div className="bg-zinc-950 border border-white/10 rounded-2xl p-4 md:p-6">
+            <div className="bg-zinc-950 border border-white/10 rounded-[2rem] p-6">
               <p className="text-gray-400 mb-3">Confirmed Orders</p>
-              <h2 className="text-3xl md:text-5xl font-extrabold text-cyan-400">
+              <h2 className="text-5xl font-extrabold text-cyan-400">
                 {analytics.confirmed}
               </h2>
             </div>
 
-            <div className="bg-zinc-950 border border-white/10 rounded-2xl p-4 md:p-6">
+            <div className="bg-zinc-950 border border-white/10 rounded-[2rem] p-6">
               <p className="text-gray-400 mb-3">Preparing Orders</p>
-              <h2 className="text-3xl md:text-5xl font-extrabold text-blue-400">
+              <h2 className="text-5xl font-extrabold text-blue-400">
                 {analytics.preparing}
               </h2>
             </div>
 
-            <div className="bg-zinc-950 border border-white/10 rounded-2xl p-4 md:p-6">
+            <div className="bg-zinc-950 border border-white/10 rounded-[2rem] p-6">
               <p className="text-gray-400 mb-3">Ready Orders</p>
-              <h2 className="text-3xl md:text-5xl font-extrabold text-green-400">
+              <h2 className="text-5xl font-extrabold text-green-400">
                 {analytics.ready}
               </h2>
             </div>
 
-            <div className="bg-zinc-950 border border-white/10 rounded-2xl p-4 md:p-6">
+            <div className="bg-zinc-950 border border-white/10 rounded-[2rem] p-6">
               <p className="text-gray-400 mb-3">Total Items</p>
-              <h2 className="text-3xl md:text-5xl font-extrabold text-orange-500">
+              <h2 className="text-5xl font-extrabold text-orange-500">
                 {analytics.totalItems}
               </h2>
             </div>
@@ -348,7 +344,7 @@ function KitchenPanel() {
           )}
 
           {!loading && orders.length > 0 && (
-            <div className="grid xl:grid-cols-2 gap-5">
+            <div className="grid xl:grid-cols-2 gap-8">
               {orders.map((order) => {
                 const isNewOrder = newOrderIds.includes(order.id)
                 const isUrgent =
@@ -358,7 +354,7 @@ function KitchenPanel() {
                 return (
                 <div
                   key={order.id}
-                  className={`bg-zinc-950 rounded-3xl p-5 md:p-7 transition ${
+                  className={`bg-zinc-950 rounded-[2.5rem] p-7 md:p-8 transition ${
                     isNewOrder
                       ? "border-2 border-orange-500 shadow-2xl shadow-orange-500/20"
                       : isUrgent
@@ -368,7 +364,7 @@ function KitchenPanel() {
                 >
                   <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-5 mb-7">
                     <div>
-                      <h2 className="text-2xl md:text-4xl font-extrabold text-orange-500">
+                      <h2 className="text-3xl md:text-4xl font-extrabold text-orange-500">
                         {order.orderNumber}
                       </h2>
 
@@ -422,14 +418,14 @@ function KitchenPanel() {
                     </div>
                   </div>
 
-                  <div className="space-y-3 mb-6">
+                  <div className="space-y-4 mb-8">
                     {order.items.map((item) => (
                       <div
                         key={item.id}
-                        className="bg-black border border-white/10 rounded-2xl p-4 flex items-center justify-between gap-4"
+                        className="bg-black border border-white/10 rounded-2xl p-5 flex items-center justify-between gap-4"
                       >
                         <div>
-                          <h3 className="font-bold text-lg md:text-xl">
+                          <h3 className="font-bold text-xl">
                             {item.productName || item.product?.name}
                             {item.variantName && (
                               <span className="text-orange-400">
@@ -444,7 +440,7 @@ function KitchenPanel() {
                           </p>
                         </div>
 
-                        <p className="text-orange-500 font-bold text-lg md:text-xl">
+                        <p className="text-orange-500 font-bold text-xl">
                           × {item.quantity}
                         </p>
                       </div>
@@ -458,7 +454,7 @@ function KitchenPanel() {
                           handleStatusChange(order.id, "CONFIRMED")
                         }
                         disabled={updatingOrderId === order.id}
-                        className="flex-1 min-w-[180px] bg-cyan-500 hover:bg-cyan-600 disabled:opacity-50 text-white py-5 rounded-2xl font-extrabold text-lg transition"
+                        className="flex-1 min-w-[180px] bg-cyan-500 hover:bg-cyan-600 disabled:opacity-50 text-white py-4 rounded-2xl font-bold text-lg transition"
                       >
                         Confirm Order
                       </button>
@@ -470,7 +466,7 @@ function KitchenPanel() {
                           handleStatusChange(order.id, "PREPARING")
                         }
                         disabled={updatingOrderId === order.id}
-                        className="flex-1 min-w-[180px] bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white py-5 rounded-2xl font-extrabold text-lg transition"
+                        className="flex-1 min-w-[180px] bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white py-4 rounded-2xl font-bold text-lg transition"
                       >
                         Start Preparing
                       </button>
@@ -480,7 +476,7 @@ function KitchenPanel() {
                       <button
                         onClick={() => handleStatusChange(order.id, "READY")}
                         disabled={updatingOrderId === order.id}
-                        className="flex-1 min-w-[180px] bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white py-5 rounded-2xl font-extrabold text-lg transition"
+                        className="flex-1 min-w-[180px] bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white py-4 rounded-2xl font-bold text-lg transition"
                       >
                         Mark Ready
                       </button>

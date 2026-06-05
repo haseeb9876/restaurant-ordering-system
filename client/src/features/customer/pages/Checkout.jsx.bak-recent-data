@@ -241,13 +241,9 @@ function Checkout() {
         },
         items: createdOrder.items.map((item) => ({
           id: item.product.id,
-          variantId: item.variantId || null,
-          variantName: item.variantName || "",
           name: item.variantName
             ? `${item.product.name} (${item.variantName})`
             : item.product.name,
-          category: item.product.category?.name || "Food",
-          image: item.product.image,
           price: item.price,
           quantity: item.quantity,
         })),

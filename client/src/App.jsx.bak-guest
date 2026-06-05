@@ -95,9 +95,23 @@ function App() {
             }
           />
 
-          <Route path="/checkout" element={<Checkout />} />
+          <Route
+            path="/checkout"
+            element={
+              <ProtectedRoute allowedRoles={["CUSTOMER", "ADMIN", "STAFF"]}>
+                <Checkout />
+              </ProtectedRoute>
+            }
+          />
 
-          <Route path="/order-success" element={<OrderSuccess />} />
+          <Route
+            path="/order-success"
+            element={
+              <ProtectedRoute allowedRoles={["CUSTOMER", "ADMIN", "STAFF"]}>
+                <OrderSuccess />
+              </ProtectedRoute>
+            }
+          />
 
           <Route
             path="/profile"

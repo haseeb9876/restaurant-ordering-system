@@ -231,7 +231,7 @@ function Checkout() {
         customer: {
           fullName: createdOrder.customerName,
           phone: createdOrder.customerPhone,
-          email: createdOrder.customerEmail === "guest@no-email.local" ? "" : createdOrder.customerEmail,
+          email: createdOrder.customerEmail,
           address: createdOrder.address,
           notes: createdOrder.notes,
         },
@@ -283,21 +283,6 @@ function Checkout() {
             <p className="text-gray-400 mt-3">
               No account required. Enter only the required delivery details.
             </p>
-
-            <div className="mt-5 inline-flex items-center gap-3 bg-zinc-950 border border-white/10 rounded-full px-5 py-3 text-sm font-bold">
-              {user ? (
-                <>
-                  <span className="text-green-400">✓ Logged in</span>
-                  <span className="text-gray-500">as</span>
-                  <span className="text-orange-400">{user.fullName}</span>
-                </>
-              ) : (
-                <>
-                  <span className="text-orange-400">Guest Checkout</span>
-                  <span className="text-gray-500">No signup needed</span>
-                </>
-              )}
-            </div>
           </div>
 
           {error && (
@@ -332,16 +317,14 @@ function Checkout() {
                     className="bg-black border border-white/10 rounded-xl px-4 py-4 outline-none focus:border-orange-500"
                   />
 
-                  {user && (
-                    <input
-                      type="email"
-                      name="email"
-                      placeholder="Email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      className="bg-black border border-white/10 rounded-xl px-4 py-4 outline-none focus:border-orange-500"
-                    />
-                  )}
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="Email *"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="bg-black border border-white/10 rounded-xl px-4 py-4 outline-none focus:border-orange-500 md:col-span-2"
+                  />
 
                   <textarea
                     name="address"

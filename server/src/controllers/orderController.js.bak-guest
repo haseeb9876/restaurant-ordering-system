@@ -52,7 +52,7 @@ function getDateRange(range) {
 export const createOrder = asyncHandler(async (req, res) => {
   const customerName = req.body.customerName?.trim()
   const customerPhone = req.body.customerPhone?.trim()
-  const customerEmail = req.body.customerEmail?.trim().toLowerCase() || "guest@no-email.local"
+  const customerEmail = req.body.customerEmail?.trim().toLowerCase()
   const address = req.body.address?.trim()
   const notes = req.body.notes?.trim() || null
   const paymentMethod = req.body.paymentMethod || "CASH_ON_DELIVERY"
@@ -70,6 +70,7 @@ export const createOrder = asyncHandler(async (req, res) => {
   if (
     !customerName ||
     !customerPhone ||
+    !customerEmail ||
     !address ||
     !items ||
     items.length === 0
@@ -78,7 +79,7 @@ export const createOrder = asyncHandler(async (req, res) => {
     throw new Error("Missing required order fields.")
   }
 
-  if (customerEmail !== "guest@no-email.local" && !isValidEmail(customerEmail)) {
+  if (!isValidEmail(customerEmail)) {
     res.status(400)
     throw new Error("Please provide a valid customer email.")
   }

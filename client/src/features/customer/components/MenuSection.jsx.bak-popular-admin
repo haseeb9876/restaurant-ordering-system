@@ -213,9 +213,7 @@ function MenuSection({ selectedCategory, setSelectedCategory, searchTerm = "" })
     })
 
     if (!normalizedSearch && selectedCategory === "🔥 Popular") {
-      const popularItems = filtered.filter((item) => item.isPopular)
-
-      return popularItems.length > 0 ? popularItems : filtered.slice(0, 8)
+      return filtered.slice(0, 8)
     }
 
     return filtered

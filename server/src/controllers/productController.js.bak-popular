@@ -129,7 +129,6 @@ export const createProduct = async (req, res) => {
       image,
       categoryId,
       isAvailable,
-      isPopular,
       trackInventory,
       stockQuantity,
       lowStockThreshold,
@@ -190,7 +189,6 @@ export const createProduct = async (req, res) => {
           inventoryValidation.stockQuantity === 0
             ? false
             : isAvailable ?? true,
-        isPopular: parseBoolean(isPopular),
         trackInventory: shouldTrackInventory,
         stockQuantity: inventoryValidation.stockQuantity,
         lowStockThreshold: inventoryValidation.lowStockThreshold,
@@ -296,10 +294,6 @@ export const updateProduct = async (req, res) => {
 
     if (req.body.isAvailable !== undefined) {
       updateData.isAvailable = Boolean(req.body.isAvailable)
-    }
-
-    if (req.body.isPopular !== undefined) {
-      updateData.isPopular = parseBoolean(req.body.isPopular)
     }
 
     if (req.body.trackInventory !== undefined) {

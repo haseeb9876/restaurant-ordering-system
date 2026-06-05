@@ -150,6 +150,7 @@ exports.Prisma.ProductScalarFieldEnum = {
   image: 'image',
   productType: 'productType',
   isAvailable: 'isAvailable',
+  isPopular: 'isPopular',
   trackInventory: 'trackInventory',
   stockQuantity: 'stockQuantity',
   lowStockThreshold: 'lowStockThreshold',

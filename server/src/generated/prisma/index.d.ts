@@ -3983,6 +3983,7 @@ export namespace Prisma {
     image: string | null
     productType: $Enums.ProductType | null
     isAvailable: boolean | null
+    isPopular: boolean | null
     trackInventory: boolean | null
     stockQuantity: number | null
     lowStockThreshold: number | null
@@ -3999,6 +4000,7 @@ export namespace Prisma {
     image: string | null
     productType: $Enums.ProductType | null
     isAvailable: boolean | null
+    isPopular: boolean | null
     trackInventory: boolean | null
     stockQuantity: number | null
     lowStockThreshold: number | null
@@ -4015,6 +4017,7 @@ export namespace Prisma {
     image: number
     productType: number
     isAvailable: number
+    isPopular: number
     trackInventory: number
     stockQuantity: number
     lowStockThreshold: number
@@ -4049,6 +4052,7 @@ export namespace Prisma {
     image?: true
     productType?: true
     isAvailable?: true
+    isPopular?: true
     trackInventory?: true
     stockQuantity?: true
     lowStockThreshold?: true
@@ -4065,6 +4069,7 @@ export namespace Prisma {
     image?: true
     productType?: true
     isAvailable?: true
+    isPopular?: true
     trackInventory?: true
     stockQuantity?: true
     lowStockThreshold?: true
@@ -4081,6 +4086,7 @@ export namespace Prisma {
     image?: true
     productType?: true
     isAvailable?: true
+    isPopular?: true
     trackInventory?: true
     stockQuantity?: true
     lowStockThreshold?: true
@@ -4184,6 +4190,7 @@ export namespace Prisma {
     image: string
     productType: $Enums.ProductType
     isAvailable: boolean
+    isPopular: boolean
     trackInventory: boolean
     stockQuantity: number
     lowStockThreshold: number
@@ -4219,6 +4226,7 @@ export namespace Prisma {
     image?: boolean
     productType?: boolean
     isAvailable?: boolean
+    isPopular?: boolean
     trackInventory?: boolean
     stockQuantity?: boolean
     lowStockThreshold?: boolean
@@ -4239,6 +4247,7 @@ export namespace Prisma {
     image?: boolean
     productType?: boolean
     isAvailable?: boolean
+    isPopular?: boolean
     trackInventory?: boolean
     stockQuantity?: boolean
     lowStockThreshold?: boolean
@@ -4256,6 +4265,7 @@ export namespace Prisma {
     image?: boolean
     productType?: boolean
     isAvailable?: boolean
+    isPopular?: boolean
     trackInventory?: boolean
     stockQuantity?: boolean
     lowStockThreshold?: boolean
@@ -4273,6 +4283,7 @@ export namespace Prisma {
     image?: boolean
     productType?: boolean
     isAvailable?: boolean
+    isPopular?: boolean
     trackInventory?: boolean
     stockQuantity?: boolean
     lowStockThreshold?: boolean
@@ -4281,7 +4292,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type ProductOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "description" | "price" | "image" | "productType" | "isAvailable" | "trackInventory" | "stockQuantity" | "lowStockThreshold" | "categoryId" | "createdAt" | "updatedAt", ExtArgs["result"]["product"]>
+  export type ProductOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "description" | "price" | "image" | "productType" | "isAvailable" | "isPopular" | "trackInventory" | "stockQuantity" | "lowStockThreshold" | "categoryId" | "createdAt" | "updatedAt", ExtArgs["result"]["product"]>
   export type ProductInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     category?: boolean | CategoryDefaultArgs<ExtArgs>
     variants?: boolean | Product$variantsArgs<ExtArgs>
@@ -4310,6 +4321,7 @@ export namespace Prisma {
       image: string
       productType: $Enums.ProductType
       isAvailable: boolean
+      isPopular: boolean
       trackInventory: boolean
       stockQuantity: number
       lowStockThreshold: number
@@ -4749,6 +4761,7 @@ export namespace Prisma {
     readonly image: FieldRef<"Product", 'String'>
     readonly productType: FieldRef<"Product", 'ProductType'>
     readonly isAvailable: FieldRef<"Product", 'Boolean'>
+    readonly isPopular: FieldRef<"Product", 'Boolean'>
     readonly trackInventory: FieldRef<"Product", 'Boolean'>
     readonly stockQuantity: FieldRef<"Product", 'Int'>
     readonly lowStockThreshold: FieldRef<"Product", 'Int'>
@@ -10313,6 +10326,7 @@ export namespace Prisma {
     image: 'image',
     productType: 'productType',
     isAvailable: 'isAvailable',
+    isPopular: 'isPopular',
     trackInventory: 'trackInventory',
     stockQuantity: 'stockQuantity',
     lowStockThreshold: 'lowStockThreshold',
@@ -10730,6 +10744,7 @@ export namespace Prisma {
     image?: StringFilter<"Product"> | string
     productType?: EnumProductTypeFilter<"Product"> | $Enums.ProductType
     isAvailable?: BoolFilter<"Product"> | boolean
+    isPopular?: BoolFilter<"Product"> | boolean
     trackInventory?: BoolFilter<"Product"> | boolean
     stockQuantity?: IntFilter<"Product"> | number
     lowStockThreshold?: IntFilter<"Product"> | number
@@ -10749,6 +10764,7 @@ export namespace Prisma {
     image?: SortOrder
     productType?: SortOrder
     isAvailable?: SortOrder
+    isPopular?: SortOrder
     trackInventory?: SortOrder
     stockQuantity?: SortOrder
     lowStockThreshold?: SortOrder
@@ -10771,6 +10787,7 @@ export namespace Prisma {
     image?: StringFilter<"Product"> | string
     productType?: EnumProductTypeFilter<"Product"> | $Enums.ProductType
     isAvailable?: BoolFilter<"Product"> | boolean
+    isPopular?: BoolFilter<"Product"> | boolean
     trackInventory?: BoolFilter<"Product"> | boolean
     stockQuantity?: IntFilter<"Product"> | number
     lowStockThreshold?: IntFilter<"Product"> | number
@@ -10790,6 +10807,7 @@ export namespace Prisma {
     image?: SortOrder
     productType?: SortOrder
     isAvailable?: SortOrder
+    isPopular?: SortOrder
     trackInventory?: SortOrder
     stockQuantity?: SortOrder
     lowStockThreshold?: SortOrder
@@ -10814,6 +10832,7 @@ export namespace Prisma {
     image?: StringWithAggregatesFilter<"Product"> | string
     productType?: EnumProductTypeWithAggregatesFilter<"Product"> | $Enums.ProductType
     isAvailable?: BoolWithAggregatesFilter<"Product"> | boolean
+    isPopular?: BoolWithAggregatesFilter<"Product"> | boolean
     trackInventory?: BoolWithAggregatesFilter<"Product"> | boolean
     stockQuantity?: IntWithAggregatesFilter<"Product"> | number
     lowStockThreshold?: IntWithAggregatesFilter<"Product"> | number
@@ -11432,6 +11451,7 @@ export namespace Prisma {
     image: string
     productType?: $Enums.ProductType
     isAvailable?: boolean
+    isPopular?: boolean
     trackInventory?: boolean
     stockQuantity?: number
     lowStockThreshold?: number
@@ -11450,6 +11470,7 @@ export namespace Prisma {
     image: string
     productType?: $Enums.ProductType
     isAvailable?: boolean
+    isPopular?: boolean
     trackInventory?: boolean
     stockQuantity?: number
     lowStockThreshold?: number
@@ -11467,6 +11488,7 @@ export namespace Prisma {
     image?: StringFieldUpdateOperationsInput | string
     productType?: EnumProductTypeFieldUpdateOperationsInput | $Enums.ProductType
     isAvailable?: BoolFieldUpdateOperationsInput | boolean
+    isPopular?: BoolFieldUpdateOperationsInput | boolean
     trackInventory?: BoolFieldUpdateOperationsInput | boolean
     stockQuantity?: IntFieldUpdateOperationsInput | number
     lowStockThreshold?: IntFieldUpdateOperationsInput | number
@@ -11485,6 +11507,7 @@ export namespace Prisma {
     image?: StringFieldUpdateOperationsInput | string
     productType?: EnumProductTypeFieldUpdateOperationsInput | $Enums.ProductType
     isAvailable?: BoolFieldUpdateOperationsInput | boolean
+    isPopular?: BoolFieldUpdateOperationsInput | boolean
     trackInventory?: BoolFieldUpdateOperationsInput | boolean
     stockQuantity?: IntFieldUpdateOperationsInput | number
     lowStockThreshold?: IntFieldUpdateOperationsInput | number
@@ -11503,6 +11526,7 @@ export namespace Prisma {
     image: string
     productType?: $Enums.ProductType
     isAvailable?: boolean
+    isPopular?: boolean
     trackInventory?: boolean
     stockQuantity?: number
     lowStockThreshold?: number
@@ -11518,6 +11542,7 @@ export namespace Prisma {
     image?: StringFieldUpdateOperationsInput | string
     productType?: EnumProductTypeFieldUpdateOperationsInput | $Enums.ProductType
     isAvailable?: BoolFieldUpdateOperationsInput | boolean
+    isPopular?: BoolFieldUpdateOperationsInput | boolean
     trackInventory?: BoolFieldUpdateOperationsInput | boolean
     stockQuantity?: IntFieldUpdateOperationsInput | number
     lowStockThreshold?: IntFieldUpdateOperationsInput | number
@@ -11533,6 +11558,7 @@ export namespace Prisma {
     image?: StringFieldUpdateOperationsInput | string
     productType?: EnumProductTypeFieldUpdateOperationsInput | $Enums.ProductType
     isAvailable?: BoolFieldUpdateOperationsInput | boolean
+    isPopular?: BoolFieldUpdateOperationsInput | boolean
     trackInventory?: BoolFieldUpdateOperationsInput | boolean
     stockQuantity?: IntFieldUpdateOperationsInput | number
     lowStockThreshold?: IntFieldUpdateOperationsInput | number
@@ -12373,6 +12399,7 @@ export namespace Prisma {
     image?: SortOrder
     productType?: SortOrder
     isAvailable?: SortOrder
+    isPopular?: SortOrder
     trackInventory?: SortOrder
     stockQuantity?: SortOrder
     lowStockThreshold?: SortOrder
@@ -12397,6 +12424,7 @@ export namespace Prisma {
     image?: SortOrder
     productType?: SortOrder
     isAvailable?: SortOrder
+    isPopular?: SortOrder
     trackInventory?: SortOrder
     stockQuantity?: SortOrder
     lowStockThreshold?: SortOrder
@@ -12413,6 +12441,7 @@ export namespace Prisma {
     image?: SortOrder
     productType?: SortOrder
     isAvailable?: SortOrder
+    isPopular?: SortOrder
     trackInventory?: SortOrder
     stockQuantity?: SortOrder
     lowStockThreshold?: SortOrder
@@ -13602,6 +13631,7 @@ export namespace Prisma {
     image: string
     productType?: $Enums.ProductType
     isAvailable?: boolean
+    isPopular?: boolean
     trackInventory?: boolean
     stockQuantity?: number
     lowStockThreshold?: number
@@ -13619,6 +13649,7 @@ export namespace Prisma {
     image: string
     productType?: $Enums.ProductType
     isAvailable?: boolean
+    isPopular?: boolean
     trackInventory?: boolean
     stockQuantity?: number
     lowStockThreshold?: number
@@ -13665,6 +13696,7 @@ export namespace Prisma {
     image?: StringFilter<"Product"> | string
     productType?: EnumProductTypeFilter<"Product"> | $Enums.ProductType
     isAvailable?: BoolFilter<"Product"> | boolean
+    isPopular?: BoolFilter<"Product"> | boolean
     trackInventory?: BoolFilter<"Product"> | boolean
     stockQuantity?: IntFilter<"Product"> | number
     lowStockThreshold?: IntFilter<"Product"> | number
@@ -13836,6 +13868,7 @@ export namespace Prisma {
     image: string
     productType?: $Enums.ProductType
     isAvailable?: boolean
+    isPopular?: boolean
     trackInventory?: boolean
     stockQuantity?: number
     lowStockThreshold?: number
@@ -13853,6 +13886,7 @@ export namespace Prisma {
     image: string
     productType?: $Enums.ProductType
     isAvailable?: boolean
+    isPopular?: boolean
     trackInventory?: boolean
     stockQuantity?: number
     lowStockThreshold?: number
@@ -13912,6 +13946,7 @@ export namespace Prisma {
     image?: StringFieldUpdateOperationsInput | string
     productType?: EnumProductTypeFieldUpdateOperationsInput | $Enums.ProductType
     isAvailable?: BoolFieldUpdateOperationsInput | boolean
+    isPopular?: BoolFieldUpdateOperationsInput | boolean
     trackInventory?: BoolFieldUpdateOperationsInput | boolean
     stockQuantity?: IntFieldUpdateOperationsInput | number
     lowStockThreshold?: IntFieldUpdateOperationsInput | number
@@ -13929,6 +13964,7 @@ export namespace Prisma {
     image?: StringFieldUpdateOperationsInput | string
     productType?: EnumProductTypeFieldUpdateOperationsInput | $Enums.ProductType
     isAvailable?: BoolFieldUpdateOperationsInput | boolean
+    isPopular?: BoolFieldUpdateOperationsInput | boolean
     trackInventory?: BoolFieldUpdateOperationsInput | boolean
     stockQuantity?: IntFieldUpdateOperationsInput | number
     lowStockThreshold?: IntFieldUpdateOperationsInput | number
@@ -14126,6 +14162,7 @@ export namespace Prisma {
     image: string
     productType?: $Enums.ProductType
     isAvailable?: boolean
+    isPopular?: boolean
     trackInventory?: boolean
     stockQuantity?: number
     lowStockThreshold?: number
@@ -14143,6 +14180,7 @@ export namespace Prisma {
     image: string
     productType?: $Enums.ProductType
     isAvailable?: boolean
+    isPopular?: boolean
     trackInventory?: boolean
     stockQuantity?: number
     lowStockThreshold?: number
@@ -14253,6 +14291,7 @@ export namespace Prisma {
     image?: StringFieldUpdateOperationsInput | string
     productType?: EnumProductTypeFieldUpdateOperationsInput | $Enums.ProductType
     isAvailable?: BoolFieldUpdateOperationsInput | boolean
+    isPopular?: BoolFieldUpdateOperationsInput | boolean
     trackInventory?: BoolFieldUpdateOperationsInput | boolean
     stockQuantity?: IntFieldUpdateOperationsInput | number
     lowStockThreshold?: IntFieldUpdateOperationsInput | number
@@ -14270,6 +14309,7 @@ export namespace Prisma {
     image?: StringFieldUpdateOperationsInput | string
     productType?: EnumProductTypeFieldUpdateOperationsInput | $Enums.ProductType
     isAvailable?: BoolFieldUpdateOperationsInput | boolean
+    isPopular?: BoolFieldUpdateOperationsInput | boolean
     trackInventory?: BoolFieldUpdateOperationsInput | boolean
     stockQuantity?: IntFieldUpdateOperationsInput | number
     lowStockThreshold?: IntFieldUpdateOperationsInput | number
@@ -14402,6 +14442,7 @@ export namespace Prisma {
     image: string
     productType?: $Enums.ProductType
     isAvailable?: boolean
+    isPopular?: boolean
     trackInventory?: boolean
     stockQuantity?: number
     lowStockThreshold?: number
@@ -14416,6 +14457,7 @@ export namespace Prisma {
     image?: StringFieldUpdateOperationsInput | string
     productType?: EnumProductTypeFieldUpdateOperationsInput | $Enums.ProductType
     isAvailable?: BoolFieldUpdateOperationsInput | boolean
+    isPopular?: BoolFieldUpdateOperationsInput | boolean
     trackInventory?: BoolFieldUpdateOperationsInput | boolean
     stockQuantity?: IntFieldUpdateOperationsInput | number
     lowStockThreshold?: IntFieldUpdateOperationsInput | number
@@ -14433,6 +14475,7 @@ export namespace Prisma {
     image?: StringFieldUpdateOperationsInput | string
     productType?: EnumProductTypeFieldUpdateOperationsInput | $Enums.ProductType
     isAvailable?: BoolFieldUpdateOperationsInput | boolean
+    isPopular?: BoolFieldUpdateOperationsInput | boolean
     trackInventory?: BoolFieldUpdateOperationsInput | boolean
     stockQuantity?: IntFieldUpdateOperationsInput | number
     lowStockThreshold?: IntFieldUpdateOperationsInput | number
@@ -14450,6 +14493,7 @@ export namespace Prisma {
     image?: StringFieldUpdateOperationsInput | string
     productType?: EnumProductTypeFieldUpdateOperationsInput | $Enums.ProductType
     isAvailable?: BoolFieldUpdateOperationsInput | boolean
+    isPopular?: BoolFieldUpdateOperationsInput | boolean
     trackInventory?: BoolFieldUpdateOperationsInput | boolean
     stockQuantity?: IntFieldUpdateOperationsInput | number
     lowStockThreshold?: IntFieldUpdateOperationsInput | number

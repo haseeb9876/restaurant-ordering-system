@@ -281,35 +281,6 @@ function AdminProducts() {
     }
   }
 
-  const handleTogglePopular = async (product) => {
-    try {
-      setUpdatingId(product.id)
-      setError("")
-
-      const updatedProduct = await updateProduct(product.id, {
-        isPopular: !product.isPopular,
-      })
-
-      setProducts((prevProducts) =>
-        prevProducts.map((currentProduct) =>
-          currentProduct.id === product.id ? updatedProduct : currentProduct
-        )
-      )
-
-      toast.success(
-        updatedProduct.isPopular
-          ? "Product added to Popular."
-          : "Product removed from Popular."
-      )
-    } catch (error) {
-      const message = error.message || "Failed to update popular status."
-      setError(message)
-      toast.error(message)
-    } finally {
-      setUpdatingId(null)
-    }
-  }
-
   const handleDeleteProduct = async (productId) => {
     const confirmDelete = window.confirm(
       "Delete this product? If it exists in previous orders, it will be archived instead."
@@ -773,23 +744,15 @@ function AdminProducts() {
                         {product.category?.name}
                       </span>
 
-                      <div className="flex flex-wrap gap-2">
-                        {product.isPopular && (
-                          <span className="text-xs px-3 py-1 rounded-full font-bold bg-orange-500/20 text-orange-400">
-                            🔥 Popular
-                          </span>
-                        )}
-
-                        <span
-                          className={`text-xs px-3 py-1 rounded-full font-bold ${
-                            product.isAvailable
-                              ? "bg-green-500/20 text-green-400"
-                              : "bg-red-500/20 text-red-400"
-                          }`}
-                        >
-                          {product.isAvailable ? "Available" : "Unavailable"}
-                        </span>
-                      </div>
+                      <span
+                        className={`text-xs px-3 py-1 rounded-full font-bold ${
+                          product.isAvailable
+                            ? "bg-green-500/20 text-green-400"
+                            : "bg-red-500/20 text-red-400"
+                        }`}
+                      >
+                        {product.isAvailable ? "Available" : "Unavailable"}
+                      </span>
                     </div>
 
                     <h2 className="text-2xl font-bold mt-4">
@@ -844,19 +807,6 @@ function AdminProducts() {
                           : product.isAvailable
                           ? "Hide"
                           : "Show"}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleTogglePopular(product)}
-                        disabled={updatingId === product.id}
-                        className="col-span-2 border border-orange-500/40 text-orange-400 hover:bg-orange-500 hover:text-white px-4 py-3 rounded-full font-bold transition disabled:opacity-60 disabled:cursor-not-allowed"
-                      >
-                        {updatingId === product.id
-                          ? "Updating..."
-                          : product.isPopular
-                          ? "Remove from Popular"
-                          : "Add to Popular"}
                       </button>
 
                       <button

@@ -84,7 +84,6 @@ model Product {
   productType       ProductType @default(SIMPLE)
 
   isAvailable       Boolean     @default(true)
-  isPopular         Boolean     @default(false)
   trackInventory    Boolean     @default(false)
   stockQuantity     Int         @default(0)
   lowStockThreshold Int         @default(5)

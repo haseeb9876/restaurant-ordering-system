@@ -194,7 +194,7 @@ function MenuSection({ selectedCategory, setSelectedCategory, searchTerm = "" })
   const filteredItems = useMemo(() => {
     const normalizedSearch = (searchTerm || search).trim().toLowerCase()
 
-    const filtered = menuItems.filter((item) => {
+    return menuItems.filter((item) => {
       const matchesSearch =
         !normalizedSearch ||
         [item.name, item.description, item.category?.name]
@@ -205,20 +205,11 @@ function MenuSection({ selectedCategory, setSelectedCategory, searchTerm = "" })
 
       const matchesCategory =
         normalizedSearch ||
-        selectedCategory === "🔥 Popular" ||
         selectedCategory === "All" ||
         item.category?.name === selectedCategory
 
       return matchesSearch && matchesCategory
     })
-
-    if (!normalizedSearch && selectedCategory === "🔥 Popular") {
-      const popularItems = filtered.filter((item) => item.isPopular)
-
-      return popularItems.length > 0 ? popularItems : filtered.slice(0, 8)
-    }
-
-    return filtered
   }, [menuItems, search, selectedCategory])
 
   const handleAddToCart = (item) => {

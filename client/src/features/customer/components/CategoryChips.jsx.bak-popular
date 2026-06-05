@@ -8,9 +8,9 @@ function CategoryChips({ selectedCategory, setSelectedCategory }) {
     const fetchCategories = async () => {
       try {
         const data = await getCategories()
-        setCategories(["🔥 Popular", "All", ...data.map((category) => category.name)])
+        setCategories(["All", ...data.map((category) => category.name)])
       } catch {
-        setCategories(["🔥 Popular", "All"])
+        setCategories(["All"])
       }
     }
 

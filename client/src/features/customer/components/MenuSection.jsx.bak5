@@ -253,6 +253,45 @@ function MenuSection({ selectedCategory, setSelectedCategory, searchTerm = "" })
       />
 
       <div className="max-w-7xl mx-auto">
+        <div className="text-center mb-5">
+          <p className="text-orange-500 font-semibold mb-3">Full Menu</p>
+
+          <h2 className="text-3xl md:text-5xl font-extrabold">
+            Quick Menu
+          </h2>
+
+          <p className="text-gray-400 mt-4 max-w-2xl mx-auto">
+            Search by food name, description, or category and add your favorite
+            dishes to cart instantly.
+          </p>
+        </div>
+
+        <div className="max-w-xl mx-auto mb-8">
+          <input
+            type="text"
+            placeholder="Search food, category, or flavor..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full bg-black border border-white/10 rounded-full px-6 py-4 outline-none focus:border-orange-500"
+          />
+        </div>
+
+        <div className="flex flex-nowrap md:flex-wrap justify-start md:justify-center gap-3 mb-12 overflow-x-auto pb-3">
+          {categories.map((category) => (
+            <button
+              key={category}
+              onClick={() => setSelectedCategory(category)}
+              className={`shrink-0 px-5 py-3 rounded-full font-semibold transition ${
+                selectedCategory === category
+                  ? "bg-orange-500 text-white"
+                  : "bg-white/5 text-gray-300 hover:bg-white/10"
+              }`}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+
         {loading && (
           <div className="grid md:grid-cols-3 gap-8">
             {[1, 2, 3, 4, 5, 6].map((item) => (

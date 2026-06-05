@@ -2,7 +2,7 @@ import React from "react"
 import ReactDOM from "react-dom/client"
 import { registerSW } from "virtual:pwa-register"
 import { BrowserRouter } from "react-router-dom"
-import toast, { Toaster } from "react-hot-toast"
+import { Toaster } from "react-hot-toast"
 import App from "./App.jsx"
 import "./index.css"
 import { CartProvider } from "./features/cart/context/CartContext.jsx"
@@ -55,40 +55,20 @@ ReactDOM.createRoot(document.getElementById("root")).render(
 )
 
 
-const updateSW = registerSW({
+registerSW({
   immediate: true,
 
   onNeedRefresh() {
-    toast(
-      (toastItem) => (
-        <div>
-          <p className="font-bold mb-2">
-            New app update available
-          </p>
-
-          <p className="text-sm text-gray-300 mb-4">
-            Refresh now to get the latest version.
-          </p>
-
-          <button
-            type="button"
-            onClick={() => {
-              toast.dismiss(toastItem.id)
-              updateSW(true)
-            }}
-            className="bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded-full text-sm font-bold text-white"
-          >
-            Refresh Now
-          </button>
-        </div>
-      ),
-      {
-        duration: Infinity,
-      }
+    const shouldUpdate = window.confirm(
+      "New version available. Update now?"
     )
+
+    if (shouldUpdate) {
+      window.location.reload()
+    }
   },
 
   onOfflineReady() {
-    toast.success("App is ready for offline viewing.")
+    
   },
 })

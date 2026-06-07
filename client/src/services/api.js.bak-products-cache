@@ -132,34 +132,10 @@ export const getCurrentUser = async () => {
   return result.data.user
 }
 
-
-let productsCache = null
-let productsCacheTime = 0
-let productsRequest = null
-const PRODUCTS_CACHE_DURATION = 5 * 60 * 1000
-
 export const getProducts = async () => {
-  const now = Date.now()
+  const result = await apiRequest("/products")
 
-  if (productsCache && now - productsCacheTime < PRODUCTS_CACHE_DURATION) {
-    return productsCache
-  }
-
-  if (productsRequest) {
-    return productsRequest
-  }
-
-  productsRequest = apiRequest("/products")
-    .then((products) => {
-      productsCache = products
-      productsCacheTime = Date.now()
-      return products
-    })
-    .finally(() => {
-      productsRequest = null
-    })
-
-  return productsRequest
+  return result.data
 }
 
 export const getProduct = async (productId) => {

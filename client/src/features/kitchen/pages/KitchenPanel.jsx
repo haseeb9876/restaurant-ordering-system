@@ -163,7 +163,7 @@ function KitchenPanel() {
 
     const interval = setInterval(() => {
       fetchOrders({ silent: true })
-    }, 5000)
+    }, 60000)
 
     return () => clearInterval(interval)
   }, [])

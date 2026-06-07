@@ -393,35 +393,8 @@ export const updateAdminSettings = async (settingsData) => {
   return result.settings
 }
 
-
-let publicSettingsCache = null
-let publicSettingsCacheTime = 0
-let publicSettingsRequest = null
-const PUBLIC_SETTINGS_CACHE_DURATION = 10 * 60 * 1000
-
 export const getPublicSettings = async () => {
-  const now = Date.now()
+  const result = await apiRequest("/settings/public")
 
-  if (
-    publicSettingsCache &&
-    now - publicSettingsCacheTime < PUBLIC_SETTINGS_CACHE_DURATION
-  ) {
-    return publicSettingsCache
-  }
-
-  if (publicSettingsRequest) {
-    return publicSettingsRequest
-  }
-
-  publicSettingsRequest = apiRequest("/settings/public")
-    .then((settings) => {
-      publicSettingsCache = settings
-      publicSettingsCacheTime = Date.now()
-      return settings
-    })
-    .finally(() => {
-      publicSettingsRequest = null
-    })
-
-  return publicSettingsRequest
+  return result
 }

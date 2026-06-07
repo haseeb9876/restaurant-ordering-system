@@ -150,7 +150,8 @@ export const getProducts = async () => {
   }
 
   productsRequest = apiRequest("/products")
-    .then((products) => {
+    .then((result) => {
+      const products = result.data || []
       productsCache = products
       productsCacheTime = Date.now()
       return products

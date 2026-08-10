@@ -27,8 +27,11 @@ const isProduction = process.env.NODE_ENV === "production"
 
 const allowedOrigins = [
   process.env.CLIENT_URL,
+  "http://localhost:9000",
   "http://localhost:5173",
   "http://localhost:5174",
+  "http://localhost:3000",
+  "http://localhost",
 ].filter(Boolean)
 
 app.use(

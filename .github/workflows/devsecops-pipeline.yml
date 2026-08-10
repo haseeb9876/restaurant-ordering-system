@@ -71,7 +71,7 @@ jobs:
 
       - name: Rolling Update on Local Kubernetes Cluster
         run: |
-          kubectl apply -f k8s/
+          kubectl apply -f k8s/frontend-k8s.yaml -f k8s/backend-k8s.yaml -f k8s/postgres-k8s.yaml -f k8s/ingress-k8s.yaml
           kubectl set image deployment/frontend-deployment frontend=${{ secrets.DOCKERHUB_USERNAME }}/restaurant-frontend:${{ github.sha }} -n default || true
           kubectl set image deployment/backend-deployment backend=${{ secrets.DOCKERHUB_USERNAME }}/restaurant-backend:${{ github.sha }} -n default || true
           kubectl rollout restart deployment/frontend-deployment deployment/backend-deployment -n default

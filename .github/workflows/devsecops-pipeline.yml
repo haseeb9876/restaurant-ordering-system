@@ -24,12 +24,12 @@ jobs:
 
       - name: Build Frontend Docker Image
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/restaurant-frontend:latest -f docker/client/Dockerfile .
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/restaurant-frontend:latest -t ${{ secrets.DOCKERHUB_USERNAME }}/restaurant-frontend:${{ github.sha }} -f docker/client/Dockerfile .
 
       - name: Scan Frontend Image with Trivy
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: '${{ secrets.DOCKERHUB_USERNAME }}/restaurant-frontend:latest'
+          image-ref: '${{ secrets.DOCKERHUB_USERNAME }}/restaurant-frontend:${{ github.sha }}'
           format: 'table'
           exit-code: '1'
           ignore-unfixed: true
@@ -39,6 +39,7 @@ jobs:
       - name: Push Frontend Image
         run: |
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/restaurant-frontend:latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/restaurant-frontend:${{ github.sha }}
 
   deploy-local-cluster:
     needs: security-and-build
@@ -46,5 +47,6 @@ jobs:
     steps:
       - name: Rolling Update on Local Kubernetes Cluster
         run: |
-          kubectl rollout restart deployment frontend-deployment -n default
+          kubectl apply -f k8s/frontend-deployment.yaml
+          kubectl set image deployment/frontend-deployment frontend=${{ secrets.DOCKERHUB_USERNAME }}/restaurant-frontend:${{ github.sha }} -n default
           kubectl rollout status deployment frontend-deployment -n default

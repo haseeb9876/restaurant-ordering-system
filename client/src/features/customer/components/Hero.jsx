@@ -37,7 +37,7 @@ function Hero() {
           </p>
 
           <h1 className="text-5xl md:text-7xl font-extrabold leading-tight">
-            Order Fresh & Hot Meals Instantly 🚀
+            Order Gourmet Dishes Delivered Fast 🍕
           </h1>
 
           <p className="text-gray-300 mt-6 text-lg max-w-xl">

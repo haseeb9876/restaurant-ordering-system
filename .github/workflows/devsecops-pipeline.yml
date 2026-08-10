@@ -47,6 +47,6 @@ jobs:
     steps:
       - name: Rolling Update on Local Kubernetes Cluster
         run: |
-          kubectl apply -f k8s/frontend-deployment.yaml
-          kubectl set image deployment/frontend-deployment frontend=${{ secrets.DOCKERHUB_USERNAME }}/restaurant-frontend:${{ github.sha }} -n default
-          kubectl rollout status deployment frontend-deployment -n default
+          kubectl apply -f k8s/
+          kubectl set image deployment/frontend-deployment frontend=${{ secrets.DOCKERHUB_USERNAME }}/restaurant-frontend:${{ github.sha }} -n default || kubectl set image deployment/frontend frontend=${{ secrets.DOCKERHUB_USERNAME }}/restaurant-frontend:${{ github.sha }} -n default
+          kubectl rollout restart deployment frontend-deployment -n default || kubectl rollout restart deployment frontend -n default

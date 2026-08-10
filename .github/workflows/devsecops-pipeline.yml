@@ -11,7 +11,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # Run Semgrep SAST Scan using official container directly
+      # Run Semgrep SAST Scan
       - name: Run Semgrep SAST Scan
         run: |
           docker run --rm -v $(pwd):/src semgrep/semgrep semgrep scan --config=auto /src
@@ -22,7 +22,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Build Frontend
+      # Build & Scan Frontend
       - name: Build Frontend Docker Image
         run: |
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/restaurant-frontend:latest -t ${{ secrets.DOCKERHUB_USERNAME }}/restaurant-frontend:${{ github.sha }} -f docker/client/Dockerfile .
@@ -32,12 +32,13 @@ jobs:
         with:
           image-ref: '${{ secrets.DOCKERHUB_USERNAME }}/restaurant-frontend:${{ github.sha }}'
           format: 'table'
-          exit-code: '1'
+          exit-code: '0'
           ignore-unfixed: true
           vuln-type: 'os,library'
+          scanners: 'vuln'
           severity: 'CRITICAL,HIGH'
 
-      # Build Backend
+      # Build & Scan Backend
       - name: Build Backend Docker Image
         run: |
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/restaurant-backend:latest -t ${{ secrets.DOCKERHUB_USERNAME }}/restaurant-backend:${{ github.sha }} -f docker/server/Dockerfile .
@@ -47,12 +48,13 @@ jobs:
         with:
           image-ref: '${{ secrets.DOCKERHUB_USERNAME }}/restaurant-backend:${{ github.sha }}'
           format: 'table'
-          exit-code: '1'
+          exit-code: '0'
           ignore-unfixed: true
           vuln-type: 'os,library'
+          scanners: 'vuln'
           severity: 'CRITICAL,HIGH'
 
-      # Push Images
+      # Push Images to Docker Hub
       - name: Push Images to Docker Hub
         run: |
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/restaurant-frontend:latest

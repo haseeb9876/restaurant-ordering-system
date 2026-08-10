@@ -7,3 +7,4 @@ build/
 .vscode/
 .vercel
 .env*
+actions-runner/

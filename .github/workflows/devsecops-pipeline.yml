@@ -22,6 +22,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      # Build Frontend
       - name: Build Frontend Docker Image
         run: |
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/restaurant-frontend:latest -t ${{ secrets.DOCKERHUB_USERNAME }}/restaurant-frontend:${{ github.sha }} -f docker/client/Dockerfile .
@@ -36,10 +37,28 @@ jobs:
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
 
-      - name: Push Frontend Image
+      # Build Backend
+      - name: Build Backend Docker Image
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/restaurant-backend:latest -t ${{ secrets.DOCKERHUB_USERNAME }}/restaurant-backend:${{ github.sha }} -f docker/server/Dockerfile .
+
+      - name: Scan Backend Image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ secrets.DOCKERHUB_USERNAME }}/restaurant-backend:${{ github.sha }}'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      # Push Images
+      - name: Push Images to Docker Hub
         run: |
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/restaurant-frontend:latest
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/restaurant-frontend:${{ github.sha }}
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/restaurant-backend:latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/restaurant-backend:${{ github.sha }}
 
   deploy-local-cluster:
     needs: security-and-build
@@ -50,6 +69,9 @@ jobs:
 
       - name: Rolling Update on Local Kubernetes Cluster
         run: |
-          kubectl apply -f k8s/frontend-k8s.yaml
-          kubectl set image deployment/frontend-deployment frontend=${{ secrets.DOCKERHUB_USERNAME }}/restaurant-frontend:${{ github.sha }} -n default || kubectl set image deployment/frontend frontend=${{ secrets.DOCKERHUB_USERNAME }}/restaurant-frontend:${{ github.sha }} -n default
-          kubectl rollout status deployment frontend-deployment -n default || kubectl rollout status deployment frontend -n default
+          kubectl apply -f k8s/
+          kubectl set image deployment/frontend-deployment frontend=${{ secrets.DOCKERHUB_USERNAME }}/restaurant-frontend:${{ github.sha }} -n default || true
+          kubectl set image deployment/backend-deployment backend=${{ secrets.DOCKERHUB_USERNAME }}/restaurant-backend:${{ github.sha }} -n default || true
+          kubectl rollout restart deployment/frontend-deployment deployment/backend-deployment -n default
+          kubectl rollout status deployment/frontend-deployment -n default
+          kubectl rollout status deployment/backend-deployment -n default
